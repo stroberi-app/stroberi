@@ -1,7 +1,8 @@
-Can# Stroberi
+# Stroberi
+<img src="./assets/images/icon.png" alt="drawing" width="100"/>
 
-Stroberi is an open-source personal expense tracking app built with React Native. It helps you manage your finances by tracking your expenses and categorizing them.
-
+Open-source personal expense tracking app built with React Native. It helps you manage your finances by tracking your expenses and categorizing them.
+It's privary first, so your data is stored locally on your device and never leaves it.
 ## Features
 
 - Track daily expenses
@@ -21,4 +22,3 @@ Stroberi is an open-source personal expense tracking app built with React Native
 - Tamagui
 - Bottom Sheet Modal
 - Yarn
-- NPM i
