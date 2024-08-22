@@ -1,6 +1,7 @@
 import { Stack, styled } from '@tamagui/core';
 
 import { createSwitch } from '@tamagui/switch';
+
 const Frame = styled(Stack, {
   width: 60,
   height: 30,
@@ -20,6 +21,7 @@ const Frame = styled(Stack, {
     checked: false,
   },
 });
+
 const Thumb = styled(Stack, {
   width: 30,
   height: 30,

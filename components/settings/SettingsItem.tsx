@@ -9,6 +9,7 @@ type SettingsItemProps = {
   rightLabel?: string;
   onPress?: () => void;
 };
+
 export const SettingsItem = ({ label, IconComponent, rightLabel, onPress }: SettingsItemProps) => {
   const Component = onPress ? TouchableOpacity : View;
   return (

@@ -5,7 +5,7 @@ import { TransactionModel } from '../../database/transaction-model';
 import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
 import { CarouselItemText } from '../carousel/CarouselItemText';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
-import { BarChart } from '../BarChart';
+import { BarChart } from './BarChart';
 import * as React from 'react';
 import { CircleSlash } from '@tamagui/lucide-icons';
 import { View } from 'tamagui';

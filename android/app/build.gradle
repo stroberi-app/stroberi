@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.stroberi'
+    namespace 'com.dev.stroberi'
     defaultConfig {
-        applicationId 'com.stroberi'
+        applicationId 'com.dev.stroberi'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

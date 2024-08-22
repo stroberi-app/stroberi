@@ -7,6 +7,7 @@ type CurrencyItemProps = {
   code: string;
   selected?: boolean;
 };
+
 export const CurrencyItem = ({ name, code, selected }: CurrencyItemProps) => {
   return (
     <View

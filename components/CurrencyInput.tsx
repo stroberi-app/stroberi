@@ -1,6 +1,7 @@
 import { SizeTokens, Text } from 'tamagui';
 import { View, Input } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
+
 type CurrencyInputProps = {
   size?: SizeTokens;
   focusOnMount?: boolean;
@@ -34,7 +35,6 @@ export function CurrencyInput({
           style={{
             height: 64,
             fontSize: 32,
-            // backgroundColor: 'red',
             flex: 1,
           }}
           id="currencyInput"
@@ -45,9 +45,6 @@ export function CurrencyInput({
         />
         <View
           onTouchStart={() => onCurrencySelect()}
-          // onTouchStart={() => router.push('/select-currency')}
-          // borderWidth={1}
-          // borderRadius={'$4'}
           borderColor={'$borderColor'}
           borderLeftWidth={2}
           paddingHorizontal={'$2'}

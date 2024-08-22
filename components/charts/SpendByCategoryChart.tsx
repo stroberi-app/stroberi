@@ -7,7 +7,7 @@ import * as React from 'react';
 import { CategoryModel } from '../../database/category-model';
 import { CarouselItemText } from '../carousel/CarouselItemText';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
-import { BarChart } from '../BarChart';
+import { BarChart } from './BarChart';
 import { useWindowDimensions, View } from 'tamagui';
 import { CircleSlash } from '@tamagui/lucide-icons';
 
