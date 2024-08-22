@@ -20,22 +20,17 @@
       "bundleIdentifier": "com.stroberi"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.stroberi"
+      "package": "com.dev.stroberi"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
       "expo-font",
       [
-        "@morrowdigital/watermelondb-expo-plugin"
+        "@morrowdigital/watermelondb-expo-plugin", { "disableJsi": true }
       ],
       [
         "expo-build-properties",

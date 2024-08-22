@@ -4,6 +4,7 @@ import { getLocales } from 'expo-localization';
 
 export const useDefaultCurrency = () => {
   const [defaultCurrency, setDefaultCurrency] = useState<string | null>(null);
+
   useEffect(() => {
     database.localStorage.get('defaultCurrency').then(currency => {
       if (!currency) {
@@ -22,6 +23,7 @@ export const useDefaultCurrency = () => {
     await database.localStorage.set('defaultCurrency', currency);
     setDefaultCurrency(currency);
   };
+
   return {
     defaultCurrency,
     setDefaultCurrency: handleSetDefaultCurrency,

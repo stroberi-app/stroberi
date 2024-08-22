@@ -21,3 +21,15 @@ It's privary first, so your data is stored locally on your device and never leav
 - Tamagui
 - Bottom Sheet Modal
 - Yarn
+
+
+
+## Local development
+
+```
+yarn start
+```
+
+```
+npx expo prebuild
+```

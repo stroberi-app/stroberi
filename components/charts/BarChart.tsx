@@ -1,6 +1,6 @@
 import { Bar, CartesianChart } from 'victory-native';
 import { LinearGradient, useFont, vec } from '@shopify/react-native-skia';
-import inter from '../assets/fonts/Inter-Medium.ttf';
+import inter from '../../assets/fonts/Inter-Medium.ttf';
 import { useTheme } from 'tamagui';
 import React from 'react';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';

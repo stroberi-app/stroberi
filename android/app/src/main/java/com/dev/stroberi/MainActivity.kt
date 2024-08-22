@@ -1,4 +1,4 @@
-package com.stroberi
+package com.dev.stroberi
 
 import android.os.Build
 import android.os.Bundle

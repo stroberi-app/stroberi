@@ -11,8 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { database } from '../database';
 import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
-import { CategoryModel } from '../database/category-model';
-import { DEFAULT_CATEGORIES } from '../data/defaultCategories';
+import { useSeedCategories } from '../hooks/useSeedCategories';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -33,8 +32,6 @@ export default function RootLayout() {
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
   });
 
-  useDefaultCurrency();
-
   useEffect(() => {
     if (interLoaded || interError) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
@@ -42,24 +39,8 @@ export default function RootLayout() {
     }
   }, [interLoaded, interError]);
 
-  useEffect(() => {
-    (async () => {
-      const categories = await database.collections
-        .get<CategoryModel>('categories')
-        .query()
-        .fetch();
-      if (categories.length === 0) {
-        await database.write(async () => {
-          for (const category of DEFAULT_CATEGORIES) {
-            await database.collections.get<CategoryModel>('categories').create(newCategory => {
-              newCategory.name = category.name;
-              newCategory.icon = category.icon;
-            });
-          }
-        });
-      }
-    })();
-  }, []);
+  useDefaultCurrency();
+  useSeedCategories();
 
   if (!interLoaded && !interError) {
     return null;

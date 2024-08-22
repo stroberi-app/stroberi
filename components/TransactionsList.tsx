@@ -7,7 +7,6 @@ import { Text, YGroup } from 'tamagui';
 import { TransactionItem } from './TransactionItem';
 import * as React from 'react';
 import { TransactionModel } from '../database/transaction-model';
-import { useRouter } from 'expo-router';
 import { CreateFirstTransactionButton } from './CreateFirstTransactionButton';
 
 type TransactionsListProps = {
