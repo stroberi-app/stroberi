@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, ScrollView, Text, View } from 'tamagui';
-import { PlusCircle, ScanText } from '@tamagui/lucide-icons';
+import { PlusCircle } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import { Carousel } from '../../components/carousel/Carousel';
 import { useDatabase } from '@nozbe/watermelondb/hooks';

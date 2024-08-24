@@ -10,6 +10,7 @@ import * as React from 'react';
 import { CircleSlash } from '@tamagui/lucide-icons';
 import { View } from 'tamagui';
 import dayjs from 'dayjs';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 
 type SpendByMonthProps = {
   chartData: SpendByMonthChartData;
@@ -29,7 +30,7 @@ export const SpendByType = withObservables<
   return {
     chartData: database.collections
       .get<TransactionModel>('transactions')
-      .query(Q.where('amount', type === 'income' ? Q.gte(0) : Q.lt(0)))
+      .query(Q.where('amountInBaseCurrency', type === 'income' ? Q.gte(0) : Q.lt(0)))
       .observe()
       .pipe(
         map(transactions => {
@@ -48,7 +49,7 @@ export const SpendByType = withObservables<
                   transactionDate.getFullYear() === date.getFullYear()
                 );
               })
-              .reduce((acc, transaction) => acc + Math.abs(transaction.amount), 0);
+              .reduce((acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency), 0);
             return {
               month,
               year,
@@ -59,10 +60,12 @@ export const SpendByType = withObservables<
       ),
   };
 })(({ chartData, type }: SpendByMonthProps) => {
+  const { defaultCurrency } = useDefaultCurrency();
   return (
     <CarouselItemWrapper>
       <CarouselItemText>
-        {type === 'expense' ? 'Spend by Month' : 'Income by Month'}
+        {type === 'expense' ? 'Spend by Month' : 'Income by Month'}{' '}
+        {defaultCurrency ? `(${defaultCurrency})` : ''}
       </CarouselItemText>
       <CarouselItemChart>
         {chartData.every(el => el.total === 0) ? (

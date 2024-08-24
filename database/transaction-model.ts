@@ -7,11 +7,15 @@ export class TransactionModel extends Model {
 
   @text('merchant') merchant: string;
   @text('note') note: string;
-  @text('currencyCode') currencyCode: string;
-  @field('amount') amount: number;
+  @text('currencyCode') currencyCode: string; // Existing field for original currency
+  @field('amount') amount: number; // Original amount in the transaction's currency
+  @text('baseCurrencyCode') baseCurrencyCode: string; // New field for the base currency
+  @field('amountInBaseCurrency') amountInBaseCurrency: number; // New field for amount in base currency
+  @field('exchangeRate') exchangeRate: number; // New field for the exchange rate used
+
   @date('date') date: Date;
 
-  @relation('categories', 'categoryId') categoryId: Relation<CategoryModel> | null;
+  @relation('categories', 'category_id') categoryId: Relation<CategoryModel> | null;
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
