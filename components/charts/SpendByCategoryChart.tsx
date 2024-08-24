@@ -41,7 +41,6 @@ export const SpendByCategory = withObservables<
               if (!acc[category]) {
                 acc[category] = 0;
               }
-              console.log(transaction.id, transaction.amountInBaseCurrency);
               acc[category] += Math.abs(transaction.amountInBaseCurrency);
               return acc;
             },
