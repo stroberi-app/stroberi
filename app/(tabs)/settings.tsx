@@ -113,8 +113,11 @@ export default function SettingsScreen() {
       <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} />
       <CurrencySelect
         sheetRef={currencySheetRef}
+        onSelect={currency => {
+          setDefaultCurrency(currency.code);
+          currencySheetRef.current?.close();
+        }}
         selectedCurrency={defaultCurrency ?? 'USD'}
-        setSelectedCurrency={setDefaultCurrency}
       />
       <ExportCSVSheet sheetRef={exportCsvSheetRef} />
       <ImportCSVSheet sheetRef={importCsvSheetRef} />

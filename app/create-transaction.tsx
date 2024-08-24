@@ -53,6 +53,9 @@ function CreateTransaction() {
   const [date, setDate] = useState(transaction?.date ? new Date(transaction.date) : new Date());
 
   const handleSubmit = async () => {
+    if (!defaultCurrency) {
+      return;
+    }
     const payload = {
       merchant: merchantName,
       amount: Number(amount),
@@ -60,6 +63,7 @@ function CreateTransaction() {
       date,
       currencyCode: selectedCurrency,
       note,
+      baseCurrency: defaultCurrency,
     };
     if (transaction) {
       updateTransaction({
@@ -180,8 +184,11 @@ function CreateTransaction() {
       </StyledScrollView>
       <CurrencySelect
         sheetRef={bottomSheetRef}
+        onSelect={currency => {
+          setSelectedCurrency(currency.code);
+          bottomSheetRef.current?.close();
+        }}
         selectedCurrency={selectedCurrency}
-        setSelectedCurrency={setSelectedCurrency}
       />
       <ManageCategoriesSheet
         selectedCategory={selectedCategory}

@@ -12,22 +12,17 @@ import { backgroundStyle, handleIndicatorStyle, snapPoints } from './sheet/const
 import { Input, View } from 'tamagui';
 
 type CurrencySelectProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
   selectedCurrency: string;
-  setSelectedCurrency: (currency: string) => void;
+  onSelect: (currency: Currency) => void;
+  sheetRef: React.RefObject<BottomSheetModal>;
 };
-export const CurrencySelect = ({
-  sheetRef,
-  selectedCurrency,
-  setSelectedCurrency,
-}: CurrencySelectProps) => {
+export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: CurrencySelectProps) => {
   const renderItem = useCallback(
     ({ item: currency }: { item: Currency }) => (
       <React.Fragment key={currency.code}>
         <TouchableOpacity
           onPress={() => {
-            setSelectedCurrency(currency.code);
-            sheetRef.current?.close();
+            onSelect(currency);
           }}>
           <CurrencyItem
             name={currency.name}
