@@ -30,7 +30,6 @@ export const getCurrencyConversion = async (baseCurrency: string, targetCurrency
 
   const cachedData = await getCachedData(cacheKey);
   if (cachedData) {
-    console.log('returning cached data', { baseCurrency, targetCurrency, cachedData });
     return cachedData;
   }
 
