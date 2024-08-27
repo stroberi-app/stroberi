@@ -1,6 +1,7 @@
 import { TransactionModel } from './transaction-model';
 import { CategoryModel } from './category-model';
 import { database } from './index';
+import { getCurrencyConversion } from '../hooks/useCurrencyApi';
 
 export type CreateTransactionPayload = {
   merchant: string;
@@ -9,6 +10,7 @@ export type CreateTransactionPayload = {
   date: Date;
   currencyCode: string;
   note: string;
+  baseCurrency: string;
 };
 export const createTransaction = ({
   merchant,
@@ -17,18 +19,35 @@ export const createTransaction = ({
   date,
   currencyCode,
   note,
+  baseCurrency,
 }: CreateTransactionPayload) =>
   database.write(async () => {
     const collection = database.get<TransactionModel>('transactions');
     const categoryCollection = categoryId
       ? await database.get<CategoryModel>('categories').find(categoryId)
       : null;
+
+    let baseCurrencyCode = baseCurrency;
+    let amountInBaseCurrency = amount;
+    let exchangeRate = 1;
+    if (baseCurrency !== currencyCode) {
+      const rate = await getCurrencyConversion(baseCurrency, currencyCode);
+      if (rate) {
+        baseCurrencyCode = baseCurrency;
+        amountInBaseCurrency = amount * rate;
+        exchangeRate = rate;
+      }
+    }
+
     return collection.create(tx => {
       tx.merchant = merchant;
       tx.amount = amount;
       tx.date = date;
       tx.currencyCode = currencyCode;
       tx.note = note;
+      tx.baseCurrencyCode = baseCurrencyCode;
+      tx.amountInBaseCurrency = amountInBaseCurrency;
+      tx.exchangeRate = exchangeRate;
       if (categoryCollection) {
         tx.categoryId?.set(categoryCollection);
       }
@@ -43,6 +62,7 @@ export const updateTransaction = ({
   date,
   currencyCode,
   note,
+  baseCurrency,
 }: {
   id: string;
   merchant: string;
@@ -51,6 +71,7 @@ export const updateTransaction = ({
   date: Date;
   currencyCode: string;
   note: string;
+  baseCurrency: string;
 }) =>
   database.write(async () => {
     const collection = database.get<TransactionModel>('transactions');
@@ -58,12 +79,28 @@ export const updateTransaction = ({
       ? await database.get<CategoryModel>('categories').find(categoryId)
       : null;
     const transaction = await collection.find(id);
+
+    let baseCurrencyCode = baseCurrency;
+    let amountInBaseCurrency = amount;
+    let exchangeRate = 1;
+    if (baseCurrency !== currencyCode) {
+      const rate = await getCurrencyConversion(baseCurrency, currencyCode);
+      if (rate) {
+        baseCurrencyCode = baseCurrency;
+        amountInBaseCurrency = amount * rate;
+        exchangeRate = rate;
+      }
+    }
+
     return transaction.update(tx => {
       tx.merchant = merchant;
       tx.amount = amount;
       tx.date = date;
       tx.currencyCode = currencyCode;
       tx.note = note;
+      tx.baseCurrencyCode = baseCurrencyCode;
+      tx.amountInBaseCurrency = amountInBaseCurrency;
+      tx.exchangeRate = exchangeRate;
       if (categoryCollection) {
         tx.categoryId?.set(categoryCollection);
       }

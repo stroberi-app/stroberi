@@ -11,5 +11,18 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 8,
+      steps: [
+        addColumns({
+          table: 'transactions',
+          columns: [
+            { name: 'baseCurrencyCode', type: 'string' },
+            { name: 'amountInBaseCurrency', type: 'number' },
+            { name: 'exchangeRate', type: 'number' },
+          ],
+        }),
+      ],
+    },
   ],
 });
