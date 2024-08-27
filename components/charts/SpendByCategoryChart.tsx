@@ -10,6 +10,7 @@ import { CarouselItemChart } from '../carousel/CarouselItemChart';
 import { BarChart } from './BarChart';
 import { useWindowDimensions, View } from 'tamagui';
 import { CircleSlash } from '@tamagui/lucide-icons';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 
 type SpendByCategoryProps = {
   chartData: SpendByCategoryChartData;
@@ -30,7 +31,7 @@ export const SpendByCategory = withObservables<
     categories: database.collections.get<CategoryModel>('categories').query().observe(),
     chartData: database.collections
       .get<TransactionModel>('transactions')
-      .query(Q.where('amount', Q.lt(0)))
+      .query(Q.where('amountInBaseCurrency', Q.lt(0)))
       .observe()
       .pipe(
         map(transactions => {
@@ -40,7 +41,7 @@ export const SpendByCategory = withObservables<
               if (!acc[category]) {
                 acc[category] = 0;
               }
-              acc[category] += Math.abs(transaction.amount);
+              acc[category] += Math.abs(transaction.amountInBaseCurrency);
               return acc;
             },
             {} as Record<string, number>
@@ -66,9 +67,12 @@ export const SpendByCategory = withObservables<
 
   const dimensions = useWindowDimensions();
   const totalBars = data.length;
+  const { defaultCurrency } = useDefaultCurrency();
   return (
     <CarouselItemWrapper>
-      <CarouselItemText>Top spend by category</CarouselItemText>
+      <CarouselItemText>
+        Top spend by category {defaultCurrency ? `(${defaultCurrency})` : ''}
+      </CarouselItemText>
       <CarouselItemChart>
         {data.length === 0 ? (
           <View width={'100%'} height="100%" alignItems={'center'} justifyContent={'center'}>

@@ -48,7 +48,6 @@ export const ExportCSVSheet = ({ sheetRef }: ExportCSVSheetProps) => {
       )
       .fetch();
 
-    console.log({ transactions });
     const csv = Papa.unparse(
       transactions.map(transaction => {
         const tx: Partial<Record<keyof TransactionModel, unknown>> = {};

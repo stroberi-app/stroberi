@@ -19,6 +19,7 @@ import { currencies } from '../../data/currencies';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { CategoryModel } from '../../database/category-model';
 import useToast from '../../hooks/useToast';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 
 type ImportCSVSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -31,6 +32,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
   const [importing, setImporting] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
+  const { defaultCurrency } = useDefaultCurrency();
   const database = useDatabase();
   const handleImport = async () => {
     setImporting(true);
@@ -118,6 +120,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                 note: note || '',
                 currencyCode,
                 categoryId: matchedCategory?.id ?? null,
+                baseCurrency: defaultCurrency as string,
               });
             }
 
@@ -159,7 +162,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         });
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
     setImporting(false);
   };
@@ -172,7 +175,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       await FileSystem.writeAsStringAsync(uri, template);
       await Sharing.shareAsync(uri);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
     setDownloading(false);
   };
