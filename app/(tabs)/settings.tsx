@@ -1,13 +1,6 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
-import {
-  DollarSign,
-  FolderInput,
-  FolderOutput,
-  ScanFace,
-  Star,
-  Tags,
-} from '@tamagui/lucide-icons';
+import { DollarSign, FolderInput, FolderOutput, ScanFace, Star, Tags } from '@tamagui/lucide-icons';
 import * as React from 'react';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';

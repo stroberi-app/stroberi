@@ -49,7 +49,7 @@ export const createTransaction = ({
       tx.amountInBaseCurrency = amountInBaseCurrency;
       tx.exchangeRate = exchangeRate;
       if (categoryCollection) {
-        tx.categoryId?.set(categoryCollection);
+        tx.category?.set(categoryCollection);
       }
     });
   });
@@ -102,7 +102,7 @@ export const updateTransaction = ({
       tx.amountInBaseCurrency = amountInBaseCurrency;
       tx.exchangeRate = exchangeRate;
       if (categoryCollection) {
-        tx.categoryId?.set(categoryCollection);
+        tx.category?.set(categoryCollection);
       }
     });
   });

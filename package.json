@@ -16,9 +16,8 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@expo/metro-runtime": "~3.2.1",
-    "@gorhom/bottom-sheet": "5.0.0-alpha.10",
-    "@gorhom/portal": "^1.0.14",
+    "@expo/metro-runtime": "^3.2.3",
+    "@gorhom/bottom-sheet": "^5.0.2",
     "@morrowdigital/watermelondb-expo-plugin": "^2.3.3",
     "@nozbe/simdjson": "^3.1.0-wmelon1",
     "@nozbe/watermelondb": "^0.27.1",
@@ -35,8 +34,8 @@
     "@tamagui/sheet": "^1.100.3",
     "babel-preset-expo": "~11.0.0",
     "burnt": "^0.12.2",
-    "dayjs": "^1.11.11",
-    "expo": "~51.0.12",
+    "dayjs": "^1.11.13",
+    "expo": "~51.0.38",
     "expo-blur": "~13.0.2",
     "expo-build-properties": "~0.12.3",
     "expo-dev-client": "~4.0.16",

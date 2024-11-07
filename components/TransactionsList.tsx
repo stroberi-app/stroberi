@@ -8,6 +8,8 @@ import { TransactionItem } from './TransactionItem';
 import * as React from 'react';
 import { TransactionModel } from '../database/transaction-model';
 import { CreateFirstTransactionButton } from './CreateFirstTransactionButton';
+import { DateFilters } from '../app/(tabs)/transactions';
+import { CategoryModel } from '../database/category-model';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
@@ -21,9 +23,12 @@ const getDateKey = (date: Date) => {
   if (dayjsDate.isYesterday()) {
     return 'Yesterday';
   }
-  return dayjsDate.format(DateFormats.FullMonthFullDay);
+  return dayjsDate.format(
+    dayjsDate.year() === dayjs().year()
+      ? DateFormats.FullMonthFullDay
+      : DateFormats.FullMonthFullDay + ', YYYY'
+  );
 };
-
 const TransactionsList = ({ transactions }: TransactionsListProps) => {
   const groupByDate = transactions.reduce(
     (acc, transaction) => {
@@ -36,7 +41,6 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
     },
     {} as Record<string, typeof transactions>
   );
-
   if (transactions.length === 0) {
     return <CreateFirstTransactionButton mt={'30%'} />;
   }
@@ -53,6 +57,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
                 key={transaction.id}
                 date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
                 transaction={transaction}
+                category={transaction.category}
               />
             ))}
           </YGroup>
@@ -63,15 +68,41 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
 };
 
 const enhance = withObservables<
-  { database: Database },
+  {
+    database: Database;
+    dateFilter?: DateFilters | null;
+    customRange?: [Date, Date];
+    categories: CategoryModel[];
+  },
   { transactions: Observable<TransactionModel[]> }
->([], ({ database }) => {
-  return {
-    transactions: database.collections
+>(
+  ['dateFilter', 'customRange', 'categories'],
+  ({ database, dateFilter, customRange, categories }) => {
+    let query = database.collections
       .get<TransactionModel>('transactions')
-      .query(Q.sortBy('date', 'desc'))
-      .observe(),
-  };
-});
+      .query(Q.sortBy('date', 'desc'));
 
+    if (dateFilter === 'This Year') {
+      const startOfYear = dayjs().startOf('year').toDate();
+      const endOfYear = dayjs().endOf('year').toDate();
+      query = query.extend(Q.where('date', Q.gte(startOfYear.getTime())));
+      query = query.extend(Q.where('date', Q.lte(endOfYear.getTime())));
+    } else if (dateFilter === 'This Month') {
+      const startOfMonth = dayjs().startOf('month').toDate();
+      const endOfMonth = dayjs().endOf('month').toDate();
+      query = query.extend(Q.where('date', Q.gte(startOfMonth.getTime())));
+      query = query.extend(Q.where('date', Q.lte(endOfMonth.getTime())));
+    } else if (customRange) {
+      const [start, end] = customRange;
+      query = query.extend(Q.where('date', Q.gte(start.getTime())));
+      query = query.extend(Q.where('date', Q.lte(end.getTime())));
+    }
+    if (categories.length > 0) {
+      query = query.extend(Q.where('categoryId', Q.oneOf(categories.map(c => c.id))));
+    }
+    return {
+      transactions: query.observe(),
+    };
+  }
+);
 export default enhance(TransactionsList);
