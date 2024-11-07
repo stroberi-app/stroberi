@@ -37,7 +37,7 @@ export const SpendByCategory = withObservables<
         map(transactions => {
           const categories = transactions.reduce(
             (acc, transaction) => {
-              const category = transaction.categoryId?.id || 'Uncategorized';
+              const category = transaction.category?.id || 'Uncategorized';
               if (!acc[category]) {
                 acc[category] = 0;
               }

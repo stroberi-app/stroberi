@@ -2,6 +2,8 @@ import { Button as TamaguiButton } from 'tamagui';
 import { styled } from '@tamagui/core';
 
 const Button = styled(TamaguiButton, {
+  fontSize: '$5',
+  fontWeight: 'bold',
   variants: {
     brand: {
       primary: {

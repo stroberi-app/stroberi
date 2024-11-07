@@ -17,7 +17,7 @@ export const TransactionItem = withObservables<{ transaction: TransactionModel }
   [],
   ({ transaction }) => {
     return {
-      category: transaction.categoryId?.observe(),
+      category: transaction.category?.observe(),
       transaction: transaction.observe(),
     };
   }
@@ -33,13 +33,15 @@ export const TransactionItem = withObservables<{ transaction: TransactionModel }
         borderWidth={1}
         borderColor={'$borderColor'}>
         <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
-        <View flexDirection={'column'}>
+        <View flexDirection={'column'} justifyContent={'center'}>
           <Text fontSize={'$5'} fontWeight={'bold'}>
-            {transaction.merchant}
-          </Text>
-          <Text fontSize={'$3'} color={'gray'}>
             {category?.name ?? 'Uncategorized'}
           </Text>
+          {transaction.merchant && (
+            <Text fontSize={'$3'} color={'gray'}>
+              {transaction.merchant}
+            </Text>
+          )}
         </View>
         <View marginLeft={'auto'} alignItems={'flex-end'}>
           <Text fontSize={'$5'} color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>

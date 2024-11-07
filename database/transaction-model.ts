@@ -15,7 +15,7 @@ export class TransactionModel extends Model {
 
   @date('date') date: Date;
 
-  @relation('categories', 'category_id') categoryId: Relation<CategoryModel> | null;
+  @relation('categories', 'categoryId') category: Relation<CategoryModel> | null;
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;

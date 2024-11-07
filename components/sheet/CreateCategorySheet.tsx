@@ -37,6 +37,7 @@ export const CreateCategorySheet = ({ sheetRef }: CreateCategorySheetProps) => {
       backgroundStyle={backgroundStyle}>
       <BottomSheetScrollView>
         <View padding={'$2'} gap={'$2'}>
+          <Text ml={'$2'}>Enter Category Name</Text>
           <Input
             placeholder="Enter name"
             value={name}
@@ -44,6 +45,9 @@ export const CreateCategorySheet = ({ sheetRef }: CreateCategorySheetProps) => {
             gap={'$4'}
             width={'100%'}
           />
+          <Text mt={'$2'} ml={'$2'}>
+            Select Category Icon
+          </Text>
           <View flexDirection={'row'} flexWrap={'wrap'} gap={'$4'} p={'$2'}>
             {spendingCategories.map((icon, index) => (
               <Button
