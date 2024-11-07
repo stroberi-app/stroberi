@@ -20,7 +20,6 @@ export const CustomBackdrop = ({ animatedIndex, style }: BottomSheetBackdropProp
     )})`,
   }));
 
-  // styles
   const containerStyle = useMemo(() => [style, containerAnimatedStyle], [style]);
 
   const blurViewProps = useAnimatedProps(() => {

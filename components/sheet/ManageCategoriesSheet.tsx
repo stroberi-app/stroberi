@@ -12,15 +12,19 @@ import { CustomBackdrop } from '../CustomBackdrop';
 
 type ManageCategoriesSheetProps = {
   selectedCategory?: CategoryModel | null;
+  selectedCategories?: CategoryModel[];
   setSelectedCategory?: (category: CategoryModel) => void;
   interactive?: boolean;
   sheetRef: React.RefObject<BottomSheetModal>;
+  preventClose?: boolean;
 };
 
 export const ManageCategoriesSheet = ({
   selectedCategory,
   setSelectedCategory,
   sheetRef,
+  preventClose = false,
+  selectedCategories,
 }: ManageCategoriesSheetProps) => {
   const [search, setSearch] = useState('');
   const ref = useRef<BottomSheetModal | null>(null);
@@ -68,10 +72,12 @@ export const ManageCategoriesSheet = ({
             />
           </View>
           <CategoriesList
+            preventClose={preventClose}
             search={search}
             database={database}
             onSelect={setSelectedCategory}
             selectedCategory={selectedCategory}
+            selectedCategories={selectedCategories}
           />
         </BottomSheetView>
       </BottomSheetModal>

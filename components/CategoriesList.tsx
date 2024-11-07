@@ -11,9 +11,17 @@ type CategoriesListProps = {
   categories: CategoryModel[];
   onSelect?: (category: CategoryModel) => void;
   selectedCategory?: CategoryModel;
+  preventClose?: boolean;
+  selectedCategories?: CategoryModel[];
 };
 
-const Component = ({ categories, onSelect, selectedCategory }: CategoriesListProps) => {
+const Component = ({
+  categories,
+  onSelect,
+  selectedCategory,
+  preventClose,
+  selectedCategories,
+}: CategoriesListProps) => {
   const { bottom } = useSafeAreaInsets();
   const { close } = useBottomSheet();
   const renderItem = useCallback(
@@ -23,18 +31,23 @@ const Component = ({ categories, onSelect, selectedCategory }: CategoriesListPro
         onPress={() => {
           if (onSelect) {
             onSelect(category);
-            close();
+            if (!preventClose) {
+              close();
+            }
           }
         }}
         disabled={!onSelect}>
         <CurrencyItem
           name={category.name}
           code={category.icon}
-          selected={category.id === selectedCategory?.id}
+          selected={
+            category.id === selectedCategory?.id ||
+            selectedCategories?.some(c => c.id === category.id)
+          }
         />
       </TouchableOpacity>
     ),
-    [selectedCategory]
+    [selectedCategory, selectedCategories]
   );
 
   const props = useMemo(
