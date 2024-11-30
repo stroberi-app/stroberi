@@ -103,7 +103,7 @@ export default function SettingsScreen() {
         </YGroup>
         <View height={140} />
       </ScrollView>
-      <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} />
+      <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch />
       <CurrencySelect
         sheetRef={currencySheetRef}
         onSelect={currency => {
