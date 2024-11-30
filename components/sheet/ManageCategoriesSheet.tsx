@@ -2,13 +2,14 @@ import React, { useRef, useState } from 'react';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { BottomSheetView, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
-import { Input, Text, View } from 'tamagui';
+import { Text, View } from 'tamagui';
 import { LinkButton } from '../button/LinkButton';
 import { PlusCircle } from '@tamagui/lucide-icons';
 import { CategoriesList } from '../CategoriesList';
 import { CreateCategorySheet } from './CreateCategorySheet';
 import { CategoryModel } from '../../database/category-model';
 import { CustomBackdrop } from '../CustomBackdrop';
+import { BottomSheetTextInput } from './BottomSheetTextInput';
 
 type ManageCategoriesSheetProps = {
   selectedCategory?: CategoryModel | null;
@@ -17,6 +18,7 @@ type ManageCategoriesSheetProps = {
   interactive?: boolean;
   sheetRef: React.RefObject<BottomSheetModal>;
   preventClose?: boolean;
+  noSearch?: boolean;
 };
 
 export const ManageCategoriesSheet = ({
@@ -25,6 +27,7 @@ export const ManageCategoriesSheet = ({
   sheetRef,
   preventClose = false,
   selectedCategories,
+  noSearch,
 }: ManageCategoriesSheetProps) => {
   const [search, setSearch] = useState('');
   const ref = useRef<BottomSheetModal | null>(null);
@@ -62,15 +65,17 @@ export const ManageCategoriesSheet = ({
               <PlusCircle size={18} color={'white'} />
             </LinkButton>
           </View>
-          <View padding={'$2'}>
-            <Input
-              placeholder="Search categories"
-              value={search}
-              onChangeText={setSearch}
-              gap={'$4'}
-              width={'100%'}
-            />
-          </View>
+          {!noSearch && (
+            <View padding={'$2'}>
+              <BottomSheetTextInput
+                placeholder="Search categories"
+                value={search}
+                onChangeText={setSearch}
+                gap={'$4'}
+                width={'100%'}
+              />
+            </View>
+          )}
           <CategoriesList
             preventClose={preventClose}
             search={search}
