@@ -11,6 +11,7 @@ import {
   RefreshCw,
   User,
 } from '@tamagui/lucide-icons';
+import { Keyboard } from 'react-native';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -85,7 +86,7 @@ function CreateTransaction() {
 
   return (
     <BottomSheetModalProvider>
-      <StyledScrollView>
+      <StyledScrollView keyboardShouldPersistTaps={'handled'}>
         <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
           <LinkButton
             backgroundColor={'transparent'}
@@ -105,6 +106,7 @@ function CreateTransaction() {
             selectedCurrency={selectedCurrency}
             value={amount}
             onChangeText={setAmount}
+            focusOnMount={!transaction}
           />
         </View>
 
@@ -128,6 +130,7 @@ function CreateTransaction() {
             <LinkButton
               color={'white'}
               onPress={() => {
+                Keyboard.dismiss();
                 manageCategoriesSheetRef.current?.present();
               }}>
               {selectedCategory ? (

@@ -43,7 +43,7 @@ const DateFilterSection = ({
         </Text>
         {dateFilter !== null && (
           <LinkButton onPress={() => setDateFilter(null)}>
-            <XCircle size={18} color={'$brandPrimary'} />
+            <XCircle size={18} color={'white'} />
           </LinkButton>
         )}
       </View>

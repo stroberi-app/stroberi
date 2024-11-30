@@ -32,6 +32,7 @@ export default function TransactionsScreen() {
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
 
+  const appliedNumberOfFilters = [dateFilter, selectedCategories.length].filter(Boolean).length;
   return (
     <>
       <ScrollView
@@ -44,6 +45,11 @@ export default function TransactionsScreen() {
           </Text>
           <LinkButton paddingHorizontal={'$2'} onPress={() => sheetRef.current?.present()}>
             <Filter size={'$1'} color={'$stroberi'} />
+            {appliedNumberOfFilters > 0 && (
+              <Text color={'$stroberi'} fontWeight={'bold'}>
+                +{appliedNumberOfFilters}
+              </Text>
+            )}
           </LinkButton>
         </View>
         <TransactionsList
