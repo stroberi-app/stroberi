@@ -69,6 +69,7 @@ const Component = ({
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       bounces={false}
+      keyboardShouldPersistTaps={'always'}
       {...props}
     />
   );

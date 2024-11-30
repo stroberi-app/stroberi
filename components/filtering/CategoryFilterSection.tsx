@@ -33,7 +33,7 @@ const CategoryFilterSection = ({
         </Text>
         {selectedCategories.length > 0 && (
           <LinkButton onPress={() => setSelectedCategory([])}>
-            <XCircle size={18} color={'$brandPrimary'} />
+            <XCircle size={18} color={'white'} />
           </LinkButton>
         )}
       </View>
