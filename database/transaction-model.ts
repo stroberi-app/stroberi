@@ -1,9 +1,16 @@
 import { Model, Relation } from '@nozbe/watermelondb';
 import { field, readonly, relation, text, writer, date } from '@nozbe/watermelondb/decorators';
 import { CategoryModel } from './category-model';
+import { Associations } from '@nozbe/watermelondb/Model';
 
 export class TransactionModel extends Model {
   static table = 'transactions';
+  static associations: Associations = {
+    categories: {
+      key: 'id',
+      type: 'belongs_to',
+    },
+  };
 
   @text('merchant') merchant: string;
   @text('note') note: string;

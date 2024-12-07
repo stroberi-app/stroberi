@@ -1,4 +1,6 @@
-import { SplashScreen, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+
 import { TamaguiProvider } from 'tamagui';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -25,7 +27,10 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
+SplashScreen.setOptions({
+  duration: 500,
+  fade: true,
+});
 export default function RootLayout() {
   const [interLoaded, interError] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
