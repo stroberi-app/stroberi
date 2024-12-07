@@ -10,7 +10,6 @@ It's privary first, so your data is stored locally on your device and never leav
 - Export and import data in CSV format
 - Manage categories
 - Set default currency
-- Face ID security
 
 ## Technologies Used
 
