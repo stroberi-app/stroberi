@@ -271,6 +271,8 @@ PODS:
     - ExpoModulesCore
   - ExpoSplashScreen (0.29.13):
     - ExpoModulesCore
+  - ExpoSQLite (15.0.3):
+    - ExpoModulesCore
   - ExpoSystemUI (4.0.4):
     - ExpoModulesCore
   - ExpoWebBrowser (14.0.1):
@@ -1518,7 +1520,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-keyboard-controller (1.12.2):
+  - react-native-keyboard-controller (1.14.5):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1539,7 +1541,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-menu (1.1.2):
+  - react-native-menu (1.1.7):
     - React
   - react-native-safe-area-context (4.12.0):
     - React-Core
@@ -2010,6 +2012,7 @@ DEPENDENCIES:
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSharing (from `../node_modules/expo-sharing/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
+  - ExpoSQLite (from `../node_modules/expo-sqlite/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
@@ -2148,6 +2151,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-sharing/ios"
   ExpoSplashScreen:
     :path: "../node_modules/expo-splash-screen/ios"
+  ExpoSQLite:
+    :path: "../node_modules/expo-sqlite/ios"
   ExpoSystemUI:
     :path: "../node_modules/expo-system-ui/ios"
   ExpoWebBrowser:
@@ -2332,6 +2337,7 @@ SPEC CHECKSUMS:
   ExpoModulesCore: f71914f0725f2f4ca7a8d25dc551263e730d5d7f
   ExpoSharing: 39a198e64bf522948fe60e270e49a0c7757912c1
   ExpoSplashScreen: 47a5c337586329223b70b5ef777d34c1f9edf412
+  ExpoSQLite: 56051549ddac62c16460d4391b84994faf494f00
   ExpoSystemUI: 97ec8f20af5e8ca18d3191c5c72e8a04e6e2f02d
   ExpoWebBrowser: f08aaf1c8a02af8a768d83793186cb6d2c69f529
   EXUpdatesInterface: 1dcebac98ac5dad4289e6ff2bd5616822e894397
@@ -2368,8 +2374,8 @@ SPEC CHECKSUMS:
   React-logger: 26155dc23db5c9038794db915f80bd2044512c2e
   React-Mapbuffer: ad1ba0205205a16dbff11b8ade6d1b3959451658
   React-microtasksnativemodule: 36e3a415c6a3a5c4784b5c6bad38013b8ca35be4
-  react-native-keyboard-controller: a20df0350765e6527dc1eed389f5cb246f21bd72
-  react-native-menu: d32728a357dfb360cf01cd5979cf7713c5acbb95
+  react-native-keyboard-controller: 467a88267b80baa1652b8f1f84e7aae79864f617
+  react-native-menu: c8dfe61ce656aa531ab18e8ee3bb4ee55ce972ea
   react-native-safe-area-context: 142fade490cbebbe428640b8cbdb09daf17e8191
   react-native-skia: 8f41b3bbde6d3b4eff1983cb82038f3af7de7eca
   React-nativeconfig: aeed6e2a8ac02b2df54476afcc7c663416c12bf7

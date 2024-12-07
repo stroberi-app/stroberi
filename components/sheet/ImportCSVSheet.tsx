@@ -21,6 +21,16 @@ import { CategoryModel } from '../../database/category-model';
 import useToast from '../../hooks/useToast';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 
+interface CSVRow {
+  merchant: string;
+  amount: string;
+  date: string;
+  note?: string;
+  currencyCode: string;
+  category?: string;
+  categoryIcon?: string;
+}
+
 type ImportCSVSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
 };
@@ -40,7 +50,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       const res = await DocumentPicker.getDocumentAsync({ type: 'text/csv' });
       if (res.assets?.[0].uri) {
         const content = await FileSystem.readAsStringAsync(res.assets?.[0].uri);
-        Papa.parse(content, {
+        Papa.parse<CSVRow>(content, {
           header: true,
           complete: async results => {
             const categories = await database.get<CategoryModel>('categories').query().fetch();
@@ -70,7 +80,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
             const errors: string[] = [];
 
             for (let index = 0; index < results.data.length; index++) {
-              const row: any = results.data[index];
+              const row = results.data[index];
               if (
                 row &&
                 typeof row === 'object' &&
@@ -80,34 +90,29 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                   !('currencyCode' in row))
               ) {
                 errors.push(`Row ${index + 1}: Missing required fields`);
-                return;
               }
               const { merchant, amount, date, note, currencyCode, category, categoryIcon } = row;
 
-              if (!merchant || !amount || !date || !currencyCode) {
+              if (!amount || !date || !currencyCode) {
                 errors.push(`Row ${index + 1}: Missing required fields`);
-                return;
               }
 
               if (isNaN(Number(amount))) {
                 errors.push(`Row ${index + 1}: Amount should be a number`);
-                return;
               }
 
               const parsedDate = new Date(date);
               if (isNaN(parsedDate.getTime())) {
                 errors.push(`Row ${index + 1}: Invalid date format`);
-                return;
               }
               // valid currency code
               if (!currencies.some(currency => currency.code === currencyCode)) {
                 errors.push(`Row ${index + 1}: Invalid currency code`);
-                return;
               }
 
               let matchedCategory = categories.find(cat => cat.name === category);
 
-              if (!matchedCategory && category && categoryIcon) {
+              if (!matchedCategory && category && categoryIcon && !errors.length) {
                 matchedCategory = await createCategory({
                   name: category,
                   icon: categoryIcon,

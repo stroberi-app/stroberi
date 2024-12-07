@@ -1,22 +1,12 @@
-import { Input, Paragraph, Text, TextArea, View, YGroup } from 'tamagui';
+import { Input, Text, TextArea, View, YGroup } from 'tamagui';
 import { LinkButton } from '../components/button/LinkButton';
 import { CurrencyInput } from '../components/CurrencyInput';
-import {
-  ArrowLeft,
-  Calendar,
-  ChevronRight,
-  Clock,
-  LayoutGrid,
-  MapPin,
-  RefreshCw,
-  User,
-} from '@tamagui/lucide-icons';
+import { ArrowLeft, Calendar, ChevronRight, Clock, LayoutGrid, User } from '@tamagui/lucide-icons';
 import { Keyboard } from 'react-native';
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { DatePicker } from '../components/DatePicker';
-import { Switch } from '../components/Switch';
 import { StyledScrollView } from '../components/StyledScrollView';
 import { CreateExpenseItem } from '../components/CreateExpenseItem';
 import { CategoryModel } from '../database/category-model';
@@ -44,8 +34,6 @@ function CreateTransaction() {
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(category ?? null);
   const [selectedCurrency, setSelectedCurrency] = useState(transaction?.currencyCode ?? 'USD');
-  const [recurring, setRecurring] = useState(false);
-  const [location, setLocation] = useState(false);
   const [amount, setAmount] = useState(
     `${transactionType ? (transactionType === 'expense' ? '-' : '') : ''}${transaction?.amount ?? ''}`
   );
@@ -151,39 +139,6 @@ function CreateTransaction() {
         <View mt={'$4'}>
           <TextArea placeholder={'Enter a note'} size={'$5'} value={note} onChangeText={setNote} />
         </View>
-        {/*<DocumentPicker />*/}
-        <YGroup bordered mt={'$4'}>
-          <CreateExpenseItem
-            IconComponent={RefreshCw}
-            label={'Recurring'}
-            bottom={
-              recurring && (
-                <View>
-                  <Paragraph>Configure recurring</Paragraph>
-                </View>
-              )
-            }>
-            <Switch id={'recurring'} checked={recurring} onCheckedChange={setRecurring}>
-              <Switch.Thumb animation="quicker" />
-            </Switch>
-          </CreateExpenseItem>
-        </YGroup>
-        <YGroup bordered mt={'$4'}>
-          <CreateExpenseItem
-            IconComponent={MapPin}
-            label={'Location'}
-            bottom={
-              location && (
-                <View>
-                  <Paragraph>Configure location</Paragraph>
-                </View>
-              )
-            }>
-            <Switch id={'location'} checked={location} onCheckedChange={setLocation}>
-              <Switch.Thumb animation="quicker" />
-            </Switch>
-          </CreateExpenseItem>
-        </YGroup>
       </StyledScrollView>
       <CurrencySelect
         sheetRef={bottomSheetRef}
