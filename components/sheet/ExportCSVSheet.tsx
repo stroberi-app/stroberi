@@ -32,38 +32,53 @@ export const ExportCSVSheet = ({ sheetRef }: ExportCSVSheetProps) => {
     { name: 'date', checked: true, label: 'Date' },
     { name: 'note', checked: true, label: 'Note' },
     { name: 'currencyCode', checked: true, label: 'Currency' },
-    { name: 'location', checked: false, label: 'Location' },
     { name: 'category', checked: false, label: 'Category' },
+    { name: 'categoryIcon', checked: false, label: 'Category Icon' },
   ]);
   const [loading, setLoading] = useState(false);
 
   const database = useDatabase();
   const handleExport = async () => {
     setLoading(true);
-    const transactions = await database.collections
-      .get<TransactionModel>('transactions')
-      .query(
-        Q.where('date', Q.gte(dayjs(fromDate).startOf('day').toDate().getTime())),
-        Q.where('date', Q.lte(dayjs(toDate).endOf('day').toDate().getTime()))
-      )
-      .fetch();
+    try {
+      const transactions = await database.collections
+        .get<TransactionModel>('transactions')
+        .query(
+          Q.unsafeSqlQuery(
+            `
+            SELECT transactions.*, categories.name as category, categories.icon as categoryIcon, 
+                   strftime('%Y-%m-%d %H:%M:%SZ', transactions.date / 1000, 'unixepoch') as date
+            FROM transactions
+            LEFT JOIN categories ON transactions.categoryId = categories.id
+            WHERE transactions.date >= ? AND transactions.date <= ? AND 
+                transactions._status != 'deleted'
+          `,
+            [
+              dayjs(fromDate).startOf('day').toDate().getTime(),
+              dayjs(toDate).endOf('day').toDate().getTime(),
+            ]
+          )
+        )
+        .unsafeFetchRaw();
 
-    const csv = Papa.unparse(
-      transactions.map(transaction => {
-        const tx: Partial<Record<keyof TransactionModel, unknown>> = {};
-        includedColumns.forEach(column => {
-          if (column.checked) {
-            const key = column.name as keyof TransactionModel;
-            tx[key] = transaction[key];
-          }
-        });
-        return tx;
-      })
-    );
-    const path = FileSystem.documentDirectory + `stoberi_export_${new Date().toISOString()}.csv`;
-    await FileSystem.writeAsStringAsync(path, csv);
-    await Sharing.shareAsync(path);
-
+      const csv = Papa.unparse(
+        transactions.map(transaction => {
+          const tx: Partial<Record<keyof TransactionModel, unknown>> = {};
+          includedColumns.forEach(column => {
+            if (column.checked) {
+              const key = column.name as keyof TransactionModel;
+              tx[key] = transaction[key];
+            }
+          });
+          return tx;
+        })
+      );
+      const path = FileSystem.documentDirectory + `stoberi_export_${new Date().toISOString()}.csv`;
+      await FileSystem.writeAsStringAsync(path, csv);
+      await Sharing.shareAsync(path);
+    } catch (error) {
+      console.error(error);
+    }
     setLoading(false);
   };
   return (
