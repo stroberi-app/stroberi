@@ -1,6 +1,6 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
-import { DollarSign, FolderInput, FolderOutput, ScanFace, Star, Tags } from '@tamagui/lucide-icons';
+import { DollarSign, FolderInput, FolderOutput, Star, Tags } from '@tamagui/lucide-icons';
 import * as React from 'react';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
@@ -80,14 +80,6 @@ export default function SettingsScreen() {
           {/*  rightLabel={''}*/}
           {/*/>*/}
         </YGroup>
-        <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
-          Security
-        </Text>
-        <YGroup>
-          {/*<SettingsItem label={'Passcode'} IconComponent={KeyRound} rightLabel={''} />*/}
-          <SettingsItem label={'Face ID'} IconComponent={ScanFace} rightLabel={''} />
-        </YGroup>
-
         <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
           Legal
         </Text>
