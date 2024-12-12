@@ -2,21 +2,16 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { map, Observable } from 'rxjs';
 import { TransactionModel } from '../../database/transaction-model';
-import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
-import { CarouselItemText } from '../carousel/CarouselItemText';
-import { CarouselItemChart } from '../carousel/CarouselItemChart';
-import { BarChart } from './BarChart';
 import * as React from 'react';
-import { CircleSlash } from '@tamagui/lucide-icons';
-import { View } from 'tamagui';
 import dayjs from 'dayjs';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { SpendBarChart } from './SpendBarChart';
 
 type SpendByMonthProps = {
   chartData: SpendByMonthChartData;
   type: 'expense' | 'income';
 };
-type SpendByMonthChartData = {
+export type SpendByMonthChartData = {
   month: string;
   year: number;
   total: number;
@@ -62,21 +57,16 @@ export const SpendByType = withObservables<
 })(({ chartData, type }: SpendByMonthProps) => {
   const { defaultCurrency } = useDefaultCurrency();
   return (
-    <CarouselItemWrapper>
-      <CarouselItemText>
-        {type === 'expense' ? 'Spend by Month' : 'Income by Month'}{' '}
-        {defaultCurrency ? `(${defaultCurrency})` : ''}
-      </CarouselItemText>
-      <CarouselItemChart>
-        {chartData.every(el => el.total === 0) ? (
-          <View width={'100%'} height="100%" alignItems={'center'} justifyContent={'center'}>
-            <CarouselItemText color={'darkgray'}>No data available</CarouselItemText>
-            <CircleSlash size={64} color={'darkgray'} />
-          </View>
-        ) : (
-          <BarChart xKey={'month'} yKeys={['total']} data={chartData} />
-        )}
-      </CarouselItemChart>
-    </CarouselItemWrapper>
+    <SpendBarChart
+      chartData={chartData}
+      title={
+        type === 'expense'
+          ? `Spend by Month (${defaultCurrency})`
+          : `Income by Month (${defaultCurrency})`
+      }
+      isEmpty={chartData.every(el => el.total === 0)}
+      xKey={'month'}
+      yKeys={['total']}
+    />
   );
 });
