@@ -2,15 +2,11 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { map, Observable } from 'rxjs';
 import { TransactionModel } from '../../database/transaction-model';
-import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
 import * as React from 'react';
 import { CategoryModel } from '../../database/category-model';
-import { CarouselItemText } from '../carousel/CarouselItemText';
-import { CarouselItemChart } from '../carousel/CarouselItemChart';
-import { BarChart } from './BarChart';
-import { useWindowDimensions, View } from 'tamagui';
-import { CircleSlash } from '@tamagui/lucide-icons';
+import { useWindowDimensions } from 'tamagui';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { SpendBarChart } from './SpendBarChart';
 
 type SpendByCategoryProps = {
   chartData: SpendByCategoryChartData;
@@ -68,26 +64,16 @@ export const SpendByCategory = withObservables<
   const dimensions = useWindowDimensions();
   const totalBars = data.length;
   const { defaultCurrency } = useDefaultCurrency();
+
   return (
-    <CarouselItemWrapper>
-      <CarouselItemText>
-        Top spend by category {defaultCurrency ? `(${defaultCurrency})` : ''}
-      </CarouselItemText>
-      <CarouselItemChart>
-        {data.length === 0 ? (
-          <View width={'100%'} height="100%" alignItems={'center'} justifyContent={'center'}>
-            <CarouselItemText color={'darkgray'}>No data available</CarouselItemText>
-            <CircleSlash size={64} color={'darkgray'} />
-          </View>
-        ) : (
-          <BarChart
-            xKey={'categoryName'}
-            yKeys={['total']}
-            barWidth={Math.min(dimensions.width / totalBars - 40, 60)}
-            data={data}
-          />
-        )}
-      </CarouselItemChart>
-    </CarouselItemWrapper>
+    <SpendBarChart
+      chartData={data}
+      title={`Top spend by category (${defaultCurrency})`}
+      xKey={'categoryName'}
+      yKeys={['total']}
+      isEmpty={data.length === 0}
+      barCount={totalBars}
+      barWidth={Math.min(dimensions.width / totalBars - 40, 60)}
+    />
   );
 });
