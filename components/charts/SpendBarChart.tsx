@@ -48,10 +48,9 @@ export const SpendBarChart = <
 }: SpendBarChartProps<RawData, XK, YK>) => {
   const { defaultCurrency } = useDefaultCurrency();
   const { state, isActive } = useChartPressState({
-    x: 'month',
-    y: { total: 0 },
+    x: xKey as string,
+    y: yKeys.reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as Record<string, number>),
   });
-
   const amount = useDerivedValue(() => {
     const formattedCurrency = formatCurrencyWorklet(
       state?.y.total.value.value,
@@ -114,6 +113,7 @@ export const SpendBarChart = <
             xKey={xKey}
             yKeys={yKeys}
             data={chartData}
+            // @ts-expect-error ignore for now
             state={state}
             isActive={isActive}
             tooltip={{

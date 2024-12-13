@@ -1,9 +1,9 @@
-import { Bar, CartesianChart } from 'victory-native';
+import { Bar, CartesianChart, ChartPressState } from 'victory-native';
 import { LinearGradient, useFont, vec, Circle } from '@shopify/react-native-skia';
 import inter from '../../assets/fonts/Inter-Medium.ttf';
 import React from 'react';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';
-import { SharedValue } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 type CartesianChartProps<
   RawData extends Record<string, unknown>,
@@ -20,7 +20,9 @@ type CartesianChartProps<
     bottom?: number;
   };
   barWidth?: number;
-  state?: any;
+  state?:
+    | ChartPressState<{ x: InputFields<RawData>[XK]; y: Record<YK, number> }>
+    | ChartPressState<{ x: InputFields<RawData>[XK]; y: Record<YK, number> }>[];
   isActive?: boolean;
   tooltip?: {
     ttX: SharedValue<number>;
@@ -47,7 +49,7 @@ export const BarChart = <
   const font = useFont(inter, 12);
 
   return (
-    <CartesianChart
+    <CartesianChart<RawData, XK, YK>
       data={data}
       xKey={xKey}
       yKeys={yKeys}
@@ -57,7 +59,11 @@ export const BarChart = <
         right: 8,
         left: 8,
       }}
-      gestureLongPressDelay={200}
+      chartPressConfig={{
+        pan: {
+          activateAfterLongPress: 200,
+        },
+      }}
       axisOptions={{
         font,
         labelColor: 'white',
