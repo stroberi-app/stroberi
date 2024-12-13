@@ -46,7 +46,6 @@ export const SpendByCategory = withObservables<
           return Object.entries(categories).map(([category, total]) => ({
             category,
             total,
-            name: 'test',
           }));
         })
       ),
@@ -59,12 +58,11 @@ export const SpendByCategory = withObservables<
       categoryName: categories.find(c => c.id === category)?.name || 'Uncategorized',
     }))
     .sort((a, b) => b.total - a.total)
-    .slice(0, 4);
+    .slice(0, 5);
 
   const dimensions = useWindowDimensions();
   const totalBars = data.length;
   const { defaultCurrency } = useDefaultCurrency();
-
   return (
     <SpendBarChart
       chartData={data}
@@ -73,7 +71,7 @@ export const SpendByCategory = withObservables<
       yKeys={['total']}
       isEmpty={data.length === 0}
       barCount={totalBars}
-      barWidth={Math.min(dimensions.width / totalBars - 40, 60)}
+      barWidth={totalBars > 0 ? Math.min(dimensions.width / totalBars - 40, 60) : 0}
     />
   );
 });
