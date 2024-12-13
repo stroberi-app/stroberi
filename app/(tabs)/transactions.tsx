@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScrollView, Text, View } from 'tamagui';
+import { Text, View } from 'tamagui';
 import * as React from 'react';
 import { Filter } from '@tamagui/lucide-icons';
 import { LinkButton } from '../../components/button/LinkButton';
@@ -35,8 +35,9 @@ export default function TransactionsScreen() {
   const appliedNumberOfFilters = [dateFilter, selectedCategories.length].filter(Boolean).length;
   return (
     <>
-      <ScrollView
+      <View
         style={{ paddingTop: top }}
+        flex={1}
         backgroundColor={'$bgPrimary'}
         paddingHorizontal={'$2'}>
         <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
@@ -59,7 +60,7 @@ export default function TransactionsScreen() {
           categories={selectedCategories}
         />
         <View height={140} />
-      </ScrollView>
+      </View>
       <BottomSheetWrapper sheetRef={sheetRef}>
         <DateFilterSection
           dateFilter={dateFilter}
