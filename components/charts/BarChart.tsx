@@ -39,7 +39,7 @@ export const BarChart = <
   data,
   yKeys,
   xKey,
-  domainPadding = { left: 50, right: 50, top: 16, bottom: 0 },
+  domainPadding = { left: 32, right: 32, top: 0, bottom: 0 },
   barWidth,
   state,
   isActive,
@@ -58,6 +58,7 @@ export const BarChart = <
       padding={{
         right: 8,
         left: 8,
+        bottom: 8,
       }}
       chartPressConfig={{
         pan: {
