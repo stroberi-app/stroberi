@@ -11,7 +11,7 @@ export const CarouselItemWrapper = ({ children }: CarouselItemWrapperProps) => {
       marginRight={'$2'}
       marginLeft={'$2'}
       backgroundColor={'$gray4'}
-      paddingHorizontal={'$2'}
+      paddingVertical={'$3'}
       paddingBottom={'$4'}>
       {children}
     </View>
