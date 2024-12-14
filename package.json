@@ -85,6 +85,7 @@
     "eslint-plugin-react": "^7.34.1",
     "globals": "^15.2.0",
     "prettier": "^3.2.5",
+    "repomix": "^0.2.6",
     "typescript-eslint": "^7.9.0"
   },
   "private": true,
