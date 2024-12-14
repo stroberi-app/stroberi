@@ -10,6 +10,7 @@ import { TransactionModel } from '../database/transaction-model';
 import { CreateFirstTransactionButton } from './CreateFirstTransactionButton';
 import { DateFilters } from '../app/(tabs)/transactions';
 import { CategoryModel } from '../database/category-model';
+import { SectionList } from 'react-native';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
@@ -29,41 +30,46 @@ const getDateKey = (date: Date) => {
       : DateFormats.FullMonthFullDay + ', YYYY'
   );
 };
+
 const TransactionsList = ({ transactions }: TransactionsListProps) => {
-  const groupByDate = transactions.reduce(
+  const sections = transactions.reduce(
     (acc, transaction) => {
       const key = getDateKey(transaction.date);
-      if (!acc[key]) {
-        acc[key] = [];
+      const section = acc.find(section => section.title === key);
+      if (section) {
+        section.data.push(transaction);
+      } else {
+        acc.push({ title: key, data: [transaction] });
       }
-      acc[key].push(transaction);
       return acc;
     },
-    {} as Record<string, typeof transactions>
+    [] as { title: string; data: TransactionModel[] }[]
   );
+
   if (transactions.length === 0) {
     return <CreateFirstTransactionButton mt={'30%'} />;
   }
+
   return (
-    <>
-      {Object.entries(groupByDate).map(([key, values]) => (
-        <React.Fragment key={key}>
+    <YGroup>
+      <SectionList
+        sections={sections}
+        keyExtractor={transaction => transaction.id}
+        renderItem={({ item: transaction }) => (
+          <TransactionItem
+            date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
+            transaction={transaction}
+            category={transaction.category}
+          />
+        )}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section: { title } }) => (
           <Text fontSize={'$5'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
-            {key}
+            {title}
           </Text>
-          <YGroup>
-            {values.map(transaction => (
-              <TransactionItem
-                key={transaction.id}
-                date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
-                transaction={transaction}
-                category={transaction.category}
-              />
-            ))}
-          </YGroup>
-        </React.Fragment>
-      ))}
-    </>
+        )}
+      />
+    </YGroup>
   );
 };
 
@@ -105,4 +111,5 @@ const enhance = withObservables<
     };
   }
 );
+
 export default enhance(TransactionsList);
