@@ -38,7 +38,7 @@ export function Carousel({ renderItem, data }: CarouselProps) {
         {...baseOptions}
         loop
         ref={ref}
-        width={width - 20}
+        width={width - 16}
         height={width / 1.5}
         data={data}
         scrollAnimationDuration={1000}
@@ -55,11 +55,13 @@ export function Carousel({ renderItem, data }: CarouselProps) {
       />
       <Pagination.Basic<{ color: string }>
         progress={progress}
-        data={colors.slice(data.length).map(color => ({ color }))}
+        data={new Array(data.length).fill({
+          color: colors[0],
+        })}
         size={12}
         dotStyle={{
           borderRadius: 100,
-          backgroundColor: 'rgba(73,72,72,0.2)',
+          backgroundColor: 'rgba(73,72,72,0.4)',
         }}
         activeDotStyle={{
           borderRadius: 100,

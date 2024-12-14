@@ -1,4 +1,4 @@
-import { BottomTabBar, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import { CircleDollarSign, Home, Settings } from '@tamagui/lucide-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -16,7 +16,6 @@ const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = props => {
       }}
       intensity={40}
       tint="dark">
-      {/*// @ts-expect-error some random problem*/}
       <BottomTabBar {...props} />
     </BlurView>
   );
