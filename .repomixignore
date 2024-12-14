@@ -1,0 +1,11 @@
+# Add patterns to ignore here, one per line
+# Example:
+# *.log
+# tmp/
+android
+ios
+node_modules
+.idea
+.tamagui
+.yarn
+tamagui-web.css
