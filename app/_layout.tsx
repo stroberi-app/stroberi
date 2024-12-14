@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 
 import { TamaguiProvider } from 'tamagui';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -59,14 +60,16 @@ function RootLayoutNav() {
     <GestureHandlerRootView style={style}>
       <KeyboardProvider>
         <TamaguiProvider config={config} defaultTheme={'dark'}>
-          <DatabaseProvider database={database}>
-            <BottomSheetModalProvider>
-              <Stack>
-                <Stack.Screen name="(tabs)" options={tabsOptions} />
-                <Stack.Screen name="create-transaction" options={options} />
-              </Stack>
-            </BottomSheetModalProvider>
-          </DatabaseProvider>
+          <ActionSheetProvider>
+            <DatabaseProvider database={database}>
+              <BottomSheetModalProvider>
+                <Stack>
+                  <Stack.Screen name="(tabs)" options={tabsOptions} />
+                  <Stack.Screen name="create-transaction" options={options} />
+                </Stack>
+              </BottomSheetModalProvider>
+            </DatabaseProvider>
+          </ActionSheetProvider>
         </TamaguiProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
