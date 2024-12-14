@@ -11,6 +11,7 @@ import { CreateFirstTransactionButton } from './CreateFirstTransactionButton';
 import { DateFilters } from '../app/(tabs)/transactions';
 import { CategoryModel } from '../database/category-model';
 import { SectionList } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
@@ -32,6 +33,7 @@ const getDateKey = (date: Date) => {
 };
 
 const TransactionsList = ({ transactions }: TransactionsListProps) => {
+  const { bottom } = useSafeAreaInsets();
   const sections = transactions.reduce(
     (acc, transaction) => {
       const key = getDateKey(transaction.date);
@@ -53,13 +55,15 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
   return (
     <YGroup>
       <SectionList
+        contentInset={{
+          bottom: 64 + bottom,
+        }}
         sections={sections}
         keyExtractor={transaction => transaction.id}
         renderItem={({ item: transaction }) => (
           <TransactionItem
             date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
             transaction={transaction}
-            category={transaction.category}
           />
         )}
         stickySectionHeadersEnabled={false}

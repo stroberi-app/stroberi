@@ -138,7 +138,7 @@ export const SpendOverview = withObservables<
         mb={'$5'}>
         <YGroup gap={'$5'}>
           <InfoItem
-            title={'Period income'}
+            title={'Period Income'}
             color={'$green'}
             value={defaultCurrency ? formatCurrency(totalIncome, defaultCurrency) : ''}
           />
@@ -152,11 +152,11 @@ export const SpendOverview = withObservables<
         </YGroup>
         <YGroup paddingHorizontal={'$4'} gap={'$5'}>
           <InfoItem
-            title={'Period expenses'}
+            title={'Period Spend'}
             color={'$stroberi'}
             value={defaultCurrency ? formatCurrency(totalExpense, defaultCurrency) : ''}
           />
-          <InfoItem title={'Transaction count'} value={transactionCount.toString()} />
+          <InfoItem title={'Transaction No.'} value={transactionCount.toString()} />
         </YGroup>
       </YGroup>
       {!!category && (

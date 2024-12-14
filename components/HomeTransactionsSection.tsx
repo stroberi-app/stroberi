@@ -44,7 +44,6 @@ export const HomeTransactionsSection = withObservables<
             <TransactionItem
               date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
               transaction={transaction}
-              amount={transaction.amount}
             />
           )}
         />
