@@ -69,8 +69,10 @@ export const TransactionItem = withObservables<{ transaction: TransactionModel }
         <View backgroundColor={'gray'} width={50}>
           <Pressable
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
-            onPress={onEdit}>
-            <Pen height={8} width={8} />
+            onPress={onEdit}
+            accessibilityLabel="Edit transaction"
+            accessibilityRole="button">
+            <Pen height={24} width={24} />
           </Pressable>
         </View>
         <View backgroundColor={'$stroberiLight'} width={50}>

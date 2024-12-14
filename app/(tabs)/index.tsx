@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, ScrollView, Text, View } from 'tamagui';
+import { Button, Text, View } from 'tamagui';
 import { PlusCircle } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import { Carousel } from '../../components/carousel/Carousel';
@@ -18,7 +18,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 export default function TabTwoScreen() {
   const { top } = useSafeAreaInsets();
   const dateSheetRef = React.useRef<BottomSheetModal | null>(null);
-  const [fromDate, setFromDate] = useState(dayjs().startOf('month'));
+  const [fromDate, setFromDate] = useState<dayjs.Dayjs>(dayjs().startOf('month'));
   const [toDate, setToDate] = useState(dayjs().endOf('month'));
   const [tempFromDate, setTempFromDate] = useState(fromDate);
   const [tempToDate, setTempToDate] = useState(toDate);
