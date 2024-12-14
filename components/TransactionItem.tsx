@@ -11,22 +11,23 @@ import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeabl
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import Animated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
+import { Observable } from 'rxjs';
 
 type TransactionItemProps = {
-  category: CategoryModel | undefined;
+  category?: CategoryModel | null;
   transaction: TransactionModel;
   date: string;
 };
 
-export const TransactionItem = withObservables<{ transaction: TransactionModel }, unknown>(
-  [],
-  ({ transaction }) => {
-    return {
-      category: transaction.category?.observe(),
-      transaction: transaction.observe(),
-    };
-  }
-)(({ date, category, transaction }: TransactionItemProps) => {
+export const TransactionItem = withObservables<
+  { transaction: TransactionModel },
+  { transaction: Observable<TransactionModel>; category?: Observable<CategoryModel | null> }
+>(['transaction'], ({ transaction }) => {
+  return {
+    category: transaction.category?.observe(),
+    transaction: transaction.observe(),
+  };
+})(({ date, category, transaction }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
