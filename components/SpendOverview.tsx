@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import { CarouselItemWrapper } from './carousel/CarouselItemWrapper';
 import { Text, View, YGroup } from 'tamagui';
+import { Calendar } from '@tamagui/lucide-icons';
+
 import { LinkButton } from './button/LinkButton';
 import * as React from 'react';
 import { withObservables } from '@nozbe/watermelondb/react';
@@ -10,6 +12,8 @@ import { TransactionModel } from '../database/transaction-model';
 import { formatCurrency } from '../lib/format';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { CategoryModel } from '../database/category-model';
+import { InfoItem } from './InfoItem';
+import { formatDateRange } from '../lib/date';
 
 type SpendOverviewProps = {
   totalExpense: number;
@@ -121,7 +125,12 @@ export const SpendOverview = withObservables<
         flexDirection={'row'}
         marginBottom={'$4'}
         paddingHorizontal={'$3'}>
-        <LinkButton onPress={onDatePress}>{formatDateRange(fromDate, toDate)}</LinkButton>
+        <LinkButton onPress={onDatePress} color={'white'} backgroundColor={'$gray2'}>
+          <View flexDirection={'row'} gap={'$2'} alignItems={'center'}>
+            <Text fontSize={'$5'}>{formatDateRange(fromDate, toDate)}</Text>
+            <Calendar size={16} />
+          </View>
+        </LinkButton>
       </View>
       <YGroup
         flexDirection={'row'}
@@ -163,28 +172,3 @@ export const SpendOverview = withObservables<
     </CarouselItemWrapper>
   );
 });
-
-const InfoItem = ({ title, value, color }: { title: string; value: string; color?: string }) => {
-  return (
-    <YGroup.Item>
-      <View gap={'$1'}>
-        <Text fontSize={'$2'}>{title}</Text>
-        <Text fontSize={'$5'} fontWeight={'bold'} color={color}>
-          {value}
-        </Text>
-      </View>
-    </YGroup.Item>
-  );
-};
-function formatDateRange(fromDate: number, toDate: number): string {
-  const from = dayjs(fromDate);
-  const to = dayjs(toDate);
-
-  if (from.date() === 1 && to.date() === to.daysInMonth() && from.isSame(to, 'month')) {
-    return from.format('MMM YYYY');
-  } else if (from.isSame(to, 'year')) {
-    return `${from.format('MMM D')} - ${to.format('MMM D, YYYY')}`;
-  } else {
-    return `${from.format('MMM D, YYYY')} - ${to.format('MMM D, YYYY')}`;
-  }
-}
