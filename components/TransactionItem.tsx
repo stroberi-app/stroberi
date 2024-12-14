@@ -8,6 +8,7 @@ import { formatCurrency } from '../lib/format';
 import * as ContextMenu from 'zeego/context-menu';
 import { useRouter } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 import Animated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 
@@ -26,6 +27,8 @@ export const TransactionItem = withObservables<{ transaction: TransactionModel }
     };
   }
 )(({ date, category, transaction }: TransactionItemProps) => {
+  const { showActionSheetWithOptions } = useActionSheet();
+
   const router = useRouter();
 
   const onEdit = () => {
@@ -39,7 +42,19 @@ export const TransactionItem = withObservables<{ transaction: TransactionModel }
   };
 
   const onDelete = () => {
-    transaction.deleteTx();
+    showActionSheetWithOptions(
+      {
+        title: 'Are you sure you want to delete this transaction?',
+        options: ['Delete', 'Cancel'],
+        destructiveButtonIndex: 0,
+        cancelButtonIndex: 1,
+      },
+      async buttonIndex => {
+        if (buttonIndex === 0) {
+          await transaction.deleteTx();
+        }
+      }
+    );
   };
   const renderRightAction = (prog: SharedValue<number>, drag: SharedValue<number>) => {
     const styleAnimation = useAnimatedStyle(() => {
