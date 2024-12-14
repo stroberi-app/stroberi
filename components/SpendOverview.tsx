@@ -21,10 +21,9 @@ type SpendOverviewProps = {
   transactionCount: number;
   highestSpendCategory$: { category: string; total: number };
   categories: CategoryModel[];
-  selectedDate: dayjs.Dayjs;
   onDatePress: () => void;
-  fromDate: number;
-  toDate: number;
+  fromDate: dayjs.Dayjs;
+  toDate: dayjs.Dayjs;
 };
 export const SpendOverview = withObservables<
   {

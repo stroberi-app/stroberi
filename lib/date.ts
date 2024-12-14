@@ -5,10 +5,7 @@ export enum DateFormats {
   FullMonthFullDayTime = 'MMM DD HH:mm',
 }
 
-export function formatDateRange(fromDate: number, toDate: number): string {
-  const from = dayjs(fromDate);
-  const to = dayjs(toDate);
-
+export function formatDateRange(from: dayjs.Dayjs, to: dayjs.Dayjs): string {
   if (from.date() === 1 && to.date() === to.daysInMonth() && from.isSame(to, 'month')) {
     return from.format('MMM YYYY');
   } else if (from.isSame(to, 'year')) {
