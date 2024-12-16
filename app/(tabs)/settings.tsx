@@ -77,12 +77,6 @@ export default function SettingsScreen() {
           <SettingsItem label={'Privacy Policy'} />
           <SettingsItem label={'Terms of Service'} />
         </YGroup>
-        <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
-          Support
-        </Text>
-        {/*<YGroup>*/}
-        {/*  <SettingsItem label={'Rate App'} IconComponent={Star} rightLabel={''} />*/}
-        {/*</YGroup>*/}
         <View height={140} />
       </ScrollView>
       <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />

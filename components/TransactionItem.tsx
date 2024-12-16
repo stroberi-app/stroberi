@@ -1,4 +1,4 @@
-import { Text, View, YGroup } from 'tamagui';
+import { Text, View } from 'tamagui';
 import * as React from 'react';
 import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import { CategoryModel } from '../database/category-model';
@@ -95,43 +95,41 @@ export const TransactionItem = withObservables<
   };
 
   const component = (
-    <YGroup.Item>
-      <ReanimatedSwipeable
-        key={transaction.id}
-        friction={2}
-        enableTrackpadTwoFingerGesture
-        rightThreshold={40}
-        renderRightActions={renderRightAction}>
-        <View
-          flexDirection={'row'}
-          paddingVertical={'$2'}
-          paddingHorizontal={'$4'}
-          gap={'$4'}
-          borderWidth={'$0.5'}
-          {...getBorderProps(index, total)}
-          borderColor={'$borderColor'}>
-          <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
-          <View flexDirection={'column'} justifyContent={'center'}>
-            <Text fontSize={'$5'} fontWeight={'bold'}>
-              {category?.name ?? 'Uncategorized'}
-            </Text>
-            {transaction.merchant && (
-              <Text fontSize={'$3'} color={'gray'}>
-                {transaction.merchant}
-              </Text>
-            )}
-          </View>
-          <View marginLeft={'auto'} alignItems={'flex-end'}>
-            <Text fontSize={'$5'} color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
-              {formatCurrency(transaction.amount, transaction.currencyCode)}
-            </Text>
+    <ReanimatedSwipeable
+      key={transaction.id}
+      friction={2}
+      enableTrackpadTwoFingerGesture
+      rightThreshold={40}
+      renderRightActions={renderRightAction}>
+      <View
+        flexDirection={'row'}
+        paddingVertical={'$2'}
+        paddingHorizontal={'$4'}
+        gap={'$4'}
+        borderWidth={'$0.5'}
+        {...getBorderProps(index, total)}
+        borderColor={'$borderColor'}>
+        <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
+        <View flexDirection={'column'} justifyContent={'center'}>
+          <Text fontSize={'$5'} fontWeight={'bold'}>
+            {category?.name ?? 'Uncategorized'}
+          </Text>
+          {transaction.merchant && (
             <Text fontSize={'$3'} color={'gray'}>
-              {date}
+              {transaction.merchant}
             </Text>
-          </View>
+          )}
         </View>
-      </ReanimatedSwipeable>
-    </YGroup.Item>
+        <View marginLeft={'auto'} alignItems={'flex-end'}>
+          <Text fontSize={'$5'} color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
+            {formatCurrency(transaction.amount, transaction.currencyCode)}
+          </Text>
+          <Text fontSize={'$3'} color={'gray'}>
+            {date}
+          </Text>
+        </View>
+      </View>
+    </ReanimatedSwipeable>
   );
 
   return (

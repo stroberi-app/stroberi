@@ -131,7 +131,7 @@ const Component = ({
       }
       return inner;
     },
-    [selectedCategory, selectedCategories, swipeable]
+    [selectedCategory, selectedCategories, swipeable, preventClose]
   );
 
   const props = useMemo(

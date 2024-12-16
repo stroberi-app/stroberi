@@ -1,7 +1,7 @@
 import { SizeTokens, Text } from 'tamagui';
 import { View, Input } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
-import React, { useState } from 'react';
+import React from 'react';
 
 type CurrencyInputProps = {
   size?: SizeTokens;
@@ -20,7 +20,7 @@ export function CurrencyInput({
   selectedCurrency,
   value,
 }: CurrencyInputProps) {
-  const [inputValue, setInputValue] = useState(value);
+  // const [inputValue, setInputValue] = useState(value);
 
   const handleTextChange = (text: string) => {
     // Replace all commas with dots
@@ -34,7 +34,6 @@ export function CurrencyInput({
 
     // Allow only valid numbers including negative numbers
     if (/^-?\d*\.?\d*$/.test(newText)) {
-      setInputValue(newText);
       onChangeText?.(newText);
     }
   };
@@ -62,10 +61,12 @@ export function CurrencyInput({
           placeholder="00.00"
           autoFocus={focusOnMount}
           onChangeText={handleTextChange}
-          value={inputValue}
+          value={value}
         />
         <View
-          onTouchStart={onCurrencySelect}
+          role="button"
+          onPress={onCurrencySelect}
+          aria-label={`Select currency. Current currency: ${selectedCurrency}`}
           borderColor="$borderColor"
           borderLeftWidth={2}
           paddingHorizontal="$2"
