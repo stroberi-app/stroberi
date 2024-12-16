@@ -17,6 +17,8 @@ type TransactionItemProps = {
   category?: CategoryModel | null;
   transaction: TransactionModel;
   date: string;
+  index: number;
+  total: number;
 };
 
 export const TransactionItem = withObservables<
@@ -27,7 +29,7 @@ export const TransactionItem = withObservables<
     category: transaction.category?.observe(),
     transaction: transaction.observe(),
   };
-})(({ date, category, transaction }: TransactionItemProps) => {
+})(({ date, category, transaction, index, total }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
@@ -93,8 +95,9 @@ export const TransactionItem = withObservables<
   };
 
   const component = (
-    <YGroup.Item key={transaction.id}>
+    <YGroup.Item>
       <ReanimatedSwipeable
+        key={transaction.id}
         friction={2}
         enableTrackpadTwoFingerGesture
         rightThreshold={40}
@@ -104,7 +107,8 @@ export const TransactionItem = withObservables<
           paddingVertical={'$2'}
           paddingHorizontal={'$4'}
           gap={'$4'}
-          borderWidth={1}
+          borderWidth={'$0.5'}
+          {...getBorderProps(index, total)}
           borderColor={'$borderColor'}>
           <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
           <View flexDirection={'column'} justifyContent={'center'}>
@@ -149,3 +153,23 @@ export const TransactionItem = withObservables<
     </ContextMenu.Root>
   );
 });
+
+const getBorderProps = (index: number, total: number) => {
+  if (total === 1) {
+    return {
+      borderRadius: '$2',
+    } as const;
+  }
+  if (index === 0) {
+    return {
+      borderTopLeftRadius: '$2',
+      borderTopRightRadius: '$2',
+    } as const;
+  } else if (index === total - 1) {
+    return {
+      borderBottomLeftRadius: '$2',
+      borderBottomRightRadius: '$2',
+    } as const;
+  }
+  return {};
+};

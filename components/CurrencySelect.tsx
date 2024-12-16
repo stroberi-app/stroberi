@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from '@gorhom/bottom-sheet';
 import { currencies, Currency } from '../data/currencies';
-import { CurrencyItem } from './CurrencyItem';
+import { ListItem } from './ListItem';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './sheet/constants';
 import { Input, View } from 'tamagui';
@@ -24,9 +24,9 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
           onPress={() => {
             onSelect(currency);
           }}>
-          <CurrencyItem
+          <ListItem
             name={currency.name}
-            code={currency.code}
+            extra={currency.code}
             selected={currency.code === selectedCurrency}
           />
         </TouchableOpacity>
