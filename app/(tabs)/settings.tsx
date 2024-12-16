@@ -1,6 +1,6 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
-import { DollarSign, FolderInput, FolderOutput, Star, Tags } from '@tamagui/lucide-icons';
+import { DollarSign, FolderInput, FolderOutput, Tags } from '@tamagui/lucide-icons';
 import * as React from 'react';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
@@ -69,16 +69,6 @@ export default function SettingsScreen() {
               importCsvSheetRef.current?.present();
             }}
           />
-          {/*<SettingsItem*/}
-          {/*  label={'Import with Bank Statements'}*/}
-          {/*  IconComponent={Landmark}*/}
-          {/*  rightLabel={''}*/}
-          {/*/>*/}
-          {/*<SettingsItem*/}
-          {/*  label={'Recurring Transactions'}*/}
-          {/*  IconComponent={RefreshCw}*/}
-          {/*  rightLabel={''}*/}
-          {/*/>*/}
         </YGroup>
         <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
           Legal
@@ -87,15 +77,9 @@ export default function SettingsScreen() {
           <SettingsItem label={'Privacy Policy'} />
           <SettingsItem label={'Terms of Service'} />
         </YGroup>
-        <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
-          Support
-        </Text>
-        <YGroup>
-          <SettingsItem label={'Rate App'} IconComponent={Star} rightLabel={''} />
-        </YGroup>
         <View height={140} />
       </ScrollView>
-      <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch />
+      <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />
       <CurrencySelect
         sheetRef={currencySheetRef}
         onSelect={currency => {

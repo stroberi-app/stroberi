@@ -90,7 +90,10 @@ function CreateTransaction() {
         </View>
         <View mt={'$8'}>
           <CurrencyInput
-            onCurrencySelect={() => bottomSheetRef.current?.present()}
+            onCurrencySelect={() => {
+              Keyboard.dismiss();
+              bottomSheetRef.current?.present();
+            }}
             selectedCurrency={selectedCurrency}
             value={amount}
             onChangeText={setAmount}
