@@ -11,6 +11,7 @@ import { Pressable } from 'react-native';
 import Animated, { SharedValue, useAnimatedStyle, LinearTransition } from 'react-native-reanimated';
 import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import { View } from 'tamagui';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 
 type CategoriesListProps = {
   categories: CategoryModel[];
@@ -37,8 +38,22 @@ const Component = ({
     console.log({ category });
   };
 
+  const { showActionSheetWithOptions } = useActionSheet();
+
   const onDelete = (category: CategoryModel) => {
-    category.deleteCategory();
+    showActionSheetWithOptions(
+      {
+        title: 'Are you sure you want to delete this category?',
+        options: ['Delete', 'Cancel'],
+        destructiveButtonIndex: 0,
+        cancelButtonIndex: 1,
+      },
+      buttonIndex => {
+        if (buttonIndex === 0) {
+          category.deleteCategory();
+        }
+      }
+    );
   };
 
   const renderRightAction = (
