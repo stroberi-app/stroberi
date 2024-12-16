@@ -19,6 +19,7 @@ type ManageCategoriesSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
   preventClose?: boolean;
   noSearch?: boolean;
+  swipeable?: boolean;
 };
 
 export const ManageCategoriesSheet = ({
@@ -28,6 +29,7 @@ export const ManageCategoriesSheet = ({
   preventClose = false,
   selectedCategories,
   noSearch,
+  swipeable = false,
 }: ManageCategoriesSheetProps) => {
   const [search, setSearch] = useState('');
   const ref = useRef<BottomSheetModal | null>(null);
@@ -83,6 +85,7 @@ export const ManageCategoriesSheet = ({
             onSelect={setSelectedCategory}
             selectedCategory={selectedCategory}
             selectedCategories={selectedCategories}
+            swipeable={swipeable}
           />
         </BottomSheetView>
       </BottomSheetModal>

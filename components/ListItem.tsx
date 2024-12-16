@@ -2,13 +2,13 @@ import { Text, View } from 'tamagui';
 import * as React from 'react';
 import { Check } from '@tamagui/lucide-icons';
 
-type CurrencyItemProps = {
+type ListItemProps = {
   name: string;
-  code: string;
+  extra: string;
   selected?: boolean;
 };
 
-export const CurrencyItem = ({ name, code, selected }: CurrencyItemProps) => {
+export const ListItem = ({ name, extra, selected }: ListItemProps) => {
   return (
     <View
       backgroundColor={'transparent'}
@@ -26,7 +26,7 @@ export const CurrencyItem = ({ name, code, selected }: CurrencyItemProps) => {
       </View>
       <View marginLeft={'auto'} alignItems={'flex-end'} flexDirection={'row'} gap={'$3'}>
         {selected && <Check size={20} />}
-        <Text fontSize={'$5'}>{code}</Text>
+        <Text fontSize={'$5'}>{extra}</Text>
       </View>
     </View>
   );

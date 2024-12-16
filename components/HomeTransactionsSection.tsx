@@ -40,10 +40,12 @@ export const HomeTransactionsSection = withObservables<
           itemLayoutAnimation={LinearTransition}
           data={transactions}
           keyExtractor={transaction => transaction.id}
-          renderItem={({ item: transaction }) => (
+          renderItem={({ item: transaction, index }) => (
             <TransactionItem
               date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
               transaction={transaction}
+              index={index}
+              total={transactions.length}
             />
           )}
         />

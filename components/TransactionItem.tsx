@@ -1,4 +1,4 @@
-import { Text, View, YGroup } from 'tamagui';
+import { Text, View } from 'tamagui';
 import * as React from 'react';
 import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import { CategoryModel } from '../database/category-model';
@@ -17,6 +17,8 @@ type TransactionItemProps = {
   category?: CategoryModel | null;
   transaction: TransactionModel;
   date: string;
+  index: number;
+  total: number;
 };
 
 export const TransactionItem = withObservables<
@@ -27,7 +29,7 @@ export const TransactionItem = withObservables<
     category: transaction.category?.observe(),
     transaction: transaction.observe(),
   };
-})(({ date, category, transaction }: TransactionItemProps) => {
+})(({ date, category, transaction, index, total }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
@@ -93,41 +95,41 @@ export const TransactionItem = withObservables<
   };
 
   const component = (
-    <YGroup.Item key={transaction.id}>
-      <ReanimatedSwipeable
-        friction={2}
-        enableTrackpadTwoFingerGesture
-        rightThreshold={40}
-        renderRightActions={renderRightAction}>
-        <View
-          flexDirection={'row'}
-          paddingVertical={'$2'}
-          paddingHorizontal={'$4'}
-          gap={'$4'}
-          borderWidth={1}
-          borderColor={'$borderColor'}>
-          <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
-          <View flexDirection={'column'} justifyContent={'center'}>
-            <Text fontSize={'$5'} fontWeight={'bold'}>
-              {category?.name ?? 'Uncategorized'}
-            </Text>
-            {transaction.merchant && (
-              <Text fontSize={'$3'} color={'gray'}>
-                {transaction.merchant}
-              </Text>
-            )}
-          </View>
-          <View marginLeft={'auto'} alignItems={'flex-end'}>
-            <Text fontSize={'$5'} color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
-              {formatCurrency(transaction.amount, transaction.currencyCode)}
-            </Text>
+    <ReanimatedSwipeable
+      key={transaction.id}
+      friction={2}
+      enableTrackpadTwoFingerGesture
+      rightThreshold={40}
+      renderRightActions={renderRightAction}>
+      <View
+        flexDirection={'row'}
+        paddingVertical={'$2'}
+        paddingHorizontal={'$4'}
+        gap={'$4'}
+        borderWidth={'$0.5'}
+        {...getBorderProps(index, total)}
+        borderColor={'$borderColor'}>
+        <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
+        <View flexDirection={'column'} justifyContent={'center'}>
+          <Text fontSize={'$5'} fontWeight={'bold'}>
+            {category?.name ?? 'Uncategorized'}
+          </Text>
+          {transaction.merchant && (
             <Text fontSize={'$3'} color={'gray'}>
-              {date}
+              {transaction.merchant}
             </Text>
-          </View>
+          )}
         </View>
-      </ReanimatedSwipeable>
-    </YGroup.Item>
+        <View marginLeft={'auto'} alignItems={'flex-end'}>
+          <Text fontSize={'$5'} color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
+            {formatCurrency(transaction.amount, transaction.currencyCode)}
+          </Text>
+          <Text fontSize={'$3'} color={'gray'}>
+            {date}
+          </Text>
+        </View>
+      </View>
+    </ReanimatedSwipeable>
   );
 
   return (
@@ -149,3 +151,23 @@ export const TransactionItem = withObservables<
     </ContextMenu.Root>
   );
 });
+
+const getBorderProps = (index: number, total: number) => {
+  if (total === 1) {
+    return {
+      borderRadius: '$2',
+    } as const;
+  }
+  if (index === 0) {
+    return {
+      borderTopLeftRadius: '$2',
+      borderTopRightRadius: '$2',
+    } as const;
+  } else if (index === total - 1) {
+    return {
+      borderBottomLeftRadius: '$2',
+      borderBottomRightRadius: '$2',
+    } as const;
+  }
+  return {};
+};
