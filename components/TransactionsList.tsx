@@ -3,7 +3,7 @@ import { DateFormats } from '../lib/date';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Observable } from 'rxjs';
-import { Text, YGroup } from 'tamagui';
+import { Text } from 'tamagui';
 import { TransactionItem } from './TransactionItem';
 import * as React from 'react';
 import { TransactionModel } from '../database/transaction-model';
@@ -53,29 +53,27 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
   }
 
   return (
-    <YGroup>
-      <SectionList
-        contentInset={{
-          bottom: 64 + bottom,
-        }}
-        sections={sections}
-        keyExtractor={transaction => transaction.id}
-        renderItem={({ item: transaction, index, section }) => (
-          <TransactionItem
-            date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
-            transaction={transaction}
-            index={index}
-            total={section.data.length}
-          />
-        )}
-        stickySectionHeadersEnabled={false}
-        renderSectionHeader={({ section: { title } }) => (
-          <Text fontSize={'$5'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
-            {title}
-          </Text>
-        )}
-      />
-    </YGroup>
+    <SectionList
+      contentInset={{
+        bottom: 64 + bottom,
+      }}
+      sections={sections}
+      keyExtractor={transaction => transaction.id}
+      renderItem={({ item: transaction, index, section }) => (
+        <TransactionItem
+          date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
+          transaction={transaction}
+          index={index}
+          total={section.data.length}
+        />
+      )}
+      stickySectionHeadersEnabled={false}
+      renderSectionHeader={({ section: { title } }) => (
+        <Text fontSize={'$5'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
+          {title}
+        </Text>
+      )}
+    />
   );
 };
 
