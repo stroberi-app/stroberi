@@ -60,10 +60,12 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
         }}
         sections={sections}
         keyExtractor={transaction => transaction.id}
-        renderItem={({ item: transaction }) => (
+        renderItem={({ item: transaction, index, section }) => (
           <TransactionItem
             date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
             transaction={transaction}
+            index={index}
+            total={section.data.length}
           />
         )}
         stickySectionHeadersEnabled={false}
