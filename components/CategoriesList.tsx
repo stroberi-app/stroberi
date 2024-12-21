@@ -8,7 +8,12 @@ import { Database, Q } from '@nozbe/watermelondb';
 import { Observable } from 'rxjs';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Pressable } from 'react-native';
-import Animated, { SharedValue, useAnimatedStyle, LinearTransition } from 'react-native-reanimated';
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+  LinearTransition,
+  withTiming,
+} from 'react-native-reanimated';
 import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import { View } from 'tamagui';
 import { useActionSheet } from '@expo/react-native-action-sheet';
@@ -20,6 +25,7 @@ type CategoriesListProps = {
   preventClose?: boolean;
   selectedCategories?: CategoryModel[];
   swipeable?: boolean;
+  onEdit?: (category: CategoryModel) => void;
 };
 
 const Component = ({
@@ -29,14 +35,10 @@ const Component = ({
   preventClose,
   selectedCategories,
   swipeable,
+  onEdit,
 }: CategoriesListProps) => {
   const { bottom } = useSafeAreaInsets();
   const { close } = useBottomSheet();
-
-  const onEdit = (category: CategoryModel) => {
-    // Implement edit logic here
-    console.log({ category });
-  };
 
   const { showActionSheetWithOptions } = useActionSheet();
 
@@ -70,15 +72,20 @@ const Component = ({
 
     return (
       <Animated.View style={styleAnimation}>
-        <View backgroundColor={'gray'} width={50}>
-          <Pressable
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
-            onPress={() => onEdit(category)}
-            accessibilityLabel="Edit category"
-            accessibilityRole="button">
-            <Pen height={24} width={24} />
-          </Pressable>
-        </View>
+        {!!onEdit && (
+          <View backgroundColor={'gray'} width={50}>
+            <Pressable
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
+              onPress={() => {
+                onEdit(category);
+                drag.value = withTiming(0, { duration: 200 });
+              }}
+              accessibilityLabel="Edit category"
+              accessibilityRole="button">
+              <Pen height={24} width={24} />
+            </Pressable>
+          </View>
+        )}
         <View backgroundColor={'$stroberiLight'} width={50}>
           <Pressable
             style={{
@@ -87,7 +94,10 @@ const Component = ({
               justifyContent: 'center',
               width: '100%',
             }}
-            onPress={() => onDelete(category)}>
+            onPress={() => {
+              onDelete(category);
+              drag.value = withTiming(0, { duration: 200 });
+            }}>
             <Trash2 height={8} width={8} />
           </Pressable>
         </View>

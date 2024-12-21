@@ -115,3 +115,14 @@ export const createCategory = ({ name, icon }: { name: string; icon: string }) =
       category.icon = icon;
     });
   });
+
+export const updateCategory = ({ id, name, icon }: { id: string; name: string; icon: string }) =>
+  database.write(async () => {
+    const collection = database.get<CategoryModel>('categories');
+    collection.find(id).then(category => {
+      category.update(tx => {
+        tx.name = name;
+        tx.icon = icon;
+      });
+    });
+  });

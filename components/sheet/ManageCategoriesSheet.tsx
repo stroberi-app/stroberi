@@ -6,8 +6,8 @@ import { Text, View } from 'tamagui';
 import { LinkButton } from '../button/LinkButton';
 import { PlusCircle } from '@tamagui/lucide-icons';
 import { CategoriesList } from '../CategoriesList';
-import { CreateCategorySheet } from './CreateCategorySheet';
-import { CategoryModel } from '../../database/category-model';
+import { ManageCategoryItemSheet } from './ManageCategoryItemSheet';
+import type { CategoryModel } from '../../database/category-model';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { BottomSheetTextInput } from './BottomSheetTextInput';
 
@@ -32,8 +32,14 @@ export const ManageCategoriesSheet = ({
   swipeable = false,
 }: ManageCategoriesSheetProps) => {
   const [search, setSearch] = useState('');
-  const ref = useRef<BottomSheetModal | null>(null);
+  const categorySheet = useRef<BottomSheetModal | null>(null);
   const database = useDatabase();
+  const [categoryToEdit, setCategoryToEdit] = useState<CategoryModel | null>(null);
+
+  const handleEdit = (category: CategoryModel) => {
+    setCategoryToEdit(category);
+    categorySheet.current?.present();
+  };
   return (
     <>
       <BottomSheetModal
@@ -63,7 +69,7 @@ export const ManageCategoriesSheet = ({
               alignSelf={'center'}
               color={'white'}
               backgroundColor={'$green'}
-              onPress={() => ref.current?.present()}>
+              onPress={() => categorySheet.current?.present()}>
               <PlusCircle size={18} color={'white'} />
             </LinkButton>
           </View>
@@ -83,13 +89,20 @@ export const ManageCategoriesSheet = ({
             search={search}
             database={database}
             onSelect={setSelectedCategory}
+            onEdit={handleEdit}
             selectedCategory={selectedCategory}
             selectedCategories={selectedCategories}
             swipeable={swipeable}
           />
         </BottomSheetView>
       </BottomSheetModal>
-      <CreateCategorySheet sheetRef={ref} />
+      <ManageCategoryItemSheet
+        sheetRef={categorySheet}
+        category={categoryToEdit}
+        onClose={() => {
+          setCategoryToEdit(null);
+        }}
+      />
     </>
   );
 };

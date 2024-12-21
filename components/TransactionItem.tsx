@@ -9,7 +9,7 @@ import * as ContextMenu from 'zeego/context-menu';
 import { useRouter } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useActionSheet } from '@expo/react-native-action-sheet';
-import Animated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { SharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 import { Observable } from 'rxjs';
 
@@ -72,7 +72,10 @@ export const TransactionItem = withObservables<
         <View backgroundColor={'gray'} width={50}>
           <Pressable
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
-            onPress={onEdit}
+            onPress={() => {
+              onEdit();
+              drag.value = withTiming(0, { duration: 200 });
+            }}
             accessibilityLabel="Edit transaction"
             accessibilityRole="button">
             <Pen height={24} width={24} />
@@ -86,7 +89,10 @@ export const TransactionItem = withObservables<
               justifyContent: 'center',
               width: '100%',
             }}
-            onPress={onDelete}>
+            onPress={() => {
+              onDelete();
+              drag.value = withTiming(0, { duration: 200 });
+            }}>
             <Trash2 height={8} width={8} />
           </Pressable>
         </View>
@@ -163,7 +169,8 @@ const getBorderProps = (index: number, total: number) => {
       borderTopLeftRadius: '$2',
       borderTopRightRadius: '$2',
     } as const;
-  } else if (index === total - 1) {
+  }
+  if (index === total - 1) {
     return {
       borderBottomLeftRadius: '$2',
       borderBottomRightRadius: '$2',

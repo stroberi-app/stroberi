@@ -56,7 +56,10 @@ export default function TabTwoScreen() {
   const router = useRouter();
   return (
     <>
-      <View style={{ paddingTop: top }} backgroundColor={'$bgPrimary'} paddingHorizontal={'$2'}>
+      <View
+        style={{ paddingTop: top, flex: 1 }}
+        backgroundColor={'$bgPrimary'}
+        paddingHorizontal={'$2'}>
         <HomeTransactionsSection
           database={database}
           header={
@@ -97,9 +100,6 @@ export default function TabTwoScreen() {
                   <PlusCircle color={'$green'} size={16} /> Income
                 </Button>
               </View>
-              <Text fontSize={'$9'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
-                Recent Transactions
-              </Text>
             </>
           }
         />
