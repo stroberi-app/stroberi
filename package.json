@@ -18,7 +18,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~4.0.0",
     "@expo/react-native-action-sheet": "^4.1.0",
-    "@gorhom/bottom-sheet": "^5.0.2",
+    "@gorhom/bottom-sheet": "^5.0.6",
     "@morrowdigital/watermelondb-expo-plugin": "^2.3.3",
     "@nozbe/simdjson": "^3.1.0-wmelon1",
     "@nozbe/watermelondb": "^0.27.1",
@@ -67,6 +67,7 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-native-web": "~0.19.13",
+    "rn-emoji-keyboard": "^1.7.0",
     "tamagui": "^1.98.0",
     "typescript": "^5.3.3",
     "victory-native": "^41.12.5",

@@ -2,7 +2,7 @@ import { TransactionModel } from '../database/transaction-model';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Observable } from 'rxjs';
-import { YGroup } from 'tamagui';
+import { Text, YGroup } from 'tamagui';
 import { TransactionItem } from './TransactionItem';
 import dayjs from 'dayjs';
 import { DateFormats } from '../lib/date';
@@ -26,9 +26,6 @@ export const HomeTransactionsSection = withObservables<
   };
 })(({ transactions, header }: RecentTransactionsSectionProps) => {
   const { bottom } = useSafeAreaInsets();
-  if (transactions.length === 0) {
-    return null;
-  }
   return (
     <>
       <YGroup>
@@ -36,7 +33,16 @@ export const HomeTransactionsSection = withObservables<
           contentInset={{
             bottom: 64 + bottom,
           }}
-          ListHeaderComponent={() => header}
+          ListHeaderComponent={() => (
+            <>
+              {header}
+              {transactions.length > 0 && (
+                <Text fontSize={'$9'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
+                  Recent Transactions
+                </Text>
+              )}
+            </>
+          )}
           itemLayoutAnimation={LinearTransition}
           data={transactions}
           keyExtractor={transaction => transaction.id}

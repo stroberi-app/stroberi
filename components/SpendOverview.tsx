@@ -117,6 +117,8 @@ export const SpendOverview = withObservables<
   const { defaultCurrency } = useDefaultCurrency();
 
   const category = categories.find(c => c.id === highestSpendCategory$.category);
+
+  const balance = totalIncome + totalExpense;
   return (
     <CarouselItemWrapper>
       <View
@@ -139,12 +141,12 @@ export const SpendOverview = withObservables<
         <YGroup gap={'$5'}>
           <InfoItem
             title={'Period Income'}
-            color={'$green'}
+            color={totalIncome > 0 ? '$green' : 'white'}
             value={defaultCurrency ? formatCurrency(totalIncome, defaultCurrency) : ''}
           />
           <InfoItem
             title={'Period Balance'}
-            color={totalIncome + totalExpense >= 0 ? '$green' : '$stroberi'}
+            color={balance > 0 ? '$green' : balance === 0 ? 'white' : '$stroberi'}
             value={
               defaultCurrency ? formatCurrency(totalIncome + totalExpense, defaultCurrency) : ''
             }
@@ -153,21 +155,25 @@ export const SpendOverview = withObservables<
         <YGroup paddingHorizontal={'$4'} gap={'$5'}>
           <InfoItem
             title={'Period Spend'}
-            color={'$stroberi'}
+            color={totalExpense !== 0 ? '$stroberi' : 'white'}
             value={defaultCurrency ? formatCurrency(totalExpense, defaultCurrency) : ''}
           />
           <InfoItem title={'Transaction No.'} value={transactionCount.toString()} />
         </YGroup>
       </YGroup>
-      {!!category && (
-        <View paddingHorizontal={'$4'} gap={'$1'} mb={'$2'}>
-          <Text fontSize={'$2'}>Top Spend Category</Text>
+      <View paddingHorizontal={'$4'} gap={'$1'} mb={'$2'}>
+        <Text fontSize={'$2'}>Top Spend Category</Text>
+        {category ? (
           <Text fontSize={'$5'} fontWeight={'bold'}>
             {category?.name ?? 'Uncategorized'} {category?.icon}{' '}
             {defaultCurrency ? formatCurrency(highestSpendCategory$?.total, defaultCurrency) : null}
           </Text>
-        </View>
-      )}
+        ) : (
+          <Text fontSize={'$5'} fontWeight={'bold'}>
+            N/A
+          </Text>
+        )}
+      </View>
     </CarouselItemWrapper>
   );
 });
