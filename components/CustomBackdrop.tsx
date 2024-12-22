@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { Keyboard } from 'react-native';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -34,6 +35,7 @@ export const CustomBackdrop = ({ animatedIndex, style }: BottomSheetBackdropProp
       animatedProps={blurViewProps}
       style={containerStyle}
       onTouchEnd={() => {
+        Keyboard.dismiss();
         dismiss();
       }}
     />

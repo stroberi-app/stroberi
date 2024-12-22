@@ -59,7 +59,6 @@ export default function TransactionsScreen() {
           customRange={dateFilter === 'Custom' ? [fromDate, toDate] : undefined}
           categories={selectedCategories}
         />
-        <View height={140} />
       </View>
       <BottomSheetWrapper sheetRef={sheetRef}>
         <DateFilterSection
