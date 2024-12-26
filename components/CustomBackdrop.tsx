@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { BottomSheetBackdropProps, useBottomSheetModal } from '@gorhom/bottom-sheet';
 import Animated, {
   Extrapolation,
@@ -30,14 +30,16 @@ export const CustomBackdrop = ({ animatedIndex, style }: BottomSheetBackdropProp
     };
   });
 
+  const onTouchEnd = useCallback(() => {
+    Keyboard.dismiss();
+    dismiss();
+  }, []);
+
   return (
     <AnimatedBlurView
       animatedProps={blurViewProps}
       style={containerStyle}
-      onTouchEnd={() => {
-        Keyboard.dismiss();
-        dismiss();
-      }}
+      onTouchEnd={onTouchEnd}
     />
   );
 };

@@ -74,21 +74,21 @@ function CreateTransaction() {
 
   return (
     <BottomSheetModalProvider>
-      <StyledScrollView keyboardShouldPersistTaps={'handled'}>
-        <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
+      <StyledScrollView keyboardShouldPersistTaps="handled">
+        <View flexDirection="row" justifyContent="space-between" alignItems="center">
           <LinkButton
-            backgroundColor={'transparent'}
-            paddingHorizontal={'$2'}
-            color={'gray'}
+            backgroundColor="transparent"
+            paddingHorizontal="$2"
+            color="gray"
             onPress={() => router.back()}>
-            <ArrowLeft size={20} color={'gray'} />
+            <ArrowLeft size={20} color="gray" />
             Back
           </LinkButton>
-          <LinkButton color={'white'} backgroundColor={'$green'} onPress={handleSubmit}>
+          <LinkButton color="white" backgroundColor="$green" onPress={handleSubmit}>
             Save
           </LinkButton>
         </View>
-        <View mt={'$8'}>
+        <View mt="$8">
           <CurrencyInput
             onCurrencySelect={() => {
               Keyboard.dismiss();
@@ -101,46 +101,46 @@ function CreateTransaction() {
           />
         </View>
 
-        <YGroup bordered mt={'$4'}>
-          <CreateExpenseItem IconComponent={Calendar} label={'Date'}>
-            <DatePicker mode={'date'} date={date} setDate={setDate} />
+        <YGroup bordered mt="$4">
+          <CreateExpenseItem IconComponent={Calendar} label="Date">
+            <DatePicker mode="date" date={date} setDate={setDate} />
           </CreateExpenseItem>
-          <CreateExpenseItem IconComponent={Clock} label={'Time'}>
-            <DatePicker mode={'time'} date={date} setDate={setDate} />
+          <CreateExpenseItem IconComponent={Clock} label="Time">
+            <DatePicker mode="time" date={date} setDate={setDate} />
           </CreateExpenseItem>
-          <CreateExpenseItem IconComponent={User} label={'Merchant/Payee'}>
+          <CreateExpenseItem IconComponent={User} label="Merchant/Payee">
             <Input
-              placeholder={'Enter merchant name'}
+              placeholder="Enter merchant name"
               flex={1}
-              fontSize={'$2'}
+              fontSize="$2"
               value={merchantName}
               onChangeText={setMerchantName}
             />
           </CreateExpenseItem>
-          <CreateExpenseItem IconComponent={LayoutGrid} label={'Category'}>
+          <CreateExpenseItem IconComponent={LayoutGrid} label="Category">
             <LinkButton
-              color={'white'}
+              color="white"
               onPress={() => {
                 Keyboard.dismiss();
                 manageCategoriesSheetRef.current?.present();
               }}>
               {selectedCategory ? (
-                <View flexDirection={'row'} alignItems={'center'} gap={'$2'}>
+                <View flexDirection="row" alignItems="center" gap="$2">
                   <Text>{selectedCategory.icon}</Text>
                   <Text>{selectedCategory.name} </Text>
-                  <ChevronRight color={'white'} size={18} />
+                  <ChevronRight color="white" size={18} />
                 </View>
               ) : (
-                <View flexDirection={'row'} alignItems={'center'} gap={'$2'}>
+                <View flexDirection="row" alignItems="center" gap="$2">
                   <Text>Uncategorized</Text>
-                  <ChevronRight color={'white'} size={18} />
+                  <ChevronRight color="white" size={18} />
                 </View>
               )}
             </LinkButton>
           </CreateExpenseItem>
         </YGroup>
-        <View mt={'$4'}>
-          <TextArea placeholder={'Enter a note'} size={'$5'} value={note} onChangeText={setNote} />
+        <View mt="$4">
+          <TextArea placeholder="Enter a note" size="$5" value={note} onChangeText={setNote} />
         </View>
       </StyledScrollView>
       <CurrencySelect

@@ -31,6 +31,7 @@ type SpendBarChartProps<
   isEmpty: boolean;
   barCount?: number;
   barWidth?: number;
+  footer?: React.ReactNode;
 };
 
 export const SpendBarChart = <
@@ -45,6 +46,7 @@ export const SpendBarChart = <
   isEmpty,
   barCount,
   barWidth,
+  footer,
 }: SpendBarChartProps<RawData, XK, YK>) => {
   const { defaultCurrency } = useDefaultCurrency();
   const { state, isActive } = useChartPressState({
@@ -85,18 +87,18 @@ export const SpendBarChart = <
   return (
     <CarouselItemWrapper>
       <View
-        flexDirection={'row'}
-        alignItems={'center'}
-        justifyContent={'space-between'}
-        paddingHorizontal={'$2'}
-        marginBottom={'$2'}>
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="space-between"
+        paddingHorizontal="$2"
+        marginBottom="$2">
         {isActive ? (
           <Canvas
             style={{
               height: 17,
               flex: 1,
             }}>
-            <Text x={0} y={12} font={font} text={amount} color={'white'} style={'fill'} />
+            <Text x={0} y={12} font={font} text={amount} color="white" style="fill" />
           </Canvas>
         ) : (
           <CarouselItemText>{title}</CarouselItemText>
@@ -104,25 +106,28 @@ export const SpendBarChart = <
       </View>
       <CarouselItemChart>
         {isEmpty ? (
-          <View width={'100%'} height="100%" alignItems={'center'} justifyContent={'center'}>
-            <CarouselItemText color={'darkgray'}>No data available</CarouselItemText>
-            <CircleSlash size={64} color={'darkgray'} />
+          <View width="100%" height="100%" alignItems="center" justifyContent="center" gap="$3">
+            <CarouselItemText color="darkgray">No data available</CarouselItemText>
+            <CircleSlash size={64} color="darkgray" />
           </View>
         ) : (
-          <BarChart
-            xKey={xKey}
-            yKeys={yKeys}
-            data={chartData}
-            // @ts-expect-error ignore for now
-            state={state}
-            isActive={isActive}
-            tooltip={{
-              ttX,
-              ttY,
-            }}
-            barCount={barCount}
-            barWidth={barWidth}
-          />
+          <>
+            <BarChart
+              xKey={xKey}
+              yKeys={yKeys}
+              data={chartData}
+              // @ts-expect-error ignore for now
+              state={state}
+              isActive={isActive}
+              tooltip={{
+                ttX,
+                ttY,
+              }}
+              barCount={barCount}
+              barWidth={barWidth}
+            />
+            {footer}
+          </>
         )}
       </CarouselItemChart>
     </CarouselItemWrapper>

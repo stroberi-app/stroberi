@@ -17,8 +17,6 @@ type TransactionItemProps = {
   category?: CategoryModel | null;
   transaction: TransactionModel;
   date: string;
-  index: number;
-  total: number;
 };
 
 export const TransactionItem = withObservables<
@@ -29,7 +27,7 @@ export const TransactionItem = withObservables<
     category: transaction.category?.observe(),
     transaction: transaction.observe(),
   };
-})(({ date, category, transaction, index, total }: TransactionItemProps) => {
+})(({ date, category, transaction }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
@@ -69,7 +67,7 @@ export const TransactionItem = withObservables<
 
     return (
       <Animated.View style={styleAnimation}>
-        <View backgroundColor={'gray'} width={50}>
+        <View backgroundColor="gray" width={50}>
           <Pressable
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
             onPress={() => {
@@ -81,7 +79,7 @@ export const TransactionItem = withObservables<
             <Pen height={24} width={24} />
           </Pressable>
         </View>
-        <View backgroundColor={'$stroberiLight'} width={50}>
+        <View backgroundColor="$stroberiLight" width={50}>
           <Pressable
             style={{
               flex: 1,
@@ -108,29 +106,28 @@ export const TransactionItem = withObservables<
       rightThreshold={40}
       renderRightActions={renderRightAction}>
       <View
-        flexDirection={'row'}
-        paddingVertical={'$2'}
-        paddingHorizontal={'$4'}
-        gap={'$4'}
-        borderWidth={'$0.5'}
-        {...getBorderProps(index, total)}
-        borderColor={'$borderColor'}>
-        <Text fontSize={'$5'}>{category?.icon ?? '📦'}</Text>
-        <View flexDirection={'column'} justifyContent={'center'}>
-          <Text fontSize={'$5'} fontWeight={'bold'}>
+        flexDirection="row"
+        paddingVertical="$2"
+        paddingHorizontal="$4"
+        gap="$4"
+        borderWidth="$0.5"
+        borderColor="$borderColor">
+        <Text fontSize="$5">{category?.icon ?? '📦'}</Text>
+        <View flexDirection="column" justifyContent="center">
+          <Text fontSize="$5" fontWeight="bold">
             {category?.name ?? 'Uncategorized'}
           </Text>
           {transaction.merchant && (
-            <Text fontSize={'$3'} color={'gray'}>
+            <Text fontSize="$3" color="gray">
               {transaction.merchant}
             </Text>
           )}
         </View>
-        <View marginLeft={'auto'} alignItems={'flex-end'}>
-          <Text fontSize={'$5'} color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
+        <View marginLeft="auto" alignItems="flex-end">
+          <Text fontSize="$5" color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
             {formatCurrency(transaction.amount, transaction.currencyCode)}
           </Text>
-          <Text fontSize={'$3'} color={'gray'}>
+          <Text fontSize="$3" color="gray">
             {date}
           </Text>
         </View>
@@ -147,34 +144,13 @@ export const TransactionItem = withObservables<
         alignOffset={true}
         avoidCollisions={true}>
         <ContextMenu.Preview>{() => component}</ContextMenu.Preview>
-        <ContextMenu.Item key={'edit'} onSelect={onEdit}>
+        <ContextMenu.Item key="edit" onSelect={onEdit}>
           <ContextMenu.ItemTitle>Edit</ContextMenu.ItemTitle>
         </ContextMenu.Item>
-        <ContextMenu.Item key={'delete'} destructive onSelect={onDelete}>
+        <ContextMenu.Item key="delete" destructive onSelect={onDelete}>
           <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu.Root>
   );
 });
-
-const getBorderProps = (index: number, total: number) => {
-  if (total === 1) {
-    return {
-      borderRadius: '$2',
-    } as const;
-  }
-  if (index === 0) {
-    return {
-      borderTopLeftRadius: '$2',
-      borderTopRightRadius: '$2',
-    } as const;
-  }
-  if (index === total - 1) {
-    return {
-      borderBottomLeftRadius: '$2',
-      borderBottomRightRadius: '$2',
-    } as const;
-  }
-  return {};
-};
