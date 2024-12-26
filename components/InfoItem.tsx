@@ -1,20 +1,17 @@
-import { Text, View, YGroup } from 'tamagui';
 import * as React from 'react';
+import { Text, View, YGroup } from 'tamagui';
 
-export const InfoItem = ({
-  title,
-  value,
-  color,
-}: {
+type InfoItemProps = {
   title: string;
   value: string;
   color?: string;
-}) => {
+};
+export const InfoItem = ({ title, value, color }: InfoItemProps) => {
   return (
     <YGroup.Item>
-      <View gap={'$1'}>
-        <Text fontSize={'$2'}>{title}</Text>
-        <Text fontSize={'$5'} fontWeight={'bold'} color={color}>
+      <View gap="$1">
+        <Text fontSize="$2">{title}</Text>
+        <Text fontSize="$5" fontWeight="bold" color={color}>
           {value}
         </Text>
       </View>

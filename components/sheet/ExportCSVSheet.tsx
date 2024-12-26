@@ -93,16 +93,16 @@ export const ExportCSVSheet = ({ sheetRef }: ExportCSVSheetProps) => {
       backdropComponent={CustomBackdrop}
       handleIndicatorStyle={handleIndicatorStyle}
       backgroundStyle={backgroundStyle}>
-      <View padding={'$4'} gap={'$2'} pb={bottom + 16} height={'100%'}>
-        <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-          <Text fontSize={'$6'} fontWeight={'bold'}>
+      <View padding="$4" gap="$2" pb={bottom + 16} height="100%">
+        <View flexDirection="row" justifyContent="space-between" alignItems="center">
+          <Text fontSize="$6" fontWeight="bold">
             From Date
           </Text>
           <DatePicker date={fromDate} setDate={setFromDate} />
         </View>
 
-        <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-          <Text fontSize={'$6'} fontWeight={'bold'}>
+        <View flexDirection="row" justifyContent="space-between" alignItems="center">
+          <Text fontSize="$6" fontWeight="bold">
             To Date
           </Text>
           <DatePicker date={toDate} setDate={setToDate} />
@@ -129,13 +129,12 @@ export const ExportCSVSheet = ({ sheetRef }: ExportCSVSheetProps) => {
           ))}
         </YStack>
         <Button
-          fontWeight={'bold'}
-          backgroundColor={'$green'}
-          mt={'auto'}
+          fontWeight="bold"
+          backgroundColor="$green"
+          mt="auto"
           onPress={() => handleExport()}
           disabled={loading}>
-          Export{' '}
-          {loading ? <Spinner color={'white'} /> : <FolderOutput size={18} color={'white'} />}
+          Export {loading ? <Spinner color="white" /> : <FolderOutput size={18} color="white" />}
         </Button>
       </View>
     </BottomSheetModal>

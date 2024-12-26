@@ -10,7 +10,7 @@ type BottomSheetWrapperProps = {
   children: React.ReactNode;
 } & React.ComponentProps<typeof BottomSheetModal>;
 
-const BottomSheetWrapper = ({ sheetRef, children, ...rest }: BottomSheetWrapperProps) => {
+const BottomSheetDynamicSize = ({ sheetRef, children, ...rest }: BottomSheetWrapperProps) => {
   const { bottom } = useSafeAreaInsets();
   return (
     <BottomSheetModal
@@ -26,4 +26,4 @@ const BottomSheetWrapper = ({ sheetRef, children, ...rest }: BottomSheetWrapperP
   );
 };
 
-export default BottomSheetWrapper;
+export default BottomSheetDynamicSize;

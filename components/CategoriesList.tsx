@@ -73,7 +73,7 @@ const Component = ({
     return (
       <Animated.View style={styleAnimation}>
         {!!onEdit && (
-          <View backgroundColor={'gray'} width={50}>
+          <View backgroundColor="gray" width={50}>
             <Pressable
               style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
               onPress={() => {
@@ -86,7 +86,7 @@ const Component = ({
             </Pressable>
           </View>
         )}
-        <View backgroundColor={'$stroberiLight'} width={50}>
+        <View backgroundColor="$stroberiLight" width={50}>
           <Pressable
             style={{
               flex: 1,
@@ -163,14 +163,14 @@ const Component = ({
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       bounces={false}
-      keyboardShouldPersistTaps={'always'}
+      keyboardShouldPersistTaps="always"
       itemLayoutAnimation={LinearTransition}
       {...props}
     />
   );
 };
 
-const enhance = withObservables<
+const withData = withObservables<
   { database: Database; search: string },
   { categories: Observable<CategoryModel[]> }
 >(['search'], ({ database, search }) => {
@@ -182,6 +182,6 @@ const enhance = withObservables<
   };
 });
 
-export const CategoriesList = enhance(Component);
+export const CategoriesList = withData(Component);
 
 const keyExtractor = (item: CategoryModel) => item.id;

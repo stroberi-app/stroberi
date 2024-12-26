@@ -37,7 +37,7 @@ export const HomeTransactionsSection = withObservables<
             <>
               {header}
               {transactions.length > 0 && (
-                <Text fontSize={'$9'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
+                <Text fontSize={'$8'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
                   Recent Transactions
                 </Text>
               )}
@@ -46,12 +46,10 @@ export const HomeTransactionsSection = withObservables<
           itemLayoutAnimation={LinearTransition}
           data={transactions}
           keyExtractor={transaction => transaction.id}
-          renderItem={({ item: transaction, index }) => (
+          renderItem={({ item: transaction }) => (
             <TransactionItem
               date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
               transaction={transaction}
-              index={index}
-              total={transactions.length}
             />
           )}
         />

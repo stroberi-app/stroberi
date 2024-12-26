@@ -1,13 +1,12 @@
-import { Checkbox, CheckboxProps, Label, XStack } from 'tamagui';
+import { Checkbox, Label, XStack } from 'tamagui';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import React from 'react';
 
-export function CheckboxWithLabel({
-  size,
-  name,
-  label,
-  ...checkboxProps
-}: CheckboxProps & { label: string; name: string }) {
+type CheckboxWithLabelProps = React.ComponentProps<typeof Checkbox> & {
+  label: string;
+  name: string;
+};
+export function CheckboxWithLabel({ size, name, label, ...checkboxProps }: CheckboxWithLabelProps) {
   return (
     <XStack alignItems="center" gap="$3">
       <Checkbox id={name} size={size} {...checkboxProps}>

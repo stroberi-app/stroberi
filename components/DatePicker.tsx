@@ -2,6 +2,7 @@ import React from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
 import { Text, View } from 'tamagui';
+
 type DatePickerProps = {
   mode?: 'date' | 'time';
   date: Date;
@@ -32,12 +33,12 @@ export const DatePicker = ({ mode = 'date', date, setDate }: DatePickerProps) =>
       <>
         {show && picker}
         <View
-          borderColor={'$borderColor'}
+          borderColor="$borderColor"
           borderWidth={0.5}
           borderRadius={8}
-          padding={'$2'}
+          padding="$2"
           onPress={() => setShow(true)}>
-          <Text color={'white'}>
+          <Text color="white">
             {mode === 'date' ? date.toLocaleDateString() : date.toLocaleTimeString()}
           </Text>
         </View>

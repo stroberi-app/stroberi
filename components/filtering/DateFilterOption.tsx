@@ -12,11 +12,11 @@ type DateFilterOptionProps = {
 
 const DateFilterOption = ({ label, isSelected, onPress }: DateFilterOptionProps) => (
   <LinkButton
-    paddingHorizontal={'$4'}
+    paddingHorizontal="$4"
     onPress={onPress}
     backgroundColor={isSelected ? '$green' : '$background075'}>
     <Text>{label}</Text>
-    {isSelected && <Check size={12} color={'white'} />}
+    {isSelected && <Check size={12} color="white" />}
   </LinkButton>
 );
 
