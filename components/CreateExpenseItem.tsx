@@ -15,16 +15,16 @@ export const CreateExpenseItem = ({
 }: CreateExpenseItemProps) => {
   return (
     <YGroup.Item>
-      <View backgroundColor={'$gray1'} paddingVertical={'$2.5'} paddingHorizontal={'$4'} gap={'$4'}>
+      <View backgroundColor="$gray1" paddingVertical="$2.5" paddingHorizontal="$4" gap="$4">
         <View
-          gap={'$4'}
-          flexDirection={'row'}
-          width={'100%'}
-          justifyContent={'space-between'}
-          alignItems={'center'}>
-          <View flexDirection={'row'} alignItems={'center'} gap={'$2'}>
+          gap="$4"
+          flexDirection="row"
+          width="100%"
+          justifyContent="space-between"
+          alignItems="center">
+          <View flexDirection="row" alignItems="center" gap="$2">
             <IconComponent size={20} />
-            <Text fontSize={'$5'}>{label}</Text>
+            <Text fontSize="$5">{label}</Text>
           </View>
           {children}
         </View>

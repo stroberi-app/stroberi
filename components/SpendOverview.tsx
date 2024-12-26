@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { CarouselItemWrapper } from './carousel/CarouselItemWrapper';
-import { Text, View, YGroup } from 'tamagui';
+import { Button, Text, View, YGroup } from 'tamagui';
 import { Calendar } from '@tamagui/lucide-icons';
 
 import { LinkButton } from './button/LinkButton';
@@ -14,6 +14,10 @@ import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { CategoryModel } from '../database/category-model';
 import { InfoItem } from './InfoItem';
 import { formatDateRange } from '../lib/date';
+import { DatePicker } from './DatePicker';
+import BottomSheetDynamicSize from './filtering/BottomSheetDynamicSize';
+import { useState } from 'react';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 type SpendOverviewProps = {
   totalExpense: number;
@@ -25,7 +29,7 @@ type SpendOverviewProps = {
   fromDate: dayjs.Dayjs;
   toDate: dayjs.Dayjs;
 };
-export const SpendOverview = withObservables<
+const SpendOverview = withObservables<
   {
     database: Database;
     fromDate: dayjs.Dayjs;
@@ -177,3 +181,55 @@ export const SpendOverview = withObservables<
     </CarouselItemWrapper>
   );
 });
+
+type WithDateFilterProps = {
+  database: Database;
+};
+const WithDateFilter = ({ database }: WithDateFilterProps) => {
+  const dateSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const [fromDate, setFromDate] = useState<dayjs.Dayjs>(dayjs().startOf('month'));
+  const [toDate, setToDate] = useState(dayjs().endOf('month'));
+  const [tempFromDate, setTempFromDate] = useState(fromDate);
+  const [tempToDate, setTempToDate] = useState(toDate);
+  return (
+    <>
+      <SpendOverview
+        database={database}
+        fromDate={fromDate}
+        toDate={toDate}
+        onDatePress={() => {
+          dateSheetRef.current?.present();
+        }}
+      />
+      <BottomSheetDynamicSize sheetRef={dateSheetRef}>
+        <View paddingHorizontal={'$4'} paddingVertical={'$2'} gap={'$5'}>
+          <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
+            <Text fontSize={'$6'} fontWeight={'bold'}>
+              From Date
+            </Text>
+            <DatePicker date={tempFromDate.toDate()} setDate={d => setTempFromDate(dayjs(d))} />
+          </View>
+          <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
+            <Text fontSize={'$6'} fontWeight={'bold'}>
+              To Date
+            </Text>
+            <DatePicker date={tempToDate.toDate()} setDate={d => setTempToDate(dayjs(d))} />
+          </View>
+          <Button
+            backgroundColor={'$green'}
+            gap={'$0'}
+            paddingHorizontal={'$2'}
+            onPress={() => {
+              setFromDate(tempFromDate);
+              setToDate(tempToDate);
+              dateSheetRef.current?.close();
+            }}>
+            Apply
+          </Button>
+        </View>
+      </BottomSheetDynamicSize>
+    </>
+  );
+};
+
+export default WithDateFilter;

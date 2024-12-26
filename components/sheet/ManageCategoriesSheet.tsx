@@ -32,7 +32,7 @@ export const ManageCategoriesSheet = ({
   swipeable = false,
 }: ManageCategoriesSheetProps) => {
   const [search, setSearch] = useState('');
-  const categorySheet = useRef<BottomSheetModal | null>(null);
+  const categorySheet = useRef<BottomSheetModal>(null);
   const database = useDatabase();
   const [categoryToEdit, setCategoryToEdit] = useState<CategoryModel | null>(null);
 
@@ -45,7 +45,7 @@ export const ManageCategoriesSheet = ({
       <BottomSheetModal
         ref={sheetRef}
         $modal={false}
-        stackBehavior={'push'}
+        stackBehavior="push"
         enableContentPanningGesture={false}
         snapPoints={snapPoints}
         enableDynamicSizing={false}
@@ -56,31 +56,31 @@ export const ManageCategoriesSheet = ({
         backgroundStyle={backgroundStyle}>
         <BottomSheetView>
           <View
-            flexDirection={'row'}
-            alignItems={'center'}
-            paddingHorizontal={'$3'}
-            width={'100%'}
-            justifyContent={'space-between'}
-            marginBottom={'$2'}>
-            <Text color={'white'} fontSize={'$6'}>
+            flexDirection="row"
+            alignItems="center"
+            paddingHorizontal="$3"
+            width="100%"
+            justifyContent="space-between"
+            marginBottom="$2">
+            <Text color="white" fontSize="$6">
               Categories
             </Text>
             <LinkButton
-              alignSelf={'center'}
-              color={'white'}
-              backgroundColor={'$green'}
+              alignSelf="center"
+              color="white"
+              backgroundColor="$green"
               onPress={() => categorySheet.current?.present()}>
-              <PlusCircle size={18} color={'white'} />
+              <PlusCircle size={18} color="white" />
             </LinkButton>
           </View>
           {!noSearch && (
-            <View padding={'$2'}>
+            <View padding="$2">
               <BottomSheetTextInput
                 placeholder="Search categories"
                 value={search}
                 onChangeText={setSearch}
-                gap={'$4'}
-                width={'100%'}
+                gap="$4"
+                width="100%"
               />
             </View>
           )}

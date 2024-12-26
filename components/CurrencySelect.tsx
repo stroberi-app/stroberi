@@ -16,6 +16,7 @@ type CurrencySelectProps = {
   onSelect: (currency: Currency) => void;
   sheetRef: React.RefObject<BottomSheetModal>;
 };
+
 export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: CurrencySelectProps) => {
   const renderItem = useCallback(
     ({ item: currency }: { item: Currency }) => (
@@ -36,6 +37,7 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
   );
 
   const [search, setSearch] = useState('');
+
   const filteredData = useMemo(
     () =>
       currencies
@@ -56,6 +58,7 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
     [search, selectedCurrency]
   );
   const { bottom } = useSafeAreaInsets();
+
   return (
     <BottomSheetModal
       enableContentPanningGesture={false}
@@ -67,7 +70,7 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
       handleIndicatorStyle={handleIndicatorStyle}
       backgroundStyle={backgroundStyle}>
       <BottomSheetView>
-        <View padding={'$2'}>
+        <View padding="$2">
           <Input placeholder="Search currencies" value={search} onChangeText={setSearch} />
         </View>
         <BottomSheetFlatList

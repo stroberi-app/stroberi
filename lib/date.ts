@@ -1,4 +1,9 @@
 import dayjs from 'dayjs';
+import isToday from 'dayjs/plugin/isToday';
+import isYesterday from 'dayjs/plugin/isYesterday';
+
+dayjs.extend(isToday);
+dayjs.extend(isYesterday);
 
 export enum DateFormats {
   FullMonthFullDay = 'MMM DD',
@@ -14,3 +19,5 @@ export function formatDateRange(from: dayjs.Dayjs, to: dayjs.Dayjs): string {
     return `${from.format('MMM D, YYYY')} - ${to.format('MMM D, YYYY')}`;
   }
 }
+
+export type DateFilters = 'This Year' | 'This Month' | 'Custom';

@@ -1,7 +1,6 @@
-import { SizeTokens, Text } from 'tamagui';
-import { View, Input } from 'tamagui';
-import { ChevronRight } from '@tamagui/lucide-icons';
 import React from 'react';
+import { View, Input, Text, SizeTokens } from 'tamagui';
+import { ChevronRight } from '@tamagui/lucide-icons';
 
 type CurrencyInputProps = {
   size?: SizeTokens;
@@ -20,8 +19,6 @@ export function CurrencyInput({
   selectedCurrency,
   value,
 }: CurrencyInputProps) {
-  // const [inputValue, setInputValue] = useState(value);
-
   const handleTextChange = (text: string) => {
     // Replace all commas with dots
     let newText = text.replace(/,/g, '.');

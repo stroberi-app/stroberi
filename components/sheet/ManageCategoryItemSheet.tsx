@@ -74,9 +74,9 @@ export const ManageCategoryItemSheet = ({
       handleIndicatorStyle={handleIndicatorStyle}
       backgroundStyle={backgroundStyle}>
       <BottomSheetView>
-        <View padding={'$2'} gap={'$2'}>
-          <Text ml={'$2'}>Category Name & Icon</Text>
-          <View flexDirection={'row'} gap={'$3'}>
+        <View padding="$2" gap="$2">
+          <Text ml="$2">Category Name & Icon</Text>
+          <View flexDirection="row" gap="$3">
             <BottomSheetTextInput
               placeholder="Enter name"
               value={name}
@@ -84,15 +84,15 @@ export const ManageCategoryItemSheet = ({
               flex={1}
             />
             <Button
-              backgroundColor={'$black3'}
+              backgroundColor="$black3"
               borderWidth={0.5}
-              borderColor={'$borderColor'}
-              width={'auto'}
+              borderColor="$borderColor"
+              width="auto"
               onPress={() => {
                 Keyboard.dismiss();
                 setIsOpen(true);
               }}>
-              <Text width={30} textAlign={'center'}>
+              <Text width={30} textAlign="center">
                 {selectedIcon}
               </Text>
             </Button>
@@ -116,9 +116,9 @@ export const ManageCategoryItemSheet = ({
             />
           </View>
         </View>
-        <View padding={'$4'} gap={'$2'} mb={bottom} mt={'auto'}>
-          <Button backgroundColor={'$green'} onPress={() => handleSave()}>
-            {category ? 'Update' : 'Create'} {!category && <PlusCircle size={18} color={'white'} />}
+        <View padding="$4" gap="$2" mb={bottom} mt="auto">
+          <Button backgroundColor="$green" onPress={() => handleSave()}>
+            {category ? 'Update' : 'Create'} {!category && <PlusCircle size={18} color="white" />}
           </Button>
         </View>
       </BottomSheetView>
