@@ -104,7 +104,7 @@ const getItemType = (item: ListItem) => {
 const keyExtractor = (item: ListItem) => {
   return typeof item === 'string' ? item : item.id;
 };
-const enhance = withObservables<
+const withData = withObservables<
   {
     database: Database;
     dateFilter?: DateFilters | null;
@@ -144,4 +144,4 @@ const enhance = withObservables<
   }
 );
 
-export default enhance(TransactionsList);
+export default withData(TransactionsList);
