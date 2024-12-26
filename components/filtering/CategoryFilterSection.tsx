@@ -26,18 +26,18 @@ const CategoryFilterSection = ({
   };
 
   return (
-    <View paddingHorizontal={'$4'} paddingVertical={'$2'}>
-      <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'} mb={'$4'}>
-        <Text fontSize={'$6'} fontWeight={'bold'} marginBottom={'$2'}>
+    <View paddingHorizontal="$4" paddingVertical="$2">
+      <View flexDirection="row" justifyContent="space-between" alignItems="center" mb="$4">
+        <Text fontSize="$6" fontWeight="bold" marginBottom="$2">
           Filter by Category
         </Text>
         {selectedCategories.length > 0 && (
           <LinkButton onPress={() => setSelectedCategory([])}>
-            <XCircle size={18} color={'white'} />
+            <XCircle size={18} color="white" />
           </LinkButton>
         )}
       </View>
-      <View flexDirection={'row'} gap={'$3'} flexWrap={'wrap'}>
+      <View flexDirection="row" gap="$3" flexWrap="wrap">
         {selectedCategories?.map(category => (
           <FilterOption
             key={category.id}
@@ -48,9 +48,9 @@ const CategoryFilterSection = ({
           />
         ))}
         <LinkButton
-          paddingHorizontal={'$4'}
+          paddingHorizontal="$4"
           onPress={() => manageCategoriesSheetRef.current?.present()}>
-          <PlusCircle size={18} color={'white'} />
+          <PlusCircle size={18} color="white" />
           <Text>Add Category</Text>
         </LinkButton>
       </View>

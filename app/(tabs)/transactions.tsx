@@ -1,26 +1,19 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 import * as React from 'react';
+import { useState } from 'react';
 import { Filter } from '@tamagui/lucide-icons';
 import { LinkButton } from '../../components/button/LinkButton';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import dayjs from 'dayjs';
-import isToday from 'dayjs/plugin/isToday';
-import isYesterday from 'dayjs/plugin/isYesterday';
 import TransactionsList from '../../components/TransactionsList';
 import { DatePicker } from '../../components/DatePicker';
-import { useState } from 'react';
 import { Button } from '../../components/button/Button';
 import DateFilterSection from '../../components/filtering/DateFilterSection';
-import BottomSheetWrapper from '../../components/filtering/BottomSheetWrapper';
+import BottomSheetDynamicSize from '../../components/filtering/BottomSheetDynamicSize';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import CategoryFilterSection from '../../components/filtering/CategoryFilterSection';
 import { CategoryModel } from '../../database/category-model';
-
-dayjs.extend(isToday);
-dayjs.extend(isYesterday);
-
-export type DateFilters = 'This Year' | 'This Month' | 'Custom';
+import { DateFilters } from '../../lib/date';
 
 export default function TransactionsScreen() {
   const { top } = useSafeAreaInsets();
@@ -60,7 +53,7 @@ export default function TransactionsScreen() {
           categories={selectedCategories}
         />
       </View>
-      <BottomSheetWrapper sheetRef={sheetRef}>
+      <BottomSheetDynamicSize sheetRef={sheetRef}>
         <DateFilterSection
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
@@ -72,8 +65,8 @@ export default function TransactionsScreen() {
           selectedCategories={selectedCategories}
           setSelectedCategory={setSelectedCategories}
         />
-      </BottomSheetWrapper>
-      <BottomSheetWrapper sheetRef={dateSheetRef}>
+      </BottomSheetDynamicSize>
+      <BottomSheetDynamicSize sheetRef={dateSheetRef}>
         <View paddingHorizontal={'$4'} paddingVertical={'$2'} gap={'$5'}>
           <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
             <Text fontSize={'$6'} fontWeight={'bold'}>
@@ -98,7 +91,7 @@ export default function TransactionsScreen() {
             Apply
           </Button>
         </View>
-      </BottomSheetWrapper>
+      </BottomSheetDynamicSize>
     </>
   );
 }

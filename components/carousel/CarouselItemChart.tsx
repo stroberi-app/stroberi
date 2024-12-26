@@ -6,7 +6,7 @@ type CarouselItemChartProps = {
 };
 export const CarouselItemChart = ({ children }: CarouselItemChartProps) => {
   return (
-    <View backgroundColor={'transparent'} height={200}>
+    <View backgroundColor="transparent" flex={1}>
       {children}
     </View>
   );

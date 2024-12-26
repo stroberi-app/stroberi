@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { DateFormats } from '../lib/date';
+import { DateFilters, DateFormats } from '../lib/date';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Observable } from 'rxjs';
@@ -8,14 +8,16 @@ import { TransactionItem } from './TransactionItem';
 import * as React from 'react';
 import { TransactionModel } from '../database/transaction-model';
 import { CreateFirstTransactionButton } from './CreateFirstTransactionButton';
-import { DateFilters } from '../app/(tabs)/transactions';
 import { CategoryModel } from '../database/category-model';
-import { SectionList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlashList } from '@shopify/flash-list';
+import { useCallback, useMemo } from 'react';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
 };
+
+type ListItem = string | TransactionModel;
 
 const getDateKey = (date: Date) => {
   const dayjsDate = dayjs(date);
@@ -34,49 +36,74 @@ const getDateKey = (date: Date) => {
 
 const TransactionsList = ({ transactions }: TransactionsListProps) => {
   const { bottom } = useSafeAreaInsets();
-  const sections = transactions.reduce(
-    (acc, transaction) => {
+
+  const data = useMemo(() => {
+    const result: (string | TransactionModel)[] = [];
+
+    let currentKey: string | null = null;
+
+    for (const transaction of transactions) {
       const key = getDateKey(transaction.date);
-      const section = acc.find(section => section.title === key);
-      if (section) {
-        section.data.push(transaction);
-      } else {
-        acc.push({ title: key, data: [transaction] });
+
+      if (key !== currentKey) {
+        // Add a new title (section header)
+        result.push(key);
+        currentKey = key;
       }
-      return acc;
-    },
-    [] as { title: string; data: TransactionModel[] }[]
-  );
+
+      // Add the transaction to the result
+      result.push(transaction);
+    }
+
+    return result;
+  }, [transactions]);
+
+  const renderItem = useCallback(({ item }: { item: ListItem }) => {
+    if (typeof item === 'string') {
+      return (
+        <Text fontSize="$5" fontWeight="bold" marginTop="$4" marginBottom="$2">
+          {item}
+        </Text>
+      );
+    } else {
+      return (
+        <TransactionItem
+          date={dayjs(item.date).format(DateFormats.FullMonthFullDayTime)}
+          transaction={item}
+        />
+      );
+    }
+  }, []);
+
+  const contentInset = useMemo(() => {
+    return {
+      bottom: 64 + bottom,
+    };
+  }, [bottom]);
 
   if (transactions.length === 0) {
-    return <CreateFirstTransactionButton mt={'30%'} />;
+    return <CreateFirstTransactionButton mt="30%" />;
   }
 
   return (
-    <SectionList
-      contentInset={{
-        bottom: 64 + bottom,
-      }}
-      sections={sections}
-      keyExtractor={transaction => transaction.id}
-      renderItem={({ item: transaction, index, section }) => (
-        <TransactionItem
-          date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
-          transaction={transaction}
-          index={index}
-          total={section.data.length}
-        />
-      )}
-      stickySectionHeadersEnabled={false}
-      renderSectionHeader={({ section: { title } }) => (
-        <Text fontSize={'$5'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
-          {title}
-        </Text>
-      )}
+    <FlashList
+      contentInset={contentInset}
+      keyExtractor={keyExtractor}
+      data={data}
+      renderItem={renderItem}
+      getItemType={getItemType}
+      estimatedItemSize={52}
     />
   );
 };
 
+const getItemType = (item: ListItem) => {
+  return typeof item === 'string' ? 'sectionHeader' : 'row';
+};
+
+const keyExtractor = (item: ListItem) => {
+  return typeof item === 'string' ? item : item.id;
+};
 const enhance = withObservables<
   {
     database: Database;
@@ -88,18 +115,19 @@ const enhance = withObservables<
 >(
   ['dateFilter', 'customRange', 'categories'],
   ({ database, dateFilter, customRange, categories }) => {
+    const dayjsInstance = dayjs();
     let query = database.collections
       .get<TransactionModel>('transactions')
       .query(Q.sortBy('date', 'desc'));
 
     if (dateFilter === 'This Year') {
-      const startOfYear = dayjs().startOf('year').toDate();
-      const endOfYear = dayjs().endOf('year').toDate();
+      const startOfYear = dayjsInstance.startOf('year').toDate();
+      const endOfYear = dayjsInstance.endOf('year').toDate();
       query = query.extend(Q.where('date', Q.gte(startOfYear.getTime())));
       query = query.extend(Q.where('date', Q.lte(endOfYear.getTime())));
     } else if (dateFilter === 'This Month') {
-      const startOfMonth = dayjs().startOf('month').toDate();
-      const endOfMonth = dayjs().endOf('month').toDate();
+      const startOfMonth = dayjsInstance.startOf('month').toDate();
+      const endOfMonth = dayjsInstance.endOf('month').toDate();
       query = query.extend(Q.where('date', Q.gte(startOfMonth.getTime())));
       query = query.extend(Q.where('date', Q.lte(endOfMonth.getTime())));
     } else if (customRange) {

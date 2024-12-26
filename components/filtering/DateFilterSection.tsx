@@ -5,7 +5,8 @@ import dayjs from 'dayjs';
 import DateFilterOption from './DateFilterOption';
 import { LinkButton } from '../button/LinkButton';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { DateFilters } from '../../app/(tabs)/transactions';
+
+import { DateFilters } from '../../lib/date';
 
 type DateFilterSectionProps = {
   dateFilter: string | null;
@@ -36,18 +37,18 @@ const DateFilterSection = ({
   ];
 
   return (
-    <View paddingHorizontal={'$4'} paddingVertical={'$2'} mb={'$5'}>
-      <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'} mb={'$4'}>
-        <Text fontSize={'$6'} fontWeight={'bold'}>
+    <View paddingHorizontal="$4" paddingVertical="$2" mb="$5">
+      <View flexDirection="row" justifyContent="space-between" alignItems="center" mb="$4">
+        <Text fontSize="$6" fontWeight="bold">
           Filter by Date
         </Text>
         {dateFilter !== null && (
           <LinkButton onPress={() => setDateFilter(null)}>
-            <XCircle size={18} color={'white'} />
+            <XCircle size={18} color="white" />
           </LinkButton>
         )}
       </View>
-      <View flexDirection={'row'} gap={'$3'} flexWrap={'wrap'}>
+      <View flexDirection="row" gap="$3" flexWrap="wrap">
         {options.map(option => (
           <DateFilterOption
             key={option.value}
