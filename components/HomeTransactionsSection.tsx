@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type RecentTransactionsSectionProps = {
   transactions: TransactionModel[];
-  header: React.ReactNode;
+  header: (transactionCount: number) => React.ReactNode;
 };
 export const HomeTransactionsSection = withObservables<
   { database: Database },
@@ -35,7 +35,7 @@ export const HomeTransactionsSection = withObservables<
           }}
           ListHeaderComponent={() => (
             <>
-              {header}
+              {header(transactions.length)}
               {transactions.length > 0 && (
                 <Text fontSize={'$8'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
                   Recent Transactions
