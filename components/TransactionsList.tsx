@@ -7,7 +7,7 @@ import { Text } from 'tamagui';
 import { TransactionItem } from './TransactionItem';
 import * as React from 'react';
 import { TransactionModel } from '../database/transaction-model';
-import { CreateFirstTransactionButton } from './CreateFirstTransactionButton';
+import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
 import { CategoryModel } from '../database/category-model';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -82,7 +82,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
   }, [bottom]);
 
   if (transactions.length === 0) {
-    return <CreateFirstTransactionButton mt="30%" />;
+    return <CreateFirstTransactionSection mt="30%" />;
   }
 
   return (
