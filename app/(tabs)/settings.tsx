@@ -20,7 +20,7 @@ export default function SettingsScreen() {
   return (
     <>
       <ScrollView
-        style={{ paddingTop: top }}
+        style={{ paddingTop: top || 8 }}
         backgroundColor={'$bgPrimary'}
         paddingHorizontal={'$2'}>
         <Text fontSize={'$9'} fontWeight={'bold'} marginBottom={'$4'}>

@@ -33,8 +33,9 @@ export const DatePicker = ({ mode = 'date', date, setDate }: DatePickerProps) =>
       <>
         {show && picker}
         <View
+          backgroundColor="$gray3"
           borderColor="$borderColor"
-          borderWidth={0.5}
+          borderWidth={2}
           borderRadius={8}
           padding="$2"
           onPress={() => setShow(true)}>
