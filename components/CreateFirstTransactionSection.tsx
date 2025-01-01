@@ -2,8 +2,8 @@ import { Text, View, YStack } from 'tamagui';
 import * as React from 'react';
 import { CreateTransactionButtons } from './CreateTransactionButtons';
 
-type CreateFirstTransactionButton = React.ComponentProps<typeof YStack>;
-export const CreateFirstTransactionSection = ({ ...rest }: CreateFirstTransactionButton) => {
+type CreateFirstTransactionSectionProps = React.ComponentProps<typeof YStack>;
+export const CreateFirstTransactionSection = ({ ...rest }: CreateFirstTransactionSectionProps) => {
   return (
     <YStack alignItems="center" justifyContent="center" p="$4" {...rest}>
       <Text color="white" fontWeight="bold" fontSize="$7" mb="$2">
