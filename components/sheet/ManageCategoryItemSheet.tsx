@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { createCategory, updateCategory } from '../../database/helpers';
 import { CustomBackdrop } from '../CustomBackdrop';
-import { Text, View } from 'tamagui';
+import { Text, useTheme, View } from 'tamagui';
 import { spendingCategories } from '../../data/emojis';
 import { Button } from '../button/Button';
 import { PlusCircle } from '@tamagui/lucide-icons';
@@ -25,6 +25,8 @@ export const ManageCategoryItemSheet = ({
   category,
   onClose,
 }: CreateCategorySheetProps) => {
+  const { stroberi } = useTheme();
+  const stroberiColor = stroberi?.get() ?? 'black';
   const [name, setName] = useState(category?.name || '');
   const [selectedIcon, setSelectedIcon] = useState(category?.icon || getRandomIcon());
   const { bottom } = useSafeAreaInsets();
@@ -113,6 +115,24 @@ export const ManageCategoryItemSheet = ({
               onEmojiSelected={handlePick}
               open={isOpen}
               onClose={() => setIsOpen(false)}
+              theme={{
+                search: {
+                  text: '#fff',
+                  placeholder: '#fff',
+                  icon: '#fff',
+                },
+                backdrop: '#16161888',
+                knob: stroberiColor,
+                container: '#282829',
+                header: '#fff',
+                skinTonesContainer: '#252427',
+                category: {
+                  icon: '#fff',
+                  iconActive: '#fff',
+                  container: '#252427',
+                  containerActive: stroberiColor,
+                },
+              }}
             />
           </View>
         </View>
