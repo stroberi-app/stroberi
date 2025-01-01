@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Text, View } from 'tamagui';
-import { PlusCircle } from '@tamagui/lucide-icons';
-import { useRouter } from 'expo-router';
+import { Text, View } from 'tamagui';
 import { Carousel } from '../../components/carousel/Carousel';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { HomeTransactionsSection } from '../../components/HomeTransactionsSection';
@@ -10,6 +8,8 @@ import { SpendByType } from '../../components/charts/SpendByTypeChart';
 import SpendByCategory from '../../components/charts/SpendByCategoryChart';
 import { useCallback, useMemo } from 'react';
 import SpendOverview from '../../components/SpendOverview';
+import { CreateFirstTransactionSection } from '../../components/CreateFirstTransactionSection';
+import { CreateTransactionButtons } from '../../components/CreateTransactionButtons';
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
@@ -33,8 +33,6 @@ export default function HomeScreen() {
     return <View />;
   }, []);
 
-  const router = useRouter();
-
   const carouselData = useMemo(() => {
     return carouselItems.map((_, i) => i);
   }, []);
@@ -47,46 +45,21 @@ export default function HomeScreen() {
         paddingHorizontal="$2">
         <HomeTransactionsSection
           database={database}
-          header={
+          header={transactionCount => (
             <>
               <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
                 Overview
               </Text>
               <Carousel renderItem={renderCarouselItem} data={carouselData} />
-              <View flexDirection="row" gap="$2" marginTop="$4" width="100%">
-                <Button
-                  gap="$0"
-                  paddingHorizontal="$2"
-                  flex={1}
-                  color="$stroberi"
-                  onPress={() => {
-                    router.push({
-                      pathname: '/create-transaction',
-                      params: {
-                        transactionType: 'expense',
-                      },
-                    });
-                  }}>
-                  <PlusCircle color={'$stroberi'} size={16} /> Expense
-                </Button>
-                <Button
-                  flex={1}
-                  color="$green"
-                  gap="$0"
-                  paddingHorizontal="$2"
-                  onPress={() => {
-                    router.push({
-                      pathname: '/create-transaction',
-                      params: {
-                        transactionType: 'income',
-                      },
-                    });
-                  }}>
-                  <PlusCircle color="$green" size={16} /> Income
-                </Button>
-              </View>
+              {transactionCount > 0 ? (
+                <View flexDirection="row" gap="$2" marginTop="$4" width="100%">
+                  <CreateTransactionButtons />
+                </View>
+              ) : (
+                <CreateFirstTransactionSection />
+              )}
             </>
-          }
+          )}
         />
       </View>
     </>
