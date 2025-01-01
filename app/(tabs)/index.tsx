@@ -40,7 +40,7 @@ export default function HomeScreen() {
   return (
     <>
       <View
-        style={{ paddingTop: top, flex: 1 }}
+        style={{ paddingTop: top || 8, flex: 1 }}
         backgroundColor="$bgPrimary"
         paddingHorizontal="$2">
         <HomeTransactionsSection
