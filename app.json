@@ -15,7 +15,8 @@
       "bundleIdentifier": "com.stroberi"
     },
     "android": {
-      "package": "com.dev.stroberi"
+      "package": "com.dev.stroberi",
+      "icon": "./assets/images/icon-android.png"
     },
     "web": {
       "bundler": "metro",
@@ -56,7 +57,12 @@
           "image": "./assets/images/splash2.png",
           "resizeMode": "contain",
           "backgroundColor": "#E54B4B",
-          "imageWidth": 250
+          "ios": {
+            "imageWidth": 250
+          },
+          "android": {
+            "imageWidth": 180
+          }
         }
       ],
       "expo-sqlite"

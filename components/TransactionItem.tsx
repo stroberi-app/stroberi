@@ -5,7 +5,6 @@ import { CategoryModel } from '../database/category-model';
 import { TransactionModel } from '../database/transaction-model';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { formatCurrency } from '../lib/format';
-import * as ContextMenu from 'zeego/context-menu';
 import { useRouter } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useActionSheet } from '@expo/react-native-action-sheet';
@@ -98,7 +97,7 @@ export const TransactionItem = withObservables<
     );
   };
 
-  const component = (
+  return (
     <ReanimatedSwipeable
       key={transaction.id}
       friction={2}
@@ -133,24 +132,5 @@ export const TransactionItem = withObservables<
         </View>
       </View>
     </ReanimatedSwipeable>
-  );
-
-  return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger>{component}</ContextMenu.Trigger>
-      <ContextMenu.Content
-        loop={false}
-        collisionPadding={{}}
-        alignOffset={true}
-        avoidCollisions={true}>
-        <ContextMenu.Preview>{() => component}</ContextMenu.Preview>
-        <ContextMenu.Item key="edit" onSelect={onEdit}>
-          <ContextMenu.ItemTitle>Edit</ContextMenu.ItemTitle>
-        </ContextMenu.Item>
-        <ContextMenu.Item key="delete" destructive onSelect={onDelete}>
-          <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
-        </ContextMenu.Item>
-      </ContextMenu.Content>
-    </ContextMenu.Root>
   );
 });
