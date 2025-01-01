@@ -26,7 +26,7 @@ export const ManageCategoryItemSheet = ({
   onClose,
 }: CreateCategorySheetProps) => {
   const { stroberi } = useTheme();
-  const stroberiColor = stroberi?.get();
+  const stroberiColor = stroberi?.get() ?? 'black';
   const [name, setName] = useState(category?.name || '');
   const [selectedIcon, setSelectedIcon] = useState(category?.icon || getRandomIcon());
   const { bottom } = useSafeAreaInsets();
