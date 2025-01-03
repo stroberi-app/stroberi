@@ -34,7 +34,7 @@ export default function TransactionsScreen() {
         backgroundColor={'$bgPrimary'}
         paddingHorizontal={'$2'}>
         <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-          <Text fontSize={'$9'} fontWeight={'bold'} marginBottom={'$2'}>
+          <Text fontSize={'$8'} fontWeight={'bold'} marginBottom={'$2'}>
             Transactions
           </Text>
           <LinkButton paddingHorizontal={'$2'} onPress={() => sheetRef.current?.present()}>

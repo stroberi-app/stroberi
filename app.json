@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.dev.stroberi",
-      "icon": "./assets/images/icon-android.png"
+      "icon": "./assets/images/logo-round.png"
     },
     "web": {
       "bundler": "metro",
@@ -54,11 +54,11 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash2.png",
+          "image": "./assets/images/icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#E54B4B",
           "ios": {
-            "imageWidth": 250
+            "imageWidth": 230
           },
           "android": {
             "imageWidth": 180
