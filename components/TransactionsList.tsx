@@ -66,12 +66,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
         </Text>
       );
     } else {
-      return (
-        <TransactionItem
-          date={dayjs(item.date).format(DateFormats.FullMonthFullDayTime)}
-          transaction={item}
-        />
-      );
+      return <TransactionItem transaction={item} />;
     }
   }, []);
 

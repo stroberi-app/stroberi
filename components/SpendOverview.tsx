@@ -52,7 +52,7 @@ const SpendOverview = withObservables<
       Q.where('date', Q.gte(fromDate)),
       Q.where('date', Q.lte(toDate))
     )
-    .observe()
+    .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
     .pipe(
       map(transactions => {
         const categories = transactions.reduce(
@@ -82,7 +82,7 @@ const SpendOverview = withObservables<
         Q.where('date', Q.gte(fromDate)),
         Q.where('date', Q.lte(toDate))
       )
-      .observe()
+      .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
       .pipe(
         map(transactions =>
           transactions.reduce((sum, transaction) => sum + transaction.amountInBaseCurrency, 0)
@@ -95,7 +95,7 @@ const SpendOverview = withObservables<
         Q.where('date', Q.gte(fromDate)),
         Q.where('date', Q.lte(toDate))
       )
-      .observe()
+      .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
       .pipe(
         map(transactions =>
           transactions.reduce((sum, transaction) => sum + transaction.amountInBaseCurrency, 0)

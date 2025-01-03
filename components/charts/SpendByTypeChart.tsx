@@ -26,7 +26,7 @@ export const SpendByType = withObservables<
     chartData: database.collections
       .get<TransactionModel>('transactions')
       .query(Q.where('amountInBaseCurrency', type === 'income' ? Q.gte(0) : Q.lt(0)))
-      .observe()
+      .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map(transactions => {
           const last6Months = Array.from({ length: 6 }, (_, i) => {

@@ -11,11 +11,12 @@ import { useActionSheet } from '@expo/react-native-action-sheet';
 import Animated, { SharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 import { Observable } from 'rxjs';
+import dayjs from 'dayjs';
+import { DateFormats } from '../lib/date';
 
 type TransactionItemProps = {
   category?: CategoryModel | null;
   transaction: TransactionModel;
-  date: string;
 };
 
 export const TransactionItem = withObservables<
@@ -26,7 +27,7 @@ export const TransactionItem = withObservables<
     category: transaction.category?.observe(),
     transaction: transaction.observe(),
   };
-})(({ date, category, transaction }: TransactionItemProps) => {
+})(({ category, transaction }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
@@ -127,7 +128,7 @@ export const TransactionItem = withObservables<
             {formatCurrency(transaction.amount, transaction.currencyCode)}
           </Text>
           <Text fontSize="$3" color="gray">
-            {date}
+            {dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
           </Text>
         </View>
       </View>

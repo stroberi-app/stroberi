@@ -4,8 +4,6 @@ import { Database, Q } from '@nozbe/watermelondb';
 import { Observable } from 'rxjs';
 import { Text, YGroup } from 'tamagui';
 import { TransactionItem } from './TransactionItem';
-import dayjs from 'dayjs';
-import { DateFormats } from '../lib/date';
 import * as React from 'react';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,12 +44,7 @@ export const HomeTransactionsSection = withObservables<
           itemLayoutAnimation={LinearTransition}
           data={transactions}
           keyExtractor={transaction => transaction.id}
-          renderItem={({ item: transaction }) => (
-            <TransactionItem
-              date={dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
-              transaction={transaction}
-            />
-          )}
+          renderItem={({ item: transaction }) => <TransactionItem transaction={transaction} />}
         />
       </YGroup>
     </>
