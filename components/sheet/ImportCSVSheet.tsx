@@ -52,6 +52,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         const content = await FileSystem.readAsStringAsync(res.assets?.[0].uri);
         Papa.parse<CSVRow>(content, {
           header: true,
+          skipEmptyLines: true,
           complete: async results => {
             const categories = await database.get<CategoryModel>('categories').query().fetch();
             if (results.data.length === 0) {
