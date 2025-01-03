@@ -82,7 +82,7 @@ export default function SettingsScreen() {
             onPress={() => {
               router.push({
                 pathname: '/webview',
-                params: { url: `${BASE_WEBSITE_URL}/privacy-policy`, title: 'Privacy Policy' },
+                params: { url: `${BASE_WEBSITE_URL}/privacy-policy` },
               });
             }}
           />
@@ -93,7 +93,6 @@ export default function SettingsScreen() {
                 pathname: '/webview',
                 params: {
                   url: `${BASE_WEBSITE_URL}/terms-and-conditions`,
-                  title: 'Terms and Conditions',
                 },
               });
             }}
