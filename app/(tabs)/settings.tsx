@@ -9,6 +9,7 @@ import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { CurrencySelect } from '../../components/CurrencySelect';
 import { ExportCSVSheet } from '../../components/sheet/ExportCSVSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
@@ -17,6 +18,8 @@ export default function SettingsScreen() {
   const exportCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency } = useDefaultCurrency();
+
+  const router = useRouter();
   return (
     <>
       <ScrollView
@@ -74,8 +77,27 @@ export default function SettingsScreen() {
           Legal
         </Text>
         <YGroup>
-          <SettingsItem label={'Privacy Policy'} />
-          <SettingsItem label={'Terms of Service'} />
+          <SettingsItem
+            label="Privacy Policy"
+            onPress={() => {
+              router.push({
+                pathname: '/webview',
+                params: { url: `${BASE_WEBSITE_URL}/privacy-policy`, title: 'Privacy Policy' },
+              });
+            }}
+          />
+          <SettingsItem
+            label="Terms and Conditions"
+            onPress={() => {
+              router.push({
+                pathname: '/webview',
+                params: {
+                  url: `${BASE_WEBSITE_URL}/terms-and-conditions`,
+                  title: 'Terms and Conditions',
+                },
+              });
+            }}
+          />
         </YGroup>
         <View height={140} />
       </ScrollView>
@@ -93,3 +115,5 @@ export default function SettingsScreen() {
     </>
   );
 }
+
+const BASE_WEBSITE_URL = 'https://stroberi.app';
