@@ -1,8 +1,9 @@
-# Stroberi (wip)
-<img src="./assets/images/icon.png" alt="drawing" width="100"/>
+# Stroberi
+<img src="./assets/images/logo-round.png" alt="drawing" width="100"/>
 
 Open-source personal expense tracking app built with React Native. It helps you manage your finances by tracking your expenses and categorizing them.
-It's privary first, so your data is stored locally on your device and never leaves it.
+It's privacy first, so your data is stored locally on your device and never leaves it.
+
 ## Features
 
 - Track daily expenses
@@ -21,13 +22,18 @@ It's privary first, so your data is stored locally on your device and never leav
 - Bottom Sheet Modal
 - Yarn
 
-
-
 ## Local development
+
+```
+yarn install
+```
 
 ```
 yarn start
 ```
+
+
+## Generate native directories
 
 ```
 npx expo prebuild
