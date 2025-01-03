@@ -1,13 +1,13 @@
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { useChartPressState } from 'victory-native';
 import {
+  runOnJS,
   useAnimatedReaction,
   useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { formatCurrencyWorklet } from '../../lib/format';
-import { Canvas, matchFont, Text } from '@shopify/react-native-skia';
 import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
 import { View } from 'tamagui';
 import { CarouselItemText } from '../carousel/CarouselItemText';
@@ -16,6 +16,7 @@ import { CircleSlash } from '@tamagui/lucide-icons';
 import { BarChart } from './BarChart';
 import * as React from 'react';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';
+import { TextInput } from 'react-native';
 
 const animConfig = { duration: 300 };
 
@@ -61,13 +62,6 @@ export const SpendBarChart = <
     return `${state.x.value.value}: ${formattedCurrency}`;
   }, [state?.y.total.value.value]);
 
-  const fontStyle = {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: 'bold' as const,
-  };
-  const font = matchFont(fontStyle);
-
   const ttX = useSharedValue(0);
   const ttY = useSharedValue(0);
 
@@ -84,6 +78,27 @@ export const SpendBarChart = <
     }
   );
 
+  const titleRef = React.useRef<TextInput>(null);
+
+  const updateText = (value: string) => {
+    if (!isActive) {
+      titleRef.current?.setNativeProps({
+        text: title,
+      });
+      return;
+    }
+    if (!titleRef.current) return;
+    titleRef.current.setNativeProps({
+      text: value,
+    });
+  };
+
+  useAnimatedReaction(
+    () => amount.value,
+    val => {
+      runOnJS(updateText)(val);
+    }
+  );
   return (
     <CarouselItemWrapper>
       <View
@@ -92,17 +107,16 @@ export const SpendBarChart = <
         justifyContent="space-between"
         paddingHorizontal="$2"
         marginBottom="$2">
-        {isActive ? (
-          <Canvas
-            style={{
-              height: 17,
-              flex: 1,
-            }}>
-            <Text x={0} y={12} font={font} text={amount} color="white" style="fill" />
-          </Canvas>
-        ) : (
-          <CarouselItemText>{title}</CarouselItemText>
-        )}
+        <TextInput
+          ref={titleRef}
+          defaultValue=""
+          style={{
+            color: 'white',
+            fontSize: 14,
+            fontWeight: 'bold',
+            fontFamily: 'Inter',
+          }}
+        />
       </View>
       <CarouselItemChart>
         {isEmpty ? (
