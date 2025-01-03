@@ -35,4 +35,24 @@ export const DEFAULT_CATEGORIES = [
     name: 'Other',
     icon: '📦',
   },
+  {
+    name: 'Employment',
+    icon: '💰',
+  },
+  {
+    name: 'Gifts',
+    icon: '🎁',
+  },
+  {
+    name: 'Rent',
+    icon: '🏠',
+  },
+  {
+    name: 'Personal Care',
+    icon: '🧼',
+  },
+  {
+    name: 'Groceries',
+    icon: '🍎',
+  },
 ];

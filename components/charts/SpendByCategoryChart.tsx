@@ -46,7 +46,7 @@ export const SpendByCategory = withObservables<
   }
   return {
     categories: database.collections.get<CategoryModel>('categories').query().observe(),
-    chartData: query.observe().pipe(
+    chartData: query.observeWithColumns(['categoryId', 'amountInBaseCurrency']).pipe(
       map(transactions => {
         const categories = transactions.reduce(
           (acc, transaction) => {

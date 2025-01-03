@@ -106,10 +106,15 @@ export const SpendBarChart = <
       </View>
       <CarouselItemChart>
         {isEmpty ? (
-          <View width="100%" height="100%" alignItems="center" justifyContent="center" gap="$3">
-            <CarouselItemText color="darkgray">No data available</CarouselItemText>
-            <CircleSlash size={64} color="darkgray" />
-          </View>
+          <>
+            <View width="100%" height="100%" alignItems="center" justifyContent="center" gap="$3">
+              <CarouselItemText color="darkgray">No data available</CarouselItemText>
+              <CircleSlash size={64} color="darkgray" />
+              <View position={'absolute'} bottom={0}>
+                {footer}
+              </View>
+            </View>
+          </>
         ) : (
           <>
             <BarChart
