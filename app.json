@@ -17,7 +17,7 @@
     "android": {
       "package": "com.stroberi",
       "icon": "./assets/images/logo-round.png",
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "bundler": "metro",
