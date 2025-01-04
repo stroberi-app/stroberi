@@ -25,7 +25,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
-        <data android:scheme="com.dev.stroberi"/>
+        <data android:scheme="com.stroberi"/>
         <data android:scheme="exp+stroberi"/>
       </intent-filter>
     </activity>
