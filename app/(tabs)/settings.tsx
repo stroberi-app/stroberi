@@ -26,7 +26,7 @@ export default function SettingsScreen() {
         style={{ paddingTop: top || 8 }}
         backgroundColor={'$bgPrimary'}
         paddingHorizontal={'$2'}>
-        <Text fontSize={'$9'} fontWeight={'bold'} marginBottom={'$4'}>
+        <Text fontSize={'$8'} fontWeight={'bold'} marginBottom={'$4'}>
           Settings
         </Text>
 

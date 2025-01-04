@@ -8,6 +8,8 @@
       "distribution": "internal"
     },
     "production": {
+      "distribution": "store",
+      "autoIncrement": true
     },
     "development-simulator": {
       "developmentClient": true,

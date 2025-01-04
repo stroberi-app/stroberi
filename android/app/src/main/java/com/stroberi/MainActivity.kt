@@ -1,4 +1,4 @@
-package com.dev.stroberi
+package com.stroberi
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
