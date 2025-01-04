@@ -1,4 +1,4 @@
-package com.dev.stroberi
+package com.stroberi
 
 import android.app.Application
 import android.content.res.Configuration
