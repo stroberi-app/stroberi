@@ -15,6 +15,7 @@ import { useCallback, useMemo } from 'react';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
+  appliedNumberOfFilters?: number;
 };
 
 type ListItem = string | TransactionModel;
@@ -34,7 +35,7 @@ const getDateKey = (date: Date) => {
   );
 };
 
-const TransactionsList = ({ transactions }: TransactionsListProps) => {
+const TransactionsList = ({ transactions, appliedNumberOfFilters }: TransactionsListProps) => {
   const { bottom } = useSafeAreaInsets();
 
   const data = useMemo(() => {
@@ -76,7 +77,7 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
     };
   }, [bottom]);
 
-  if (transactions.length === 0) {
+  if (transactions.length === 0 && appliedNumberOfFilters === 0) {
     return <CreateFirstTransactionSection mt="30%" />;
   }
 

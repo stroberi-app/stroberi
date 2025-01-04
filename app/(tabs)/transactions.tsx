@@ -51,6 +51,7 @@ export default function TransactionsScreen() {
           dateFilter={dateFilter}
           customRange={dateFilter === 'Custom' ? [fromDate, toDate] : undefined}
           categories={selectedCategories}
+          appliedNumberOfFilters={appliedNumberOfFilters}
         />
       </View>
       <BottomSheetDynamicSize sheetRef={sheetRef}>
