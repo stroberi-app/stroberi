@@ -31,16 +31,16 @@ export default function TransactionsScreen() {
       <View
         style={{ paddingTop: top || 8 }}
         flex={1}
-        backgroundColor={'$bgPrimary'}
-        paddingHorizontal={'$2'}>
-        <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-          <Text fontSize={'$8'} fontWeight={'bold'} marginBottom={'$2'}>
+        backgroundColor="$bgPrimary"
+        paddingHorizontal="$2">
+        <View flexDirection="row" justifyContent="space-between" alignItems="center">
+          <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
             Transactions
           </Text>
-          <LinkButton paddingHorizontal={'$2'} onPress={() => sheetRef.current?.present()}>
-            <Filter size={'$1'} color={'$stroberi'} />
+          <LinkButton paddingHorizontal="$2" onPress={() => sheetRef.current?.present()}>
+            <Filter size="$1" color="$stroberi" />
             {appliedNumberOfFilters > 0 && (
-              <Text color={'$stroberi'} fontWeight={'bold'}>
+              <Text color="$stroberi" fontWeight="bold">
                 +{appliedNumberOfFilters}
               </Text>
             )}
@@ -68,23 +68,23 @@ export default function TransactionsScreen() {
         />
       </BottomSheetDynamicSize>
       <BottomSheetDynamicSize sheetRef={dateSheetRef}>
-        <View paddingHorizontal={'$4'} paddingVertical={'$2'} gap={'$5'}>
-          <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-            <Text fontSize={'$6'} fontWeight={'bold'}>
+        <View paddingHorizontal="$4" paddingVertical="$2" gap="$5">
+          <View flexDirection="row" justifyContent="space-between" alignItems="center">
+            <Text fontSize="$6" fontWeight="bold">
               From Date
             </Text>
             <DatePicker date={fromDate} setDate={setFromDate} />
           </View>
-          <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-            <Text fontSize={'$6'} fontWeight={'bold'}>
+          <View flexDirection="row" justifyContent="space-between" alignItems="center">
+            <Text fontSize="$6" fontWeight="bold">
               To Date
             </Text>
             <DatePicker date={toDate} setDate={setToDate} />
           </View>
           <Button
-            backgroundColor={'$green'}
-            gap={'$0'}
-            paddingHorizontal={'$2'}
+            backgroundColor="$green"
+            gap="$0"
+            paddingHorizontal="$2"
             onPress={() => {
               dateSheetRef.current?.close();
               setDateFilter('Custom');
