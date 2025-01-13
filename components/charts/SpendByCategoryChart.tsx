@@ -20,7 +20,7 @@ type SpendByCategoryChartData = {
   total: number;
 }[];
 
-type SpendByCategoryDateFilter = 'all' | 'lastMonth' | 'thisMonth';
+type SpendByCategoryDateFilter = 'thisMonth' | 'lastMonth' | 'thisYear';
 export const SpendByCategory = withObservables<
   { database: Database; dateFilter: SpendByCategoryDateFilter },
   {
@@ -31,18 +31,24 @@ export const SpendByCategory = withObservables<
   let query = database.collections
     .get<TransactionModel>('transactions')
     .query(Q.where('amountInBaseCurrency', Q.lt(0)));
-
+  const today = dayjs();
   if (dateFilter === 'lastMonth') {
-    const startOfMonth = dayjs().subtract(1, 'month').startOf('month').toDate();
-    const endOfMonth = dayjs().subtract(1, 'month').endOf('month').toDate();
+    const startOfMonth = today.subtract(1, 'month').startOf('month').toDate();
+    const endOfMonth = today.subtract(1, 'month').endOf('month').toDate();
     query = query.extend(Q.where('date', Q.gte(startOfMonth.getTime())));
     query = query.extend(Q.where('date', Q.lte(endOfMonth.getTime())));
   }
   if (dateFilter === 'thisMonth') {
-    const startOfMonth = dayjs().startOf('month').toDate();
-    const endOfMonth = dayjs().endOf('month').toDate();
+    const startOfMonth = today.startOf('month').toDate();
+    const endOfMonth = today.endOf('month').toDate();
     query = query.extend(Q.where('date', Q.gte(startOfMonth.getTime())));
     query = query.extend(Q.where('date', Q.lte(endOfMonth.getTime())));
+  }
+  if (dateFilter === 'thisYear') {
+    const startOfYear = today.startOf('year').toDate();
+    const endOfYear = today.endOf('year').toDate();
+    query = query.extend(Q.where('date', Q.gte(startOfYear.getTime())));
+    query = query.extend(Q.where('date', Q.lte(endOfYear.getTime())));
   }
   return {
     categories: database.collections.get<CategoryModel>('categories').query().observe(),
@@ -98,11 +104,11 @@ export const SpendByCategory = withObservables<
           flexWrap={'wrap'}
           alignItems={'center'}>
           <FilterButton
-            active={dateFilter === 'all'}
+            active={dateFilter === 'thisMonth'}
             onPress={() => {
-              setDateFilter('all');
+              setDateFilter('thisMonth');
             }}>
-            All time
+            This month
           </FilterButton>
           <FilterButton
             active={dateFilter === 'lastMonth'}
@@ -112,11 +118,11 @@ export const SpendByCategory = withObservables<
             Last month
           </FilterButton>
           <FilterButton
-            active={dateFilter === 'thisMonth'}
+            active={dateFilter === 'thisYear'}
             onPress={() => {
-              setDateFilter('thisMonth');
+              setDateFilter('thisYear');
             }}>
-            This month
+            This year
           </FilterButton>
         </View>
       }
@@ -145,7 +151,7 @@ type WithFiltersProps = {
   database: Database;
 };
 const WithFilters = ({ database }: WithFiltersProps) => {
-  const [dateFilter, setDateFilter] = React.useState<SpendByCategoryDateFilter>('all');
+  const [dateFilter, setDateFilter] = React.useState<SpendByCategoryDateFilter>('thisMonth');
   return (
     <SpendByCategory dateFilter={dateFilter} setDateFilter={setDateFilter} database={database} />
   );

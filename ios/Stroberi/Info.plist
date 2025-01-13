@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
+          <string>stroberi</string>
           <string>com.stroberi</string>
         </array>
       </dict>

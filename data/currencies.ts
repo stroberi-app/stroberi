@@ -38,4 +38,5 @@ export const currencies: Currency[] = [
   { name: 'Indonesian Rupiah', code: 'IDR' },
   { name: 'Thai Baht', code: 'THB' },
   { name: 'Serbian Dinar', code: 'RSD' },
+  { name: 'Bosnian Convertible Mark', code: 'BAM' },
 ];
