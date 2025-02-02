@@ -1,21 +1,21 @@
 import dayjs from 'dayjs';
-import { CarouselItemWrapper } from './carousel/CarouselItemWrapper';
+import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
 import { Button, Text, View, YGroup } from 'tamagui';
 import { Calendar } from '@tamagui/lucide-icons';
 
-import { LinkButton } from './button/LinkButton';
+import { LinkButton } from '../button/LinkButton';
 import * as React from 'react';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { map, Observable } from 'rxjs';
-import { TransactionModel } from '../database/transaction-model';
-import { formatCurrency } from '../lib/format';
-import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
-import { CategoryModel } from '../database/category-model';
-import { InfoItem } from './InfoItem';
-import { formatDateRange } from '../lib/date';
-import { DatePicker } from './DatePicker';
-import BottomSheetDynamicSize from './filtering/BottomSheetDynamicSize';
+import { TransactionModel } from '../../database/transaction-model';
+import { formatCurrency } from '../../lib/format';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { CategoryModel } from '../../database/category-model';
+import { InfoItem } from '../InfoItem';
+import { formatDateRange } from '../../lib/date';
+import { DatePicker } from '../DatePicker';
+import BottomSheetDynamicSize from '../filtering/BottomSheetDynamicSize';
 import { useState } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
@@ -126,54 +126,50 @@ const SpendOverview = withObservables<
   return (
     <CarouselItemWrapper>
       <View
-        justifyContent={'flex-start'}
-        flexDirection={'row'}
-        marginBottom={'$4'}
-        paddingHorizontal={'$3'}>
-        <LinkButton onPress={onDatePress} color={'white'} backgroundColor={'$gray2'}>
-          <View flexDirection={'row'} gap={'$2'} alignItems={'center'}>
-            <Text fontSize={'$5'}>{formatDateRange(fromDate, toDate)}</Text>
+        justifyContent="flex-start"
+        flexDirection="row"
+        marginBottom="$4"
+        paddingHorizontal="$3">
+        <LinkButton onPress={onDatePress} color="white" backgroundColor="$gray2">
+          <View flexDirection="row" gap="$2" alignItems="center">
+            <Text fontSize="$5">{formatDateRange(fromDate, toDate)}</Text>
             <Calendar size={16} />
           </View>
         </LinkButton>
       </View>
-      <YGroup
-        flexDirection={'row'}
-        paddingHorizontal={'$4'}
-        justifyContent={'space-between'}
-        mb={'$5'}>
-        <YGroup gap={'$5'}>
+      <YGroup flexDirection="row" paddingHorizontal="$4" justifyContent="space-between" mb="$5">
+        <YGroup gap="$5">
           <InfoItem
-            title={'Period Income'}
+            title="Period Income"
             color={totalIncome > 0 ? '$green' : 'white'}
             value={defaultCurrency ? formatCurrency(totalIncome, defaultCurrency) : ''}
           />
           <InfoItem
-            title={'Period Balance'}
+            title="Period Balance"
             color={balance > 0 ? '$green' : balance === 0 ? 'white' : '$stroberi'}
             value={
               defaultCurrency ? formatCurrency(totalIncome + totalExpense, defaultCurrency) : ''
             }
           />
         </YGroup>
-        <YGroup paddingHorizontal={'$4'} gap={'$5'}>
+        <YGroup paddingHorizontal="$4" gap="$5">
           <InfoItem
-            title={'Period Spend'}
+            title="Period Spend"
             color={totalExpense !== 0 ? '$stroberi' : 'white'}
             value={defaultCurrency ? formatCurrency(totalExpense, defaultCurrency) : ''}
           />
-          <InfoItem title={'Transaction No.'} value={transactionCount.toString()} />
+          <InfoItem title="Transaction No." value={transactionCount.toString()} />
         </YGroup>
       </YGroup>
-      <View paddingHorizontal={'$4'} gap={'$1'} mb={'$2'}>
-        <Text fontSize={'$2'}>Top Spend Category</Text>
+      <View paddingHorizontal="$4" gap="$1" mb="$2">
+        <Text fontSize="$2">Top Spend Category</Text>
         {category ? (
-          <Text fontSize={'$5'} fontWeight={'bold'}>
+          <Text fontSize="$5" fontWeight="bold">
             {category?.name ?? 'Uncategorized'} {category?.icon}{' '}
             {defaultCurrency ? formatCurrency(highestSpendCategory$?.total, defaultCurrency) : null}
           </Text>
         ) : (
-          <Text fontSize={'$5'} fontWeight={'bold'}>
+          <Text fontSize="$5" fontWeight="bold">
             N/A
           </Text>
         )}
@@ -202,23 +198,23 @@ const WithDateFilter = ({ database }: WithDateFilterProps) => {
         }}
       />
       <BottomSheetDynamicSize sheetRef={dateSheetRef}>
-        <View paddingHorizontal={'$4'} paddingVertical={'$2'} gap={'$5'}>
-          <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-            <Text fontSize={'$6'} fontWeight={'bold'}>
+        <View paddingHorizontal="$4" paddingVertical="$2" gap="$5">
+          <View flexDirection="row" justifyContent="space-between" alignItems="center">
+            <Text fontSize="$6" fontWeight="bold">
               From Date
             </Text>
             <DatePicker date={tempFromDate.toDate()} setDate={d => setTempFromDate(dayjs(d))} />
           </View>
-          <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-            <Text fontSize={'$6'} fontWeight={'bold'}>
+          <View flexDirection="row" justifyContent="space-between" alignItems="center">
+            <Text fontSize="$6" fontWeight="bold">
               To Date
             </Text>
             <DatePicker date={tempToDate.toDate()} setDate={d => setTempToDate(dayjs(d))} />
           </View>
           <Button
-            backgroundColor={'$green'}
-            gap={'$0'}
-            paddingHorizontal={'$2'}
+            backgroundColor="$green"
+            gap="$0"
+            paddingHorizontal="$2"
             onPress={() => {
               setFromDate(tempFromDate);
               setToDate(tempToDate);

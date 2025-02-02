@@ -12,7 +12,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stroberi"
+      "bundleIdentifier": "com.stroberi",
+      "buildNumber": "4",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.stroberi",

@@ -59,7 +59,7 @@ function RootLayoutNav() {
   return (
     <GestureHandlerRootView style={style}>
       <KeyboardProvider>
-        <TamaguiProvider config={config} defaultTheme={'dark'}>
+        <TamaguiProvider config={config} defaultTheme="dark">
           <ActionSheetProvider>
             <DatabaseProvider database={database}>
               <BottomSheetModalProvider>
