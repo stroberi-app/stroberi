@@ -3,11 +3,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 import { Carousel } from '../../components/carousel/Carousel';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { HomeTransactionsSection } from '../../components/HomeTransactionsSection';
+import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
 import { SpendByType } from '../../components/charts/SpendByTypeChart';
 import SpendByCategory from '../../components/charts/SpendByCategoryChart';
 import { useCallback, useMemo } from 'react';
-import SpendOverview from '../../components/SpendOverview';
+import SpendOverview from '../../components/home/SpendOverview';
 import { CreateFirstTransactionSection } from '../../components/CreateFirstTransactionSection';
 import { CreateTransactionButtons } from '../../components/CreateTransactionButtons';
 

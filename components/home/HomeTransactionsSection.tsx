@@ -1,9 +1,9 @@
-import { TransactionModel } from '../database/transaction-model';
+import { TransactionModel } from '../../database/transaction-model';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Observable } from 'rxjs';
 import { Text, YGroup } from 'tamagui';
-import { TransactionItem } from './TransactionItem';
+import { TransactionItem } from '../TransactionItem';
 import * as React from 'react';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
