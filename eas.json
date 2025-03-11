@@ -18,5 +18,8 @@
         "simulator": true
       }
     }
+  },
+  "cli": {
+    "appVersionSource": "remote"
   }
 }
