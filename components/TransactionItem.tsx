@@ -107,6 +107,7 @@ export const TransactionItem = withObservables<
       renderRightActions={renderRightAction}>
       <View
         flexDirection="row"
+        alignItems="center"
         paddingVertical="$2"
         paddingHorizontal="$4"
         gap="$4"
