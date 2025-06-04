@@ -15,7 +15,9 @@ export type SpendByMonthChartData = {
   month: string;
   year: number;
   total: number;
+  sortKey: number;
 }[];
+
 export const SpendByType = withObservables<
   { database: Database; type: 'expense' | 'income' },
   {
@@ -30,32 +32,42 @@ export const SpendByType = withObservables<
       .pipe(
         map(transactions => {
           const last6Months = Array.from({ length: 6 }, (_, i) => {
-            return dayjs().subtract(i, 'month').toDate();
+            return dayjs().subtract(i, 'month');
           }).reverse();
 
           return last6Months.map(date => {
-            const month = date.toLocaleString('default', { month: 'short' });
-            const year = date.getFullYear();
+            const month = date.format('MMM');
+            const year = date.year();
+            const sortKey = date.valueOf(); // Use timestamp for proper sorting
+            
             const total = transactions
               .filter(transaction => {
-                const transactionDate = new Date(transaction.date);
+                const transactionDate = dayjs(transaction.date);
                 return (
-                  transactionDate.getMonth() === date.getMonth() &&
-                  transactionDate.getFullYear() === date.getFullYear()
+                  transactionDate.month() === date.month() &&
+                  transactionDate.year() === date.year()
                 );
               })
               .reduce((acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency), 0);
+              
             return {
               month,
               year,
+              sortKey,
               total,
             };
-          });
+          }).sort((a, b) => a.sortKey - b.sortKey); // Ensure proper chronological order
         })
       ),
   };
 })(({ chartData, type }: SpendByMonthProps) => {
   const { defaultCurrency } = useDefaultCurrency();
+  
+  // Custom formatter for month labels - just show month without year
+  const formatMonthLabel = (month: any) => {
+    return month?.toString() || '';
+  };
+
   return (
     <SpendBarChart
       chartData={chartData}
@@ -67,6 +79,7 @@ export const SpendByType = withObservables<
       isEmpty={chartData.every(el => el.total === 0)}
       xKey={'month'}
       yKeys={['total']}
+      formatXLabel={formatMonthLabel}
     />
   );
 });

@@ -33,6 +33,7 @@ type SpendBarChartProps<
   barCount?: number;
   barWidth?: number;
   footer?: React.ReactNode;
+  formatXLabel?: (value: any) => string;
 };
 
 export const SpendBarChart = <
@@ -48,8 +49,10 @@ export const SpendBarChart = <
   barCount,
   barWidth,
   footer,
+  formatXLabel,
 }: SpendBarChartProps<RawData, XK, YK>) => {
   const { defaultCurrency } = useDefaultCurrency();
+  
   const { state, isActive } = useChartPressState({
     x: xKey as string,
     y: yKeys.reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as Record<string, number>),
@@ -99,6 +102,7 @@ export const SpendBarChart = <
       runOnJS(updateText)(val);
     }
   );
+
   return (
     <CarouselItemWrapper>
       <View
@@ -144,6 +148,7 @@ export const SpendBarChart = <
               }}
               barCount={barCount}
               barWidth={barWidth}
+              formatXLabel={formatXLabel}
             />
             {footer}
           </>
