@@ -40,7 +40,7 @@
     "expo": "^52.0.28",
     "expo-blur": "~14.0.1",
     "expo-build-properties": "~0.13.1",
-    "expo-dev-client": "~5.0.4",
+    "expo-dev-client": "~5.0.20",
     "expo-document-picker": "~13.0.1",
     "expo-file-system": "~18.0.4",
     "expo-font": "~13.0.1",
