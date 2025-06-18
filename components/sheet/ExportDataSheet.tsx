@@ -18,9 +18,9 @@ import useTransactionExport, {
   ExportColumn,
   ExportDateRange,
   ExportDestination,
+  EXTENDED_EXPORT_COLUMNS,
 } from '../../hooks/useTransactionExport';
 import dayjs from 'dayjs';
-import { Platform } from 'react-native';
 
 type ExportDataSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -37,15 +37,8 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
   const [selectedDestination, setSelectedDestination] = useState<ExportDestination>('csv');
   const [selectedDateOption, setSelectedDateOption] = useState<DateOption>('last30');
 
-  // Smart defaults - just the essential fields
-  const [includedColumns] = useState<ExportColumn[]>([
-    { name: 'date', checked: true, label: 'Date' },
-    { name: 'amount', checked: true, label: 'Amount' },
-    { name: 'merchant', checked: true, label: 'Merchant' },
-    { name: 'category', checked: true, label: 'Category' },
-    { name: 'currencyCode', checked: true, label: 'Currency' },
-    { name: 'note', checked: true, label: 'Notes' },
-  ]);
+  // Smart defaults - comprehensive export columns
+  const [includedColumns] = useState<ExportColumn[]>(EXTENDED_EXPORT_COLUMNS);
 
   const { exportTransactions, isLoading } = useTransactionExport();
 
