@@ -4,11 +4,12 @@ import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { Spinner, Text, View, YStack, XStack, ScrollView } from 'tamagui';
 import { Button } from '../button/Button';
-import { ArrowLeft, Calendar, DollarSign } from '@tamagui/lucide-icons';
+import { ArrowLeft, Calendar, FolderOutput } from '@tamagui/lucide-icons';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
 import useTransactionExport, {
   ExportDateRange,
   TransactionExportData,
+  EXTENDED_EXPORT_COLUMNS,
 } from '../../hooks/useTransactionExport';
 import dayjs from 'dayjs';
 
@@ -28,10 +29,11 @@ export const TransactionPreviewSheet = forwardRef<
   const { bottom } = useSafeAreaInsets();
   const [transactions, setTransactions] = useState<TransactionExportData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [dateRange, setDateRange] = useState<ExportDateRange | null>(null);
   const sheetRef = React.useRef<BottomSheetModal>(null);
 
-  const { fetchTransactionsForExport } = useTransactionExport();
+  const { fetchTransactionsForExport, exportTransactions } = useTransactionExport();
 
   useImperativeHandle(ref, () => ({
     present: (dateRange: ExportDateRange) => {
@@ -74,6 +76,23 @@ export const TransactionPreviewSheet = forwardRef<
     return dayjs(dateString).format('MMM DD, YYYY');
   };
 
+  const handleExport = async () => {
+    if (!dateRange) return;
+
+    setIsExporting(true);
+    try {
+      await exportTransactions({
+        dateRange,
+        columns: EXTENDED_EXPORT_COLUMNS,
+        destination: 'csv',
+      });
+    } catch (error) {
+      console.error('Failed to export transactions:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <BottomSheetModal
       ref={sheetRef}
@@ -113,6 +132,20 @@ export const TransactionPreviewSheet = forwardRef<
                 </Text>
               )}
             </View>
+            <Button
+              size="$3"
+              variant="outlined"
+              onPress={handleExport}
+              disabled={isExporting || transactions.length === 0}
+              backgroundColor="$green2"
+              borderColor="$green8"
+              opacity={isExporting || transactions.length === 0 ? 0.5 : 1}>
+              {isExporting ? (
+                <Spinner size="small" color="$green10" />
+              ) : (
+                <FolderOutput size={16} color="$green10" />
+              )}
+            </Button>
           </XStack>
 
           {/* Summary */}
@@ -183,7 +216,10 @@ export const TransactionPreviewSheet = forwardRef<
                         </View>
 
                         <View alignItems="flex-end">
-                          <Text fontSize="$4" fontWeight="700" color="$red10">
+                          <Text
+                            fontSize="$4"
+                            fontWeight="700"
+                            color={transaction.amountInBaseCurrency >= 0 ? '$green10' : '$red10'}>
                             {formatAmount(transaction.amount, transaction.currencyCode)}
                           </Text>
                           {transaction.currencyCode !== 'USD' && (

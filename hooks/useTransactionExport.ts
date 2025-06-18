@@ -6,9 +6,7 @@ import Papa from 'papaparse';
 import dayjs from 'dayjs';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import * as DocumentPicker from 'expo-document-picker';
 import useToast from './useToast';
-import { Platform } from 'react-native';
 
 export type ExportColumn = {
   name: string;
@@ -46,6 +44,23 @@ export type ExportOptions = {
   columns: ExportColumn[];
   destination: ExportDestination;
 };
+
+// Shared default export columns
+export const DEFAULT_EXPORT_COLUMNS: ExportColumn[] = [
+  { name: 'date', checked: true, label: 'date' },
+  { name: 'amount', checked: true, label: 'amount' },
+  { name: 'merchant', checked: true, label: 'merchant' },
+  { name: 'category', checked: true, label: 'category' },
+  { name: 'currencyCode', checked: true, label: 'currencyCode' },
+  { name: 'note', checked: true, label: 'note' },
+];
+
+export const EXTENDED_EXPORT_COLUMNS: ExportColumn[] = [
+  ...DEFAULT_EXPORT_COLUMNS,
+  { name: 'baseCurrencyCode', checked: true, label: 'baseCurrencyCode' },
+  { name: 'amountInBaseCurrency', checked: true, label: 'amountInBaseCurrency' },
+  { name: 'exchangeRate', checked: true, label: 'exchangeRate' },
+];
 
 const useTransactionExport = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -163,27 +178,6 @@ const useTransactionExport = () => {
     const content = fileType === 'csv' ? Papa.unparse(data) : JSON.stringify(data, null, 2);
     const mimeType = fileType === 'csv' ? 'text/csv' : 'application/json';
 
-    if (Platform.OS === 'android') {
-      // Android: Use SAF for direct directory selection
-      try {
-        const permissions =
-          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-
-        if (permissions.granted) {
-          const safUri = await FileSystem.StorageAccessFramework.createFileAsync(
-            permissions.directoryUri,
-            filename,
-            mimeType
-          );
-          await FileSystem.StorageAccessFramework.writeAsStringAsync(safUri, content);
-          return;
-        }
-      } catch (error) {
-        console.log('SAF failed, using sharing fallback:', error);
-      }
-    }
-
-    // iOS or Android fallback: Create temp file and share
     const tempPath = FileSystem.cacheDirectory + filename;
     await FileSystem.writeAsStringAsync(tempPath, content);
 
@@ -192,7 +186,6 @@ const useTransactionExport = () => {
       mimeType,
     });
 
-    // Clean up temp file after a delay (sharing might be async)
     setTimeout(async () => {
       try {
         await FileSystem.deleteAsync(tempPath, { idempotent: true });
@@ -200,24 +193,6 @@ const useTransactionExport = () => {
         console.log('Failed to clean up temp file:', error);
       }
     }, 5000);
-  };
-
-  const exportToCSV = async (data: Record<string, unknown>[], filename: string): Promise<void> => {
-    try {
-      await showSaveOptions(data, filename, 'csv');
-    } catch (error) {
-      console.error('CSV export error:', error);
-      throw new Error('Failed to export CSV file');
-    }
-  };
-
-  const exportToJSON = async (data: Record<string, unknown>[], filename: string): Promise<void> => {
-    try {
-      await showSaveOptions(data, filename, 'json');
-    } catch (error) {
-      console.error('JSON export error:', error);
-      throw new Error('Failed to export JSON file');
-    }
   };
 
   const generateFilename = (dateRange: ExportDateRange, destination: ExportDestination): string => {

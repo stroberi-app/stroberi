@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { CustomBackdrop } from '../CustomBackdrop';
-import { Spinner, Text, View, YStack } from 'tamagui';
+import { Spinner, Text, View, YStack, Progress, XStack, Separator } from 'tamagui';
 import { Button } from '../button/Button';
-import { FolderInput } from '@tamagui/lucide-icons';
+import {
+  FolderInput,
+  Download,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Info,
+} from '@tamagui/lucide-icons';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
+import { ErrorSheet, ErrorInfo } from './ErrorSheet';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -35,29 +43,151 @@ type ImportCSVSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
 };
 
-const snapPoints = ['50%'];
+interface ImportProgress {
+  phase: 'parsing' | 'validating' | 'importing' | 'complete';
+  current: number;
+  total: number;
+  message: string;
+}
+
+const snapPoints = ['65%'];
+const BATCH_SIZE = 10;
+
 export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
   const toast = useToast();
   const { bottom } = useSafeAreaInsets();
   const [importing, setImporting] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState<ImportProgress | null>(null);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
+
+  const errorSheetRef = useRef<BottomSheetModal>(null);
 
   const { defaultCurrency } = useDefaultCurrency();
   const database = useDatabase();
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const showError = (error: ErrorInfo) => {
+    setErrorInfo(error);
+    errorSheetRef.current?.present();
+  };
+
+  const hideError = () => {
+    errorSheetRef.current?.dismiss();
+    setErrorInfo(null);
+  };
+
+  const resetAllStates = () => {
+    setImporting(false);
+    setDownloading(false);
+    setProgress(null);
+    setErrorInfo(null);
+  };
+
+  const handleRetry = () => {
+    // First dismiss the error sheet and reset error state
+    hideError();
+    // Small delay to ensure sheet is dismissed before starting new import
+    setTimeout(() => {
+      handleImport();
+    }, 300);
+  };
+
+  const validateCSVRow = (row: CSVRow, index: number): string[] => {
+    const errors: string[] = [];
+    const { amount, date, currencyCode } = row;
+
+    if (!amount || !date || !currencyCode) {
+      errors.push(
+        `Row ${index + 1}: Missing required fields (merchant, amount, date, or currency)`
+      );
+    }
+
+    if (amount && isNaN(Number(amount))) {
+      errors.push(`Row ${index + 1}: Amount must be a valid number`);
+    }
+
+    if (date) {
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        errors.push(`Row ${index + 1}: Date format is invalid (use YYYY-MM-DD)`);
+      }
+    }
+
+    if (currencyCode && !currencies.some(currency => currency.code === currencyCode)) {
+      errors.push(`Row ${index + 1}: Currency code '${currencyCode}' is not supported`);
+    }
+
+    return errors;
+  };
+
+  const processTransactionsInBatches = async (
+    transactions: CreateTransactionPayload[],
+    updateProgress: (current: number) => void
+  ) => {
+    const totalBatches = Math.ceil(transactions.length / BATCH_SIZE);
+
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      const start = batchIndex * BATCH_SIZE;
+      const end = Math.min(start + BATCH_SIZE, transactions.length);
+      const batch = transactions.slice(start, end);
+
+      await Promise.all(batch.map(transaction => createTransaction(transaction)));
+
+      updateProgress(end);
+
+      await sleep(50);
+    }
+  };
+
   const handleImport = async () => {
+    // Prevent multiple simultaneous imports
+    if (importing) return;
+
+    // Reset all states at the beginning
     setImporting(true);
+    setProgress(null);
+    setErrorInfo(null);
+
     try {
+      setProgress({
+        phase: 'parsing',
+        current: 0,
+        total: 0,
+        message: 'Choose your CSV file...',
+      });
+
       const res = await DocumentPicker.getDocumentAsync({ type: 'text/csv' });
-      if (res.assets?.[0].uri) {
-        const content = await FileSystem.readAsStringAsync(res.assets?.[0].uri);
-        Papa.parse<CSVRow>(content, {
-          header: true,
-          skipEmptyLines: true,
-          complete: async results => {
-            const categories = await database.get<CategoryModel>('categories').query().fetch();
+      if (!res.assets?.[0].uri) {
+        setImporting(false);
+        return;
+      }
+
+      setProgress(prev => (prev ? { ...prev, message: 'Reading your file...' } : null));
+      await sleep(100);
+
+      const content = await FileSystem.readAsStringAsync(res.assets[0].uri);
+
+      setProgress(prev => (prev ? { ...prev, message: 'Processing CSV data...' } : null));
+      await sleep(100);
+
+      Papa.parse<CSVRow>(content, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async results => {
+          try {
             if (results.data.length === 0) {
-              console.log('No data found in the CSV file');
               setImporting(false);
+              setProgress(null);
+              showError({
+                title: 'Empty File',
+                message:
+                  "Your CSV file doesn't contain any transaction data. Please check the file and try again.",
+                type: 'file',
+                showTemplateButton: true,
+                showRetryButton: true,
+              });
               return;
             }
 
@@ -67,167 +197,368 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
             );
 
             if (missingColumns.length > 0) {
-              console.log(`Missing required columns: ${missingColumns.join(', ')}`);
               setImporting(false);
-              toast.alert({
-                title: 'Failed to import.',
-                preset: 'error',
-                message: `Missing required columns: ${missingColumns.join(', ')}`,
+              setProgress(null);
+              showError({
+                title: 'Wrong Format',
+                message: `Your CSV file is missing required columns. Please make sure your file includes all the necessary columns and matches our template format.`,
+                errors: [`Missing columns: ${missingColumns.join(', ')}`],
+                type: 'format',
+                showTemplateButton: true,
+                showRetryButton: true,
               });
               return;
             }
 
+            setProgress({
+              phase: 'validating',
+              current: 0,
+              total: results.data.length,
+              message: 'Checking your transactions...',
+            });
+
+            const categories = await database.get<CategoryModel>('categories').query().fetch();
             const validTransactions: CreateTransactionPayload[] = [];
-            const errors: string[] = [];
+            const allErrors: string[] = [];
 
-            for (let index = 0; index < results.data.length; index++) {
-              const row = results.data[index];
-              if (
-                row &&
-                typeof row === 'object' &&
-                (!('merchant' in row) ||
-                  !('amount' in row) ||
-                  !('date' in row) ||
-                  !('currencyCode' in row))
-              ) {
-                errors.push(`Row ${index + 1}: Missing required fields`);
-              }
-              const { merchant, amount, date, note, currencyCode, category, categoryIcon } = row;
+            for (let i = 0; i < results.data.length; i += BATCH_SIZE) {
+              const chunk = results.data.slice(i, Math.min(i + BATCH_SIZE, results.data.length));
 
-              if (!amount || !date || !currencyCode) {
-                errors.push(`Row ${index + 1}: Missing required fields`);
-              }
+              for (let j = 0; j < chunk.length; j++) {
+                const rowIndex = i + j;
+                const row = chunk[j];
 
-              if (isNaN(Number(amount))) {
-                errors.push(`Row ${index + 1}: Amount should be a number`);
-              }
+                if (!row || typeof row !== 'object') {
+                  allErrors.push(`Row ${rowIndex + 1}: Invalid data format`);
+                  continue;
+                }
 
-              const parsedDate = new Date(date);
-              if (isNaN(parsedDate.getTime())) {
-                errors.push(`Row ${index + 1}: Invalid date format`);
-              }
-              // valid currency code
-              if (!currencies.some(currency => currency.code === currencyCode)) {
-                errors.push(`Row ${index + 1}: Invalid currency code`);
-              }
+                const validationErrors = validateCSVRow(row, rowIndex);
+                if (validationErrors.length > 0) {
+                  allErrors.push(...validationErrors);
+                  continue;
+                }
 
-              let matchedCategory = categories.find(cat => cat.name === category);
+                const { merchant, amount, date, note, currencyCode, category, categoryIcon } = row;
 
-              if (!matchedCategory && category && categoryIcon && !errors.length) {
-                matchedCategory = await createCategory({
-                  name: category,
-                  icon: categoryIcon,
+                let matchedCategory = categories.find(cat => cat.name === category);
+
+                if (!matchedCategory && category && categoryIcon) {
+                  try {
+                    matchedCategory = await createCategory({
+                      name: category,
+                      icon: categoryIcon,
+                    });
+                  } catch (error: unknown) {
+                    console.warn(`Failed to create category ${category}:`, error);
+                  }
+                }
+
+                validTransactions.push({
+                  merchant,
+                  amount: Number(amount),
+                  date: new Date(date),
+                  note: note || '',
+                  currencyCode,
+                  categoryId: matchedCategory?.id ?? null,
+                  baseCurrency: defaultCurrency as string,
                 });
               }
-              validTransactions.push({
-                merchant,
-                amount: Number(amount),
-                date: parsedDate,
-                note: note || '',
-                currencyCode,
-                categoryId: matchedCategory?.id ?? null,
-                baseCurrency: defaultCurrency as string,
-              });
+
+              setProgress(prev =>
+                prev
+                  ? {
+                      ...prev,
+                      current: Math.min(i + BATCH_SIZE, results.data.length),
+                      message: `Validated ${Math.min(i + BATCH_SIZE, results.data.length)} out of ${results.data.length} transactions`,
+                    }
+                  : null
+              );
+
+              await sleep(50);
             }
 
-            if (errors.length > 0) {
-              toast.alert({
-                title: 'Failed to import.',
-                preset: 'error',
-                message: errors.join('\n'),
-              });
+            if (allErrors.length > 0) {
               setImporting(false);
+              setProgress(null);
+              showError({
+                title: 'Data Validation Issues',
+                message: `We found ${allErrors.length} issue${allErrors.length > 1 ? 's' : ''} in your CSV file. Please fix these issues and try importing again.`,
+                errors: allErrors.slice(0, 10), // Show first 10 errors
+                type: 'validation',
+                showTemplateButton: true,
+                showRetryButton: true,
+              });
               return;
             }
 
-            for (const transaction of validTransactions) {
-              await createTransaction(transaction);
+            if (validTransactions.length === 0) {
+              setImporting(false);
+              setProgress(null);
+              showError({
+                title: 'No Valid Transactions',
+                message:
+                  "We couldn't find any valid transactions in your CSV file. Please check the format and try again.",
+                type: 'validation',
+                showTemplateButton: true,
+                showRetryButton: true,
+              });
+              return;
             }
 
-            if (validTransactions.length > 0) {
-              toast.show({
-                title: 'Success',
-                message: `Imported ${validTransactions.length} ${
-                  validTransactions.length === 1 ? 'transaction' : 'transactions'
-                }`,
-                preset: 'custom',
-                duration: 2,
-              });
-            } else {
-              toast.show({
-                title: 'Error',
-                message: `No transactions found in the CSV file`,
-                preset: 'error',
-                duration: 2,
-              });
-            }
+            setProgress({
+              phase: 'importing',
+              current: 0,
+              total: validTransactions.length,
+              message: 'Adding transactions to your account...',
+            });
 
-            // showToast(validTransactions.length);
+            await processTransactionsInBatches(validTransactions, current => {
+              setProgress(prev =>
+                prev
+                  ? {
+                      ...prev,
+                      current,
+                      message: `Added ${current} out of ${validTransactions.length} transactions`,
+                    }
+                  : null
+              );
+            });
+
+            setProgress({
+              phase: 'complete',
+              current: validTransactions.length,
+              total: validTransactions.length,
+              message: 'All done! Your transactions are ready.',
+            });
+
+            toast.show({
+              title: '🎉 Import successful!',
+              message: `Successfully imported ${validTransactions.length} ${
+                validTransactions.length === 1 ? 'transaction' : 'transactions'
+              } to your account.`,
+              preset: 'custom',
+              duration: 4,
+            });
+
+            await sleep(1500);
             sheetRef.current?.dismiss();
-          },
-        });
-      }
-    } catch (e) {
-      console.error(e);
+
+            // Reset states after dismissing the sheet
+            setTimeout(() => {
+              setImporting(false);
+              setProgress(null);
+            }, 500);
+          } catch (error) {
+            console.error('Import error:', error);
+            setImporting(false);
+            setProgress(null);
+            showError({
+              title: 'Import Failed',
+              message:
+                "We couldn't complete the import. Please try again or contact support if the issue persists.",
+              type: 'import',
+              showRetryButton: true,
+            });
+          }
+        },
+        error: (error: unknown) => {
+          console.error('CSV parse error:', error);
+          setImporting(false);
+          setProgress(null);
+          showError({
+            title: "Can't Read Your File",
+            message:
+              "There seems to be an issue with your CSV file format. Make sure it's a valid CSV file and try again.",
+            type: 'parse',
+            showTemplateButton: true,
+            showRetryButton: true,
+          });
+        },
+      });
+    } catch (error) {
+      console.error('File selection error:', error);
+      setImporting(false);
+      setProgress(null);
+      showError({
+        title: 'File Error',
+        message: "We couldn't read the selected file. Please try selecting a different file.",
+        type: 'file',
+        showRetryButton: true,
+      });
     }
-    setImporting(false);
   };
 
   const handleDownloadCSVFileTemplate = async () => {
     setDownloading(true);
     try {
-      const template = `merchant,amount,date,note,currencyCode,category,categoryIcon`;
-      const uri = FileSystem.cacheDirectory + 'template.csv';
+      const template = `merchant,amount,date,note,currencyCode,category,categoryIcon
+Starbucks,-4.50,2024-01-15,Morning coffee,USD,Food & Drink,☕
+Amazon,-29.99,2024-01-14,Book purchase,USD,Shopping,📦
+Salary,3000.00,2024-01-01,Monthly salary,USD,Income,💰`;
+      const uri = FileSystem.cacheDirectory + 'stroberi_csv_template.csv';
       await FileSystem.writeAsStringAsync(uri, template);
       await Sharing.shareAsync(uri);
     } catch (e) {
       console.error(e);
+      showError({
+        title: 'Download Failed',
+        message: "We couldn't create the template file. Please try again.",
+        type: 'file',
+        showRetryButton: false,
+      });
     }
     setDownloading(false);
   };
 
+  const getPhaseIcon = (phase: string) => {
+    switch (phase) {
+      case 'parsing':
+        return <FileText size={16} color="$blue9" />;
+      case 'validating':
+        return <AlertCircle size={16} color="$orange9" />;
+      case 'importing':
+        return <FolderInput size={16} color="$green9" />;
+      case 'complete':
+        return <CheckCircle size={16} color="$green9" />;
+      default:
+        return <Info size={16} color="$gray9" />;
+    }
+  };
+
   return (
-    <BottomSheetModal
-      ref={sheetRef}
-      enableContentPanningGesture={false}
-      snapPoints={snapPoints}
-      stackBehavior="push"
-      enableDynamicSizing={false}
-      enablePanDownToClose={true}
-      animateOnMount={true}
-      backdropComponent={CustomBackdrop}
-      handleIndicatorStyle={handleIndicatorStyle}
-      backgroundStyle={backgroundStyle}>
-      <View padding={'$4'} gap={'$2'} pb={bottom + 16} height={'100%'}>
-        <View flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-          <Text fontSize={'$6'} fontWeight={'bold'}>
-            Import Transactions from CSV file
-          </Text>
+    <>
+      <BottomSheetModal
+        ref={sheetRef}
+        enableContentPanningGesture={false}
+        snapPoints={snapPoints}
+        stackBehavior="push"
+        enableDynamicSizing={false}
+        enablePanDownToClose={!importing}
+        animateOnMount={true}
+        backdropComponent={CustomBackdrop}
+        handleIndicatorStyle={handleIndicatorStyle}
+        backgroundStyle={backgroundStyle}
+        onAnimate={(fromIndex, toIndex) => {
+          // Reset states when sheet is opened (going from -1 to 0)
+          if (fromIndex === -1 && toIndex === 0) {
+            resetAllStates();
+          }
+        }}>
+        <View padding={'$4'} pb={bottom + 16} height={'100%'}>
+          <XStack justifyContent={'space-between'} alignItems={'center'} mb={'$3'}>
+            <Text fontSize={'$6'} fontWeight={'bold'} color={'$gray12'}>
+              Import Transactions
+            </Text>
+            <FileText size={24} color="$gray9" />
+          </XStack>
+
+          <Separator mb={'$4'} />
+
+          {!importing && !progress && (
+            <YStack gap={'$3'} mb={'$4'}>
+              <XStack alignItems={'flex-start'} gap={'$3'} pr={'$3'}>
+                <Info size={18} color="$blue9" mt={'$1'} />
+                <YStack flex={1} gap={'$2'}>
+                  <Text fontSize={'$4'} fontWeight={'600'} color={'$gray12'}>
+                    Ready to import your transactions?
+                  </Text>
+                  <Text fontSize={'$3'} color={'$gray11'} lineHeight={'$1'}>
+                    Upload a CSV file with your transaction data. Make sure it includes columns for
+                    merchant, amount, date, and currency code.
+                  </Text>
+                </YStack>
+              </XStack>
+
+              <XStack alignItems={'center'} gap={'$3'} mt={'$2'} pr={'$3'}>
+                <Download size={16} color="$gray9" />
+                <Text fontSize={'$3'} color={'$gray11'}>
+                  Don't have a CSV? Download our template with example data to get started.
+                </Text>
+              </XStack>
+            </YStack>
+          )}
+
+          {progress && (
+            <YStack gap={'$4'} my={'$4'} p={'$4'} backgroundColor={'$gray2'} borderRadius={'$4'}>
+              <XStack alignItems={'center'} justifyContent={'center'} gap={'$3'}>
+                {getPhaseIcon(progress.phase)}
+                <Text fontSize={'$4'} fontWeight={'600'} textAlign={'center'} color={'$gray12'}>
+                  {progress.message}
+                </Text>
+              </XStack>
+
+              <YStack gap={'$2'}>
+                <Progress
+                  value={progress.total > 0 ? (progress.current / progress.total) * 100 : 0}
+                  backgroundColor={'$gray5'}
+                  height={'$1'}>
+                  <Progress.Indicator backgroundColor={'$green9'} />
+                </Progress>
+                <XStack justifyContent={'space-between'} alignItems={'center'}>
+                  <Text fontSize={'$2'} color={'$gray10'}>
+                    {progress.phase === 'parsing' && 'Getting ready...'}
+                    {progress.phase === 'validating' && `${progress.current} / ${progress.total}`}
+                    {progress.phase === 'importing' && `${progress.current} / ${progress.total}`}
+                    {progress.phase === 'complete' && 'Complete!'}
+                  </Text>
+                  <Text fontSize={'$2'} color={'$gray10'}>
+                    {progress.total > 0
+                      ? `${Math.round((progress.current / progress.total) * 100)}%`
+                      : ''}
+                  </Text>
+                </XStack>
+              </YStack>
+            </YStack>
+          )}
+
+          <YStack gap={'$3'} mt={'auto'}>
+            <Button
+              fontWeight={'600'}
+              backgroundColor={'$gray8'}
+              borderColor={'$gray7'}
+              borderWidth={1}
+              onPress={handleDownloadCSVFileTemplate}
+              disabled={importing || downloading}>
+              <XStack alignItems={'center'} gap={'$2'}>
+                {downloading ? (
+                  <Spinner size="small" color={'white'} />
+                ) : (
+                  <Download size={18} color={'white'} />
+                )}
+                <Text color={'white'} fontWeight={'600'}>
+                  {downloading ? 'Preparing...' : 'Download Template'}
+                </Text>
+              </XStack>
+            </Button>
+
+            <Button
+              fontWeight={'600'}
+              backgroundColor={'$green9'}
+              onPress={handleImport}
+              disabled={importing || downloading}>
+              <XStack alignItems={'center'} gap={'$2'}>
+                {importing ? (
+                  <Spinner size="small" color={'white'} />
+                ) : (
+                  <FolderInput size={18} color={'white'} />
+                )}
+                <Text color={'white'} fontWeight={'600'}>
+                  {importing ? 'Importing...' : 'Choose CSV File'}
+                </Text>
+              </XStack>
+            </Button>
+          </YStack>
         </View>
-        <Text>
-          Make sure your CSV file is in the correct format. You can download an example CSV file
-          bellow.
-        </Text>
-        <YStack gap={'$4'} mt={'auto'}>
-          <Button
-            fontWeight={'bold'}
-            backgroundColor={'#0f396e'}
-            onPress={() => handleDownloadCSVFileTemplate()}
-            disabled={importing}>
-            Download CSV file template
-            {downloading ? <Spinner color={'white'} /> : null}
-          </Button>
-          <Button
-            fontWeight={'bold'}
-            backgroundColor={'$green'}
-            mt={'auto'}
-            onPress={() => handleImport()}
-            disabled={importing}>
-            Import
-            {importing ? <Spinner color={'white'} /> : <FolderInput size={18} color={'white'} />}
-          </Button>
-        </YStack>
-      </View>
-    </BottomSheetModal>
+      </BottomSheetModal>
+
+      <ErrorSheet
+        sheetRef={errorSheetRef}
+        errorInfo={errorInfo}
+        onDownloadTemplate={handleDownloadCSVFileTemplate}
+        onRetry={handleRetry}
+        onDismiss={hideError}
+      />
+    </>
   );
 };
