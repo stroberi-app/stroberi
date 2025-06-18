@@ -10,7 +10,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "eslint . "
+    "lint": "eslint app/ data/ database/ hooks/ components/ lib/"
   },
   "jest": {
     "preset": "jest-expo"

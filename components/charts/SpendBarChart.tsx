@@ -33,7 +33,7 @@ type SpendBarChartProps<
   barCount?: number;
   barWidth?: number;
   footer?: React.ReactNode;
-  formatXLabel?: (value: any) => string;
+  formatXLabel?: (value: InputFields<RawData>[XK]) => string;
 };
 
 export const SpendBarChart = <
@@ -52,7 +52,7 @@ export const SpendBarChart = <
   formatXLabel,
 }: SpendBarChartProps<RawData, XK, YK>) => {
   const { defaultCurrency } = useDefaultCurrency();
-  
+
   const { state, isActive } = useChartPressState({
     x: xKey as string,
     y: yKeys.reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as Record<string, number>),

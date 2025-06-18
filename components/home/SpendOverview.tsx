@@ -18,12 +18,13 @@ import { DatePicker } from '../DatePicker';
 import BottomSheetDynamicSize from '../filtering/BottomSheetDynamicSize';
 import { useState } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import {
+  calculateTransactionAnalytics,
+  TransactionAnalytics,
+} from '../../lib/transactionAnalytics';
 
 type SpendOverviewProps = {
-  totalExpense: number;
-  totalIncome: number;
-  transactionCount: number;
-  highestSpendCategory$: { category: string; total: number };
+  analytics: TransactionAnalytics;
   categories: CategoryModel[];
   onDatePress: () => void;
   fromDate: dayjs.Dayjs;
@@ -36,93 +37,26 @@ const SpendOverview = withObservables<
     toDate: dayjs.Dayjs;
   },
   {
-    totalExpense: Observable<number>;
-    totalIncome: Observable<number>;
-    transactionCount: Observable<number>;
-    highestSpendCategory$: Observable<{ category: string; total: number }>;
+    analytics: Observable<TransactionAnalytics>;
     categories: Observable<CategoryModel[]>;
   }
 >(['fromDate', 'toDate'], ({ database, fromDate: fd, toDate: td }) => {
   const fromDate = fd.toDate().getTime();
   const toDate = td.toDate().getTime();
-  const highestSpendCategory$ = database.collections
-    .get<TransactionModel>('transactions')
-    .query(
-      Q.where('amountInBaseCurrency', Q.lt(0)),
-      Q.where('date', Q.gte(fromDate)),
-      Q.where('date', Q.lte(toDate))
-    )
-    .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
-    .pipe(
-      map(transactions => {
-        const categories = transactions.reduce(
-          (acc, transaction) => {
-            const category = transaction.category?.id || 'Uncategorized';
-            if (!acc[category]) {
-              acc[category] = 0;
-            }
-            acc[category] += Math.abs(transaction.amountInBaseCurrency);
-            return acc;
-          },
-          {} as Record<string, number>
-        );
-
-        return Object.entries(categories).reduce(
-          (max, [category, total]) => (total > max.total ? { category, total } : max),
-          { category: 'Uncategorized', total: 0 }
-        );
-      })
-    );
 
   return {
-    totalExpense: database.collections
-      .get<TransactionModel>('transactions')
-      .query(
-        Q.where('amountInBaseCurrency', Q.lt(0)),
-        Q.where('date', Q.gte(fromDate)),
-        Q.where('date', Q.lte(toDate))
-      )
-      .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
-      .pipe(
-        map(transactions =>
-          transactions.reduce((sum, transaction) => sum + transaction.amountInBaseCurrency, 0)
-        )
-      ),
-    totalIncome: database.collections
-      .get<TransactionModel>('transactions')
-      .query(
-        Q.where('amountInBaseCurrency', Q.gte(0)),
-        Q.where('date', Q.gte(fromDate)),
-        Q.where('date', Q.lte(toDate))
-      )
-      .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
-      .pipe(
-        map(transactions =>
-          transactions.reduce((sum, transaction) => sum + transaction.amountInBaseCurrency, 0)
-        )
-      ),
-    transactionCount: database.collections
+    // Single optimized query for all transaction analytics
+    analytics: database.collections
       .get<TransactionModel>('transactions')
       .query(Q.where('date', Q.gte(fromDate)), Q.where('date', Q.lte(toDate)))
-      .observeCount(),
-    highestSpendCategory$,
+      .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
+      .pipe(map(transactions => calculateTransactionAnalytics(transactions))),
     categories: database.collections.get<CategoryModel>('categories').query().observe(),
   };
-})(({
-  totalExpense,
-  fromDate,
-  toDate,
-  totalIncome,
-  transactionCount,
-  highestSpendCategory$,
-  categories,
-  onDatePress,
-}: SpendOverviewProps) => {
+})(({ analytics, fromDate, toDate, categories, onDatePress }: SpendOverviewProps) => {
   const { defaultCurrency } = useDefaultCurrency();
 
-  const category = categories.find(c => c.id === highestSpendCategory$.category);
-
-  const balance = totalIncome + totalExpense;
+  const category = categories.find(c => c.id === analytics.highestSpendCategory.category);
   return (
     <CarouselItemWrapper>
       <View
@@ -141,24 +75,24 @@ const SpendOverview = withObservables<
         <YGroup gap="$5">
           <InfoItem
             title="Period Income"
-            color={totalIncome > 0 ? '$green' : 'white'}
-            value={defaultCurrency ? formatCurrency(totalIncome, defaultCurrency) : ''}
+            color={analytics.totalIncome > 0 ? '$green' : 'white'}
+            value={defaultCurrency ? formatCurrency(analytics.totalIncome, defaultCurrency) : ''}
           />
           <InfoItem
             title="Period Balance"
-            color={balance > 0 ? '$green' : balance === 0 ? 'white' : '$stroberi'}
-            value={
-              defaultCurrency ? formatCurrency(totalIncome + totalExpense, defaultCurrency) : ''
+            color={
+              analytics.balance > 0 ? '$green' : analytics.balance === 0 ? 'white' : '$stroberi'
             }
+            value={defaultCurrency ? formatCurrency(analytics.balance, defaultCurrency) : ''}
           />
         </YGroup>
         <YGroup paddingHorizontal="$4" gap="$5">
           <InfoItem
             title="Period Spend"
-            color={totalExpense !== 0 ? '$stroberi' : 'white'}
-            value={defaultCurrency ? formatCurrency(totalExpense, defaultCurrency) : ''}
+            color={analytics.totalExpense !== 0 ? '$stroberi' : 'white'}
+            value={defaultCurrency ? formatCurrency(analytics.totalExpense, defaultCurrency) : ''}
           />
-          <InfoItem title="Transaction No." value={transactionCount.toString()} />
+          <InfoItem title="Transaction No." value={analytics.transactionCount.toString()} />
         </YGroup>
       </YGroup>
       <View paddingHorizontal="$4" gap="$1" mb="$2">
@@ -166,7 +100,9 @@ const SpendOverview = withObservables<
         {category ? (
           <Text fontSize="$5" fontWeight="bold">
             {category?.name ?? 'Uncategorized'} {category?.icon}{' '}
-            {defaultCurrency ? formatCurrency(highestSpendCategory$?.total, defaultCurrency) : null}
+            {defaultCurrency
+              ? formatCurrency(analytics.highestSpendCategory.total, defaultCurrency)
+              : null}
           </Text>
         ) : (
           <Text fontSize="$5" fontWeight="bold">

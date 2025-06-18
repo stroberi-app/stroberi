@@ -29,7 +29,7 @@ type CartesianChartProps<
     ttY: SharedValue<number>;
   };
   barCount?: number;
-  formatXLabel?: (value: any) => string;
+  formatXLabel?: (value: InputFields<RawData>[XK]) => string;
 };
 
 export const BarChart = <
@@ -50,59 +50,57 @@ export const BarChart = <
 }: CartesianChartProps<RawData, XK, YK>) => {
   const font = useFont(inter, 11);
 
-  // Calculate optimal bar width and domain padding based on data
   const dataLength = data.length;
   const calculatedBarWidth = React.useMemo(() => {
     if (barWidth) return barWidth;
-    
-    // Deterministic bar width based on number of bars
-    // Use consistent, predictable widths that work well across different scenarios
-    if (dataLength <= 3) return 60;      // Wide bars for few items
-    if (dataLength <= 5) return 45;      // Medium bars for moderate items  
-    if (dataLength <= 7) return 35;      // Narrower bars for more items
-    return 28;                           // Compact bars for many items
+
+    if (dataLength <= 3) return 60;
+    if (dataLength <= 5) return 45;
+    if (dataLength <= 7) return 35;
+    return 28;
   }, [barWidth, dataLength]);
 
-  // Dynamic domain padding based on bar width for consistent spacing
   const calculatedDomainPadding = React.useMemo(() => {
     if (domainPadding) return domainPadding;
-    
-    // Consistent padding that ensures good spacing regardless of bar width
+
     const horizontalPadding = Math.max(25, calculatedBarWidth * 0.8);
     return {
       left: horizontalPadding,
       right: horizontalPadding,
-      top: 30, // More space at top for labels and breathing room
-      bottom: 0, // No bottom padding to ensure bars start from zero baseline
+      top: 30,
+      bottom: 0,
     };
   }, [domainPadding, calculatedBarWidth]);
 
-  // Calculate Y-axis domain and tick values for proportional scaling
   const { yDomain, yTickValues } = React.useMemo(() => {
-    if (data.length === 0) return { yDomain: [0, 100] as [number, number], yTickValues: [0, 25, 50, 75, 100] };
+    if (data.length === 0)
+      return { yDomain: [0, 100] as [number, number], yTickValues: [0, 25, 50, 75, 100] };
 
-    // Get all Y values from the data
-    const yValues = data.flatMap(item => 
-      yKeys.map(key => {
-        const value = item[key];
-        return typeof value === 'number' ? value : parseFloat(String(value) || '0');
-      }).filter(val => !isNaN(val))
+    const yValues = data.flatMap(item =>
+      yKeys
+        .map(key => {
+          const value = item[key];
+          return typeof value === 'number' ? value : parseFloat(String(value) || '0');
+        })
+        .filter(val => !isNaN(val))
     );
 
-    if (yValues.length === 0) return { yDomain: [0, 100] as [number, number], yTickValues: [0, 25, 50, 75, 100] };
+    if (yValues.length === 0)
+      return { yDomain: [0, 100] as [number, number], yTickValues: [0, 25, 50, 75, 100] };
 
     const maxValue = Math.max(...yValues);
-    const minValue = 0; // Always start from 0 for proportional comparison
+    const minValue = 0;
 
-    // Calculate nice tick values
     const range = maxValue - minValue;
     let tickInterval: number;
 
     if (range === 0) {
-      return { yDomain: [0, Math.max(maxValue + 1, 10)] as [number, number], yTickValues: [0, Math.max(maxValue + 1, 10)] };
+      return {
+        yDomain: [0, Math.max(maxValue + 1, 10)] as [number, number],
+        yTickValues: [0, Math.max(maxValue + 1, 10)],
+      };
     }
 
-    // Determine appropriate tick interval
     if (range < 10) {
       tickInterval = 1;
     } else if (range < 50) {
@@ -127,32 +125,27 @@ export const BarChart = <
       tickInterval = 100000;
     }
 
-    // Generate tick values starting from 0
-    const ticks: number[] = [0]; // Always start with 0
+    const ticks: number[] = [0];
     let currentTick = tickInterval;
     const maxTick = Math.ceil(maxValue / tickInterval) * tickInterval;
-    
-    while (currentTick <= maxTick && ticks.length < 8) { // Limit to 8 ticks max
+
+    while (currentTick <= maxTick && ticks.length < 8) {
       ticks.push(currentTick);
       currentTick += tickInterval;
     }
 
-    // Use the calculated maxTick as domain max (no additional padding to keep zero baseline clear)
     const domainMax = Math.max(maxTick, maxValue);
 
     return {
-      yDomain: [0, domainMax] as [number, number], // Ensure domain starts exactly at 0
+      yDomain: [0, domainMax] as [number, number],
       yTickValues: ticks,
     };
   }, [data, yKeys]);
 
-  // Default label formatter for better month display
-  const defaultFormatXLabel = React.useCallback((x: any) => {
+  const defaultFormatXLabel = React.useCallback((x: InputFields<RawData>[XK]) => {
     if (!x) return '';
     const str = x.toString();
-    // If it looks like a month abbreviation, return as-is
     if (str.length <= 4) return str;
-    // Otherwise truncate longer labels
     return str.length > 8 ? str.substring(0, 8) + '...' : str;
   }, []);
 
@@ -179,8 +172,7 @@ export const BarChart = <
         font,
         labelColor: 'white',
         formatXLabel: formatXLabel || defaultFormatXLabel,
-        formatYLabel: (y: any) => {
-          // Format large numbers with K/M suffixes
+        formatYLabel: (y: NumericalFields<RawData>[YK]) => {
           const numY = typeof y === 'number' ? y : parseFloat(y?.toString() || '0');
           if (isNaN(numY)) return '0';
           if (numY >= 1000000) return `${(numY / 1000000).toFixed(1)}M`;
@@ -201,10 +193,10 @@ export const BarChart = <
               topLeft: 6,
               topRight: 6,
             }}>
-            <LinearGradient 
-              start={vec(0, 0)} 
-              end={vec(0, 400)} 
-              colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.6)']} 
+            <LinearGradient
+              start={vec(0, 0)}
+              end={vec(0, 400)}
+              colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.6)']}
             />
           </Bar>
           {isActive && tooltip && <ToolTip x={tooltip.ttX} y={tooltip.ttY} />}
