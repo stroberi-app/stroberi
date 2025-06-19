@@ -74,7 +74,7 @@ export default function SettingsScreen() {
         </Text>
         <YGroup>
           <SettingsItem
-            label={'Export Data'}
+            label={'CSV Export'}
             IconComponent={FolderOutput}
             rightLabel={''}
             onPress={() => {
