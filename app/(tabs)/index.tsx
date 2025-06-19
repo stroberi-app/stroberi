@@ -6,6 +6,7 @@ import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
 import { SpendByType } from '../../components/charts/SpendByTypeChart';
 import SpendByCategory from '../../components/charts/SpendByCategoryChart';
+import SpendingTrends from '../../components/charts/SpendingTrendsChart';
 import { useCallback, useMemo } from 'react';
 import SpendOverview from '../../components/home/SpendOverview';
 import { CreateFirstTransactionSection } from '../../components/CreateFirstTransactionSection';
@@ -21,6 +22,7 @@ export default function HomeScreen() {
       <SpendByType database={database} type="expense" key="expense" />,
       <SpendByType database={database} type="income" key="income" />,
       <SpendByCategory database={database} key="spend_by_category" />,
+      <SpendingTrends database={database} key="spending_trends" />,
     ],
     []
   );

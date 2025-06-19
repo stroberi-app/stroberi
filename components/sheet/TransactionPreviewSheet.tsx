@@ -29,6 +29,7 @@ export const TransactionPreviewSheet = forwardRef<
   const { bottom } = useSafeAreaInsets();
   const [transactions, setTransactions] = useState<TransactionExportData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [dateRange, setDateRange] = useState<ExportDateRange | null>(null);
   const sheetRef = React.useRef<BottomSheetModal>(null);
@@ -38,6 +39,7 @@ export const TransactionPreviewSheet = forwardRef<
   useImperativeHandle(ref, () => ({
     present: (dateRange: ExportDateRange) => {
       setDateRange(dateRange);
+      setIsOpening(true);
       sheetRef.current?.present();
     },
     dismiss: () => {
@@ -46,10 +48,10 @@ export const TransactionPreviewSheet = forwardRef<
   }));
 
   useEffect(() => {
-    if (dateRange) {
+    if (dateRange && !isOpening) {
       loadTransactions();
     }
-  }, [dateRange]);
+  }, [dateRange, isOpening]);
 
   const loadTransactions = async () => {
     if (!dateRange) return;
@@ -105,9 +107,17 @@ export const TransactionPreviewSheet = forwardRef<
       backdropComponent={CustomBackdrop}
       handleIndicatorStyle={handleIndicatorStyle}
       backgroundStyle={backgroundStyle}
+      onChange={index => {
+        if (index === 0 && isOpening) {
+          setTimeout(() => {
+            setIsOpening(false);
+          }, 300);
+        }
+      }}
       onDismiss={() => {
         setDateRange(null);
         setTransactions([]);
+        setIsOpening(false);
       }}>
       <BottomSheetScrollView>
         <View padding="$4" gap="$4" pb={bottom + 16}>
@@ -136,10 +146,10 @@ export const TransactionPreviewSheet = forwardRef<
               size="$3"
               variant="outlined"
               onPress={handleExport}
-              disabled={isExporting || transactions.length === 0}
+              disabled={isExporting || transactions.length === 0 || isOpening}
               backgroundColor="$green2"
               borderColor="$green8"
-              opacity={isExporting || transactions.length === 0 ? 0.5 : 1}>
+              opacity={isExporting || transactions.length === 0 || isOpening ? 0.5 : 1}>
               {isExporting ? (
                 <Spinner size="small" color="$green10" />
               ) : (
@@ -159,14 +169,18 @@ export const TransactionPreviewSheet = forwardRef<
               <Text fontSize="$4" fontWeight="600" color="$blue11">
                 Total Transactions:
               </Text>
-              <Text fontSize="$5" fontWeight="700" color="$blue11">
-                {transactions.length}
-              </Text>
+              {isOpening ? (
+                <View backgroundColor="$blue4" height={20} width={40} borderRadius="$1" />
+              ) : (
+                <Text fontSize="$5" fontWeight="700" color="$blue11">
+                  {transactions.length}
+                </Text>
+              )}
             </XStack>
           </View>
 
           {/* Transaction List */}
-          {isLoading ? (
+          {isLoading || isOpening ? (
             <View alignItems="center" padding="$6">
               <Spinner size="large" />
               <Text fontSize="$4" color="$gray11" mt="$2">

@@ -4,14 +4,7 @@ import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { Spinner, Text, View, YStack, XStack } from 'tamagui';
 import { Button } from '../button/Button';
-import {
-  FolderOutput,
-  AlertCircle,
-  Calendar,
-  FileText,
-  Database,
-  Eye,
-} from '@tamagui/lucide-icons';
+import { FolderOutput, AlertCircle, Calendar, Eye } from '@tamagui/lucide-icons';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
 import { DatePicker } from '../DatePicker';
 import useTransactionExport, {
@@ -34,11 +27,11 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
 
   const [fromDate, setFromDate] = useState(() => dayjs().subtract(30, 'days').toDate());
   const [toDate, setToDate] = useState(new Date());
-  const [selectedDestination, setSelectedDestination] = useState<ExportDestination>('csv');
   const [selectedDateOption, setSelectedDateOption] = useState<DateOption>('last30');
 
-  // Smart defaults - comprehensive export columns
+  // Smart defaults - comprehensive export columns and CSV format
   const [includedColumns] = useState<ExportColumn[]>(EXTENDED_EXPORT_COLUMNS);
+  const selectedDestination: ExportDestination = 'csv';
 
   const { exportTransactions, isLoading } = useTransactionExport();
 
@@ -77,7 +70,7 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
   };
 
   const getExportButtonText = () => {
-    return selectedDestination === 'csv' ? 'Export CSV' : 'Export JSON';
+    return 'Export CSV';
   };
 
   return (
@@ -96,37 +89,8 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
         <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View padding="$4" gap="$4" flex={1}>
             <Text fontSize="$7" fontWeight="bold" textAlign="center">
-              Export Transactions
+              Export CSV
             </Text>
-
-            {/* File Format Selection */}
-            <View>
-              <Text fontSize="$5" fontWeight="600" mb="$3">
-                Choose Format
-              </Text>
-              <XStack gap="$3">
-                <Button
-                  size="$4"
-                  variant="outlined"
-                  onPress={() => setSelectedDestination('csv')}
-                  backgroundColor={selectedDestination === 'csv' ? '$blue5' : 'transparent'}
-                  borderColor={selectedDestination === 'csv' ? '$blue8' : '$borderColor'}
-                  flex={1}>
-                  <FileText size={20} />
-                  <Text fontSize="$4">CSV</Text>
-                </Button>
-                <Button
-                  size="$4"
-                  variant="outlined"
-                  onPress={() => setSelectedDestination('json')}
-                  backgroundColor={selectedDestination === 'json' ? '$blue5' : 'transparent'}
-                  borderColor={selectedDestination === 'json' ? '$blue8' : '$borderColor'}
-                  flex={1}>
-                  <Database size={20} />
-                  <Text fontSize="$4">JSON</Text>
-                </Button>
-              </XStack>
-            </View>
 
             {/* Date Range Selection */}
             <View>

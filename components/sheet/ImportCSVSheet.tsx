@@ -214,10 +214,76 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               phase: 'validating',
               current: 0,
               total: results.data.length,
-              message: 'Checking your transactions...',
+              message: 'Checking for new categories...',
             });
+            await sleep(100);
 
-            const categories = await database.get<CategoryModel>('categories').query().fetch();
+            const existingCategories = await database
+              .get<CategoryModel>('categories')
+              .query()
+              .fetch();
+            const existingCategoryMap = new Map(existingCategories.map(c => [c.name, c]));
+
+            const newCategoriesToCreate = new Map<string, { name: string; icon: string }>();
+            for (const row of results.data) {
+              const { category, categoryIcon } = row;
+              if (
+                category &&
+                categoryIcon &&
+                !existingCategoryMap.has(category) &&
+                !newCategoriesToCreate.has(category)
+              ) {
+                newCategoriesToCreate.set(category, {
+                  name: category,
+                  icon: categoryIcon,
+                });
+              }
+            }
+
+            if (newCategoriesToCreate.size > 0) {
+              setProgress(prev =>
+                prev
+                  ? {
+                      ...prev,
+                      message: `Creating ${newCategoriesToCreate.size} new categor${newCategoriesToCreate.size > 1 ? 'ies' : 'y'}...`,
+                    }
+                  : null
+              );
+              await sleep(100);
+
+              const newCategoryPromises = Array.from(newCategoriesToCreate.values()).map(cat =>
+                createCategory({ name: cat.name, icon: cat.icon })
+              );
+
+              try {
+                await Promise.all(newCategoryPromises);
+              } catch (error) {
+                console.error('Error creating categories:', error);
+                setImporting(false);
+                setProgress(null);
+                showError({
+                  title: 'Category Creation Failed',
+                  message:
+                    "We couldn't create some of the new categories found in your file. Please check for duplicates or invalid data.",
+                  type: 'import',
+                  showRetryButton: true,
+                });
+                return;
+              }
+            }
+
+            setProgress(prev =>
+              prev
+                ? {
+                    ...prev,
+                    message: 'Checking your transactions...',
+                  }
+                : null
+            );
+            await sleep(100);
+
+            const allCategories = await database.get<CategoryModel>('categories').query().fetch();
+            const categoryMap = new Map(allCategories.map(c => [c.name, c.id]));
             const validTransactions: CreateTransactionPayload[] = [];
             const allErrors: string[] = [];
 
@@ -239,20 +305,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                   continue;
                 }
 
-                const { merchant, amount, date, note, currencyCode, category, categoryIcon } = row;
+                const { merchant, amount, date, note, currencyCode, category } = row;
 
-                let matchedCategory = categories.find(cat => cat.name === category);
-
-                if (!matchedCategory && category && categoryIcon) {
-                  try {
-                    matchedCategory = await createCategory({
-                      name: category,
-                      icon: categoryIcon,
-                    });
-                  } catch (error: unknown) {
-                    console.warn(`Failed to create category ${category}:`, error);
-                  }
-                }
+                const categoryId = category ? categoryMap.get(category) ?? null : null;
 
                 validTransactions.push({
                   merchant,
@@ -260,7 +315,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                   date: new Date(date),
                   note: note || '',
                   currencyCode,
-                  categoryId: matchedCategory?.id ?? null,
+                  categoryId,
                   baseCurrency: defaultCurrency as string,
                 });
               }
