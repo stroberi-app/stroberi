@@ -35,36 +35,37 @@ export const SpendByType = withObservables<
             return dayjs().subtract(i, 'month');
           }).reverse();
 
-          return last6Months.map(date => {
-            const month = date.format('MMM');
-            const year = date.year();
-            const sortKey = date.valueOf(); // Use timestamp for proper sorting
-            
-            const total = transactions
-              .filter(transaction => {
-                const transactionDate = dayjs(transaction.date);
-                return (
-                  transactionDate.month() === date.month() &&
-                  transactionDate.year() === date.year()
-                );
-              })
-              .reduce((acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency), 0);
-              
-            return {
-              month,
-              year,
-              sortKey,
-              total,
-            };
-          }).sort((a, b) => a.sortKey - b.sortKey); // Ensure proper chronological order
+          return last6Months
+            .map(date => {
+              const month = date.format('MMM');
+              const year = date.year();
+              const sortKey = date.valueOf();
+
+              const total = transactions
+                .filter(transaction => {
+                  const transactionDate = dayjs(transaction.date);
+                  return (
+                    transactionDate.month() === date.month() &&
+                    transactionDate.year() === date.year()
+                  );
+                })
+                .reduce((acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency), 0);
+
+              return {
+                month,
+                year,
+                sortKey,
+                total,
+              };
+            })
+            .sort((a, b) => a.sortKey - b.sortKey);
         })
       ),
   };
 })(({ chartData, type }: SpendByMonthProps) => {
   const { defaultCurrency } = useDefaultCurrency();
-  
-  // Custom formatter for month labels - just show month without year
-  const formatMonthLabel = (month: any) => {
+
+  const formatMonthLabel = (month: string) => {
     return month?.toString() || '';
   };
 

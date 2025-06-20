@@ -7,19 +7,36 @@ import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSh
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { CurrencySelect } from '../../components/CurrencySelect';
-import { ExportCSVSheet } from '../../components/sheet/ExportCSVSheet';
+import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
+import {
+  TransactionPreviewSheet,
+  TransactionPreviewSheetRef,
+} from '../../components/sheet/TransactionPreviewSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
 import { useRouter } from 'expo-router';
+import { ExportDateRange } from '../../hooks/useTransactionExport';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
   const manageCategoriesSheetRef = React.useRef<BottomSheetModal | null>(null);
   const currencySheetRef = React.useRef<BottomSheetModal | null>(null);
-  const exportCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const exportDataSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const transactionPreviewSheetRef = React.useRef<TransactionPreviewSheetRef | null>(null);
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency } = useDefaultCurrency();
 
   const router = useRouter();
+
+  const handleViewTransactions = (dateRange: ExportDateRange) => {
+    exportDataSheetRef.current?.dismiss();
+    transactionPreviewSheetRef.current?.present(dateRange);
+  };
+
+  const handleBackToExport = () => {
+    transactionPreviewSheetRef.current?.dismiss();
+    exportDataSheetRef.current?.present();
+  };
+
   return (
     <>
       <ScrollView
@@ -61,7 +78,7 @@ export default function SettingsScreen() {
             IconComponent={FolderOutput}
             rightLabel={''}
             onPress={() => {
-              exportCsvSheetRef.current?.present();
+              exportDataSheetRef.current?.present();
             }}
           />
           <SettingsItem
@@ -109,7 +126,8 @@ export default function SettingsScreen() {
         }}
         selectedCurrency={defaultCurrency ?? 'USD'}
       />
-      <ExportCSVSheet sheetRef={exportCsvSheetRef} />
+      <ExportDataSheet sheetRef={exportDataSheetRef} onViewTransactions={handleViewTransactions} />
+      <TransactionPreviewSheet ref={transactionPreviewSheetRef} onBack={handleBackToExport} />
       <ImportCSVSheet sheetRef={importCsvSheetRef} />
     </>
   );
