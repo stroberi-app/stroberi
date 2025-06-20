@@ -13,14 +13,14 @@ import { View } from 'tamagui';
 import { CarouselItemText } from '../carousel/CarouselItemText';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
 import { CircleSlash } from '@tamagui/lucide-icons';
-import { BarChart } from './BarChart';
+import { LineChart } from './LineChart';
 import * as React from 'react';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';
 import { TextInput } from 'react-native';
 
 const animConfig = { duration: 300 };
 
-type SpendBarChartProps<
+type SpendLineChartProps<
   RawData extends Record<string, unknown>,
   XK extends keyof InputFields<RawData>,
   YK extends keyof NumericalFields<RawData>,
@@ -30,13 +30,13 @@ type SpendBarChartProps<
   xKey: XK;
   yKeys: YK[];
   isEmpty: boolean;
-  barCount?: number;
-  barWidth?: number;
   footer?: React.ReactNode;
   formatXLabel?: (value: InputFields<RawData>[XK]) => string;
+  strokeWidth?: number;
+  curveType?: 'linear' | 'natural';
 };
 
-export const SpendBarChart = <
+export const SpendLineChart = <
   RawData extends Record<string, unknown>,
   XK extends keyof InputFields<RawData>,
   YK extends keyof NumericalFields<RawData>,
@@ -46,11 +46,11 @@ export const SpendBarChart = <
   xKey,
   yKeys,
   isEmpty,
-  barCount,
-  barWidth,
   footer,
   formatXLabel,
-}: SpendBarChartProps<RawData, XK, YK>) => {
+  strokeWidth = 3,
+  curveType = 'natural',
+}: SpendLineChartProps<RawData, XK, YK>) => {
   const { defaultCurrency } = useDefaultCurrency();
 
   const { state, isActive } = useChartPressState({
@@ -135,7 +135,7 @@ export const SpendBarChart = <
           </>
         ) : (
           <>
-            <BarChart
+            <LineChart
               xKey={xKey}
               yKeys={yKeys}
               data={chartData}
@@ -146,9 +146,9 @@ export const SpendBarChart = <
                 ttX,
                 ttY,
               }}
-              barCount={barCount}
-              barWidth={barWidth}
               formatXLabel={formatXLabel}
+              strokeWidth={strokeWidth}
+              curveType={curveType}
             />
             {footer}
           </>

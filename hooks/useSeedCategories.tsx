@@ -6,8 +6,12 @@ import { DEFAULT_CATEGORIES } from '../data/defaultCategories';
 export const useSeedCategories = () => {
   useEffect(() => {
     (async () => {
-      const seederRun = await database.localStorage.get('seederRun');
-      if (!seederRun) {
+      const existingCategories = await database.collections
+        .get<CategoryModel>('categories')
+        .query()
+        .fetch();
+
+      if (existingCategories.length === 0) {
         await database.write(async () => {
           for (const category of DEFAULT_CATEGORIES) {
             await database.collections.get<CategoryModel>('categories').create(newCategory => {
@@ -16,7 +20,6 @@ export const useSeedCategories = () => {
             });
           }
         });
-        await database.localStorage.set('seederRun', 'true');
       }
     })();
   }, []);

@@ -1,5 +1,5 @@
-import { Bar, CartesianChart, ChartPressState } from 'victory-native';
-import { LinearGradient, useFont, vec, Circle } from '@shopify/react-native-skia';
+import { Line, CartesianChart, ChartPressState } from 'victory-native';
+import { useFont, Circle } from '@shopify/react-native-skia';
 import inter from '../../assets/fonts/Inter-Medium.ttf';
 import React from 'react';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';
@@ -20,7 +20,6 @@ type CartesianChartProps<
     top?: number;
     bottom?: number;
   };
-  barWidth?: number;
   state?:
     | ChartPressState<{ x: InputFields<RawData>[XK]; y: Record<YK, number> }>
     | ChartPressState<{ x: InputFields<RawData>[XK]; y: Record<YK, number> }>[];
@@ -29,11 +28,12 @@ type CartesianChartProps<
     ttX: SharedValue<number>;
     ttY: SharedValue<number>;
   };
-  barCount?: number;
   formatXLabel?: (value: InputFields<RawData>[XK]) => string;
+  strokeWidth?: number;
+  curveType?: 'linear' | 'natural';
 };
 
-export const BarChart = <
+export const LineChart = <
   RawData extends Record<string, unknown>,
   XK extends keyof InputFields<RawData>,
   YK extends keyof NumericalFields<RawData>,
@@ -42,36 +42,25 @@ export const BarChart = <
   yKeys,
   xKey,
   domainPadding,
-  barWidth,
   state,
   isActive,
   tooltip,
-  barCount,
   formatXLabel,
+  strokeWidth = 3,
+  curveType = 'natural',
 }: CartesianChartProps<RawData, XK, YK>) => {
   const font = useFont(inter, 11);
-
-  const dataLength = data.length;
-  const calculatedBarWidth = React.useMemo(() => {
-    if (barWidth) return barWidth;
-
-    if (dataLength <= 3) return 60;
-    if (dataLength <= 5) return 45;
-    if (dataLength <= 7) return 35;
-    return 28;
-  }, [barWidth, dataLength]);
 
   const calculatedDomainPadding = React.useMemo(() => {
     if (domainPadding) return domainPadding;
 
-    const horizontalPadding = Math.max(25, calculatedBarWidth * 0.8);
     return {
-      left: horizontalPadding,
-      right: horizontalPadding,
+      left: 25,
+      right: 25,
       top: 30,
-      bottom: 0,
+      bottom: 10,
     };
-  }, [domainPadding, calculatedBarWidth]);
+  }, [domainPadding]);
 
   const { yDomain, yTickValues } = React.useMemo(() => {
     return calculateChartDomain(data, yKeys as string[]);
@@ -111,23 +100,15 @@ export const BarChart = <
         lineColor: 'rgba(255, 255, 255, 0.1)',
         tickCount: Math.min(yTickValues.length, 8),
       }}>
-      {({ points, chartBounds }) => (
+      {({ points }) => (
         <>
-          <Bar
-            chartBounds={chartBounds}
+          <Line
             points={points[yKeys[0]]}
-            barWidth={calculatedBarWidth}
-            barCount={barCount}
-            roundedCorners={{
-              topLeft: 6,
-              topRight: 6,
-            }}>
-            <LinearGradient
-              start={vec(0, 0)}
-              end={vec(0, 400)}
-              colors={['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.6)']}
-            />
-          </Bar>
+            color="rgba(255, 255, 255, 0.9)"
+            strokeWidth={strokeWidth}
+            curveType={curveType}
+            animate={{ type: 'timing', duration: 300 }}
+          />
           {isActive && tooltip && <ToolTip x={tooltip.ttX} y={tooltip.ttY} />}
         </>
       )}
@@ -136,5 +117,5 @@ export const BarChart = <
 };
 
 function ToolTip({ x, y }: { x: SharedValue<number>; y: SharedValue<number> }) {
-  return <Circle cx={x} cy={y} r={6} color={'rgba(255, 255, 255, 0.8)'} opacity={0.9} />;
+  return <Circle cx={x} cy={y} r={6} color="rgba(255, 255, 255, 0.9)" style="fill" />;
 }
