@@ -1,4 +1,4 @@
-import { TransactionModel } from '../database/transaction-model';
+import type { TransactionModel } from '../database/transaction-model';
 
 export interface TransactionAnalytics {
   totalExpense: number;
@@ -49,7 +49,9 @@ export function calculateTransactionAnalytics(
 
   // Find highest spend category
   const highestSpendCategory =
-    categoryBreakdown.length > 0 ? categoryBreakdown[0] : { category: 'Uncategorized', total: 0 };
+    categoryBreakdown.length > 0
+      ? categoryBreakdown[0]
+      : { category: 'Uncategorized', total: 0 };
 
   return {
     totalExpense,
@@ -71,7 +73,7 @@ export function calculateCategorySpending(transactions: TransactionModel[]): Arr
   const categoryTotals: Record<string, number> = {};
 
   // Only process expense transactions
-  const expenseTransactions = transactions.filter(t => t.amountInBaseCurrency < 0);
+  const expenseTransactions = transactions.filter((t) => t.amountInBaseCurrency < 0);
 
   for (const transaction of expenseTransactions) {
     const categoryId = transaction.category?.id || 'Uncategorized';
@@ -83,7 +85,7 @@ export function calculateCategorySpending(transactions: TransactionModel[]): Arr
 
   return Object.entries(categoryTotals)
     .map(([category, total]) => ({ category, total }))
-    .filter(item => item.total > 0) // Only include categories with spending
+    .filter((item) => item.total > 0) // Only include categories with spending
     .sort((a, b) => b.total - a.total);
 }
 
@@ -98,7 +100,7 @@ export function calculateSpendingByType(
   total: number;
 }> {
   const isExpense = type === 'expense';
-  const filteredTransactions = transactions.filter(t =>
+  const filteredTransactions = transactions.filter((t) =>
     isExpense ? t.amountInBaseCurrency < 0 : t.amountInBaseCurrency >= 0
   );
 
@@ -129,7 +131,7 @@ export function filterTransactionsByDateRange(
   fromDate: number,
   toDate: number
 ): TransactionModel[] {
-  return transactions.filter(t => {
+  return transactions.filter((t) => {
     const transactionDate = new Date(t.date).getTime();
     return transactionDate >= fromDate && transactionDate <= toDate;
   });

@@ -1,5 +1,5 @@
+import type * as React from 'react';
 import { Text } from 'tamagui';
-import * as React from 'react';
 
 type CarouselItemTextProps = {
   children: React.ReactNode;

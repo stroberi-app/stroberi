@@ -1,5 +1,5 @@
+import type * as React from 'react';
 import { View } from 'tamagui';
-import * as React from 'react';
 
 type CarouselItemWrapperProps = {
   children: React.ReactNode;
@@ -14,7 +14,8 @@ export const CarouselItemWrapper = ({ children }: CarouselItemWrapperProps) => {
       marginLeft={'$2'}
       backgroundColor={'$gray4'}
       paddingBottom={'$4'}
-      paddingVertical={'$3'}>
+      paddingVertical={'$3'}
+    >
       {children}
     </View>
   );

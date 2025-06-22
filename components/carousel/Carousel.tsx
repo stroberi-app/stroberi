@@ -1,8 +1,11 @@
 import * as React from 'react';
+import { type ReactElement, useMemo } from 'react';
 import { useSharedValue } from 'react-native-reanimated';
-import CarouselComp, { ICarouselInstance, Pagination } from 'react-native-reanimated-carousel';
+import CarouselComp, {
+  type ICarouselInstance,
+  Pagination,
+} from 'react-native-reanimated-carousel';
 import { useWindowDimensions, View } from 'tamagui';
-import { ReactElement, useMemo } from 'react';
 import { CAROUSEL_ITEM_WRAPPER_HEIGHT } from './CarouselItemWrapper';
 
 const colors = ['#26292E', '#26292E', '#26292E', '#26292E', '#26292E', '#26292E'];
@@ -52,7 +55,7 @@ export function Carousel({ renderItem, data }: CarouselProps) {
       ),
       onPress: onPressPagination,
     };
-  }, [data.length]);
+  }, [data.length, progress.value]);
   return (
     <>
       <CarouselComp
@@ -71,7 +74,11 @@ export function Carousel({ renderItem, data }: CarouselProps) {
         modeConfig={modeConfig}
         renderItem={renderItem}
       />
-      <Pagination.Basic<{ color: string }> progress={progress} size={12} {...pagination} />
+      <Pagination.Basic<{ color: string }>
+        progress={progress}
+        size={12}
+        {...pagination}
+      />
     </>
   );
 }

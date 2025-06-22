@@ -1,5 +1,6 @@
-import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
-import { useChartPressState } from 'victory-native';
+import { CircleSlash } from '@tamagui/lucide-icons';
+import * as React from 'react';
+import { TextInput } from 'react-native';
 import {
   runOnJS,
   useAnimatedReaction,
@@ -7,16 +8,15 @@ import {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { formatCurrencyWorklet } from '../../lib/format';
-import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
 import { View } from 'tamagui';
-import { CarouselItemText } from '../carousel/CarouselItemText';
-import { CarouselItemChart } from '../carousel/CarouselItemChart';
-import { CircleSlash } from '@tamagui/lucide-icons';
-import { LineChart } from './LineChart';
-import * as React from 'react';
+import { useChartPressState } from 'victory-native';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';
-import { TextInput } from 'react-native';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { formatCurrencyWorklet } from '../../lib/format';
+import { CarouselItemChart } from '../carousel/CarouselItemChart';
+import { CarouselItemText } from '../carousel/CarouselItemText';
+import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
+import { LineChart } from './LineChart';
 
 const animConfig = { duration: 300 };
 
@@ -55,7 +55,7 @@ export const SpendLineChart = <
 
   const { state, isActive } = useChartPressState({
     x: xKey as string,
-    y: yKeys.reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as Record<string, number>),
+    y: Object.fromEntries(yKeys.map((key) => [key, 0])),
   });
   const amount = useDerivedValue(() => {
     const formattedCurrency = formatCurrencyWorklet(
@@ -70,13 +70,13 @@ export const SpendLineChart = <
 
   useAnimatedReaction(
     () => state?.x.position.value,
-    val => {
+    (val) => {
       ttX.value = withTiming(val, animConfig);
     }
   );
   useAnimatedReaction(
     () => state?.y.total.position.value,
-    val => {
+    (val) => {
       ttY.value = withTiming(val, animConfig);
     }
   );
@@ -98,7 +98,7 @@ export const SpendLineChart = <
 
   useAnimatedReaction(
     () => amount.value,
-    val => {
+    (val) => {
       runOnJS(updateText)(val);
     }
   );
@@ -110,7 +110,8 @@ export const SpendLineChart = <
         alignItems="center"
         justifyContent="space-between"
         paddingHorizontal="$2"
-        marginBottom="$2">
+        marginBottom="$2"
+      >
         <TextInput
           ref={titleRef}
           defaultValue=""
@@ -124,15 +125,19 @@ export const SpendLineChart = <
       </View>
       <CarouselItemChart>
         {isEmpty ? (
-          <>
-            <View width="100%" height="100%" alignItems="center" justifyContent="center" gap="$3">
-              <CarouselItemText color="darkgray">No data available</CarouselItemText>
-              <CircleSlash size={64} color="darkgray" />
-              <View position={'absolute'} bottom={0}>
-                {footer}
-              </View>
+          <View
+            width="100%"
+            height="100%"
+            alignItems="center"
+            justifyContent="center"
+            gap="$3"
+          >
+            <CarouselItemText color="darkgray">No data available</CarouselItemText>
+            <CircleSlash size={64} color="darkgray" />
+            <View position={'absolute'} bottom={0}>
+              {footer}
             </View>
-          </>
+          </View>
         ) : (
           <>
             <LineChart

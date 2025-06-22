@@ -1,13 +1,13 @@
-import React, { useCallback, useMemo } from 'react';
-import { BottomSheetBackdropProps, useBottomSheetModal } from '@gorhom/bottom-sheet';
+import { type BottomSheetBackdropProps, useBottomSheetModal } from '@gorhom/bottom-sheet';
+import { BlurView } from 'expo-blur';
+import { useCallback, useMemo } from 'react';
+import { Keyboard } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedProps,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
-import { Keyboard } from 'react-native';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -22,7 +22,10 @@ export const CustomBackdrop = ({ animatedIndex, style }: BottomSheetBackdropProp
   }));
 
   const { dismiss } = useBottomSheetModal();
-  const containerStyle = useMemo(() => [style, containerAnimatedStyle], [style]);
+  const containerStyle = useMemo(
+    () => [style, containerAnimatedStyle],
+    [style, containerAnimatedStyle]
+  );
 
   const blurViewProps = useAnimatedProps(() => {
     return {
@@ -33,7 +36,7 @@ export const CustomBackdrop = ({ animatedIndex, style }: BottomSheetBackdropProp
   const onTouchEnd = useCallback(() => {
     Keyboard.dismiss();
     dismiss();
-  }, []);
+  }, [dismiss]);
 
   return (
     <AnimatedBlurView

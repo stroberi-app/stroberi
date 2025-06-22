@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { CustomBackdrop } from '../CustomBackdrop';
-import { Spinner, Text, View, YStack, XStack, ScrollView } from 'tamagui';
-import { Button } from '../button/Button';
 import { ArrowLeft, Calendar, FolderOutput } from '@tamagui/lucide-icons';
-import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
-import useTransactionExport, {
-  ExportDateRange,
-  TransactionExportData,
-  EXTENDED_EXPORT_COLUMNS,
-} from '../../hooks/useTransactionExport';
 import dayjs from 'dayjs';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, Spinner, Text, View, XStack, YStack } from 'tamagui';
+import useTransactionExport, {
+  EXTENDED_EXPORT_COLUMNS,
+  type ExportDateRange,
+  type TransactionExportData,
+} from '../../hooks/useTransactionExport';
+import { Button } from '../button/Button';
+import { CustomBackdrop } from '../CustomBackdrop';
+import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
 
 type TransactionPreviewSheetProps = {
   onBack: () => void;
@@ -47,12 +47,6 @@ export const TransactionPreviewSheet = forwardRef<
     },
   }));
 
-  useEffect(() => {
-    if (dateRange && !isOpening) {
-      loadTransactions();
-    }
-  }, [dateRange, isOpening]);
-
   const loadTransactions = async () => {
     if (!dateRange) return;
 
@@ -60,12 +54,18 @@ export const TransactionPreviewSheet = forwardRef<
     try {
       const data = await fetchTransactionsForExport(dateRange);
       setTransactions(data);
-    } catch (error) {
-      console.error('Failed to load transactions:', error);
+    } catch (_error) {
     } finally {
       setIsLoading(false);
     }
   };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
+  useEffect(() => {
+    if (dateRange && !isOpening) {
+      loadTransactions();
+    }
+  }, [dateRange, isOpening]);
 
   const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
@@ -88,8 +88,7 @@ export const TransactionPreviewSheet = forwardRef<
         columns: EXTENDED_EXPORT_COLUMNS,
         destination: 'csv',
       });
-    } catch (error) {
-      console.error('Failed to export transactions:', error);
+    } catch (_error) {
     } finally {
       setIsExporting(false);
     }
@@ -107,7 +106,7 @@ export const TransactionPreviewSheet = forwardRef<
       backdropComponent={CustomBackdrop}
       handleIndicatorStyle={handleIndicatorStyle}
       backgroundStyle={backgroundStyle}
-      onChange={index => {
+      onChange={(index) => {
         if (index === 0 && isOpening) {
           setTimeout(() => {
             setIsOpening(false);
@@ -118,7 +117,8 @@ export const TransactionPreviewSheet = forwardRef<
         setDateRange(null);
         setTransactions([]);
         setIsOpening(false);
-      }}>
+      }}
+    >
       <BottomSheetScrollView>
         <View padding="$4" gap="$4" pb={bottom + 16}>
           {/* Header */}
@@ -128,7 +128,8 @@ export const TransactionPreviewSheet = forwardRef<
               variant="outlined"
               onPress={onBack}
               backgroundColor="$gray2"
-              borderColor="$borderColor">
+              borderColor="$borderColor"
+            >
               <ArrowLeft size={16} />
             </Button>
             <View flex={1}>
@@ -149,7 +150,8 @@ export const TransactionPreviewSheet = forwardRef<
               disabled={isExporting || transactions.length === 0 || isOpening}
               backgroundColor="$green2"
               borderColor="$green8"
-              opacity={isExporting || transactions.length === 0 || isOpening ? 0.5 : 1}>
+              opacity={isExporting || transactions.length === 0 || isOpening ? 0.5 : 1}
+            >
               {isExporting ? (
                 <Spinner size="small" color="$green10" />
               ) : (
@@ -164,7 +166,8 @@ export const TransactionPreviewSheet = forwardRef<
             padding="$3"
             borderRadius="$3"
             borderWidth={1}
-            borderColor="$blue8">
+            borderColor="$blue8"
+          >
             <XStack justifyContent="space-between" alignItems="center">
               <Text fontSize="$4" fontWeight="600" color="$blue11">
                 Total Transactions:
@@ -205,14 +208,15 @@ export const TransactionPreviewSheet = forwardRef<
 
               <ScrollView>
                 <YStack gap="$1">
-                  {transactions.map(transaction => (
+                  {transactions.map((transaction) => (
                     <View
                       key={transaction.id}
                       backgroundColor="$gray1"
                       padding="$3"
                       borderRadius="$2"
                       borderWidth={1}
-                      borderColor="$borderColor">
+                      borderColor="$borderColor"
+                    >
                       <XStack justifyContent="space-between" alignItems="flex-start">
                         <View flex={1}>
                           <Text fontSize="$4" fontWeight="600">
@@ -233,7 +237,12 @@ export const TransactionPreviewSheet = forwardRef<
                           <Text
                             fontSize="$4"
                             fontWeight="700"
-                            color={transaction.amountInBaseCurrency >= 0 ? '$green10' : '$red10'}>
+                            color={
+                              transaction.amountInBaseCurrency >= 0
+                                ? '$green10'
+                                : '$red10'
+                            }
+                          >
                             {formatAmount(transaction.amount, transaction.currencyCode)}
                           </Text>
                           {transaction.currencyCode !== 'USD' && (

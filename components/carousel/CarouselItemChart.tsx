@@ -1,5 +1,5 @@
+import type * as React from 'react';
 import { View } from 'tamagui';
-import * as React from 'react';
 
 type CarouselItemChartProps = {
   children: React.ReactNode;

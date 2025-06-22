@@ -1,6 +1,5 @@
-import { Text, View } from 'tamagui';
-import * as React from 'react';
 import { Check } from '@tamagui/lucide-icons';
+import { Text, View } from 'tamagui';
 
 type ListItemProps = {
   name: string;
@@ -18,7 +17,8 @@ export const ListItem = ({ name, extra, selected }: ListItemProps) => {
       gap="$4"
       borderWidth="$0.5"
       borderColor="$borderColor"
-      borderRadius="$0">
+      borderRadius="$0"
+    >
       <View flexDirection="column">
         <Text fontSize="$5" fontWeight="bold">
           {name}

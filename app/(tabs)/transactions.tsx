@@ -1,19 +1,19 @@
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, View } from 'tamagui';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
+import { Filter } from '@tamagui/lucide-icons';
 import * as React from 'react';
 import { useState } from 'react';
-import { Filter } from '@tamagui/lucide-icons';
-import { LinkButton } from '../../components/button/LinkButton';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import TransactionsList from '../../components/TransactionsList';
-import { DatePicker } from '../../components/DatePicker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, View } from 'tamagui';
 import { Button } from '../../components/button/Button';
-import DateFilterSection from '../../components/filtering/DateFilterSection';
+import { LinkButton } from '../../components/button/LinkButton';
+import { DatePicker } from '../../components/DatePicker';
 import BottomSheetDynamicSize from '../../components/filtering/BottomSheetDynamicSize';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import CategoryFilterSection from '../../components/filtering/CategoryFilterSection';
-import { CategoryModel } from '../../database/category-model';
-import { DateFilters } from '../../lib/date';
+import DateFilterSection from '../../components/filtering/DateFilterSection';
+import TransactionsList from '../../components/TransactionsList';
+import type { CategoryModel } from '../../database/category-model';
+import type { DateFilters } from '../../lib/date';
 
 export default function TransactionsScreen() {
   const { top } = useSafeAreaInsets();
@@ -25,14 +25,17 @@ export default function TransactionsScreen() {
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
 
-  const appliedNumberOfFilters = [dateFilter, selectedCategories.length].filter(Boolean).length;
+  const appliedNumberOfFilters = [dateFilter, selectedCategories.length].filter(
+    Boolean
+  ).length;
   return (
     <>
       <View
         style={{ paddingTop: top || 8 }}
         flex={1}
         backgroundColor="$bgPrimary"
-        paddingHorizontal="$2">
+        paddingHorizontal="$2"
+      >
         <View flexDirection="row" justifyContent="space-between" alignItems="center">
           <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
             Transactions
@@ -88,7 +91,8 @@ export default function TransactionsScreen() {
             onPress={() => {
               dateSheetRef.current?.close();
               setDateFilter('Custom');
-            }}>
+            }}
+          >
             Apply
           </Button>
         </View>

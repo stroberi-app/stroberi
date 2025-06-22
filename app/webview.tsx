@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
-import { WebView } from 'react-native-webview';
-import { View, Text, Button } from 'tamagui';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from '@tamagui/lucide-icons';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useEffect } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
+import { Button, Text, View } from 'tamagui';
 
 const WebViewScreen = () => {
   const params = useLocalSearchParams();
@@ -14,7 +14,7 @@ const WebViewScreen = () => {
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
-  }, []);
+  }, [navigation.setOptions]);
 
   if (typeof url !== 'string') {
     return (
@@ -26,7 +26,12 @@ const WebViewScreen = () => {
 
   return (
     <View flex={1} paddingTop={insets.top} paddingBottom={insets.bottom}>
-      <View flexDirection="row" alignItems="center" paddingHorizontal={16} paddingVertical={8}>
+      <View
+        flexDirection="row"
+        alignItems="center"
+        paddingHorizontal={16}
+        paddingVertical={8}
+      >
         <Button onPress={() => navigation.goBack()}>
           <ArrowLeft />
           Back

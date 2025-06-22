@@ -1,14 +1,14 @@
+import { getLocales } from 'expo-localization';
 import { useEffect, useState } from 'react';
 import { database } from '../database';
-import { getLocales } from 'expo-localization';
+import type { TransactionModel } from '../database/transaction-model';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
-import { TransactionModel } from '../database/transaction-model';
 
 export const useDefaultCurrency = () => {
   const [defaultCurrency, setDefaultCurrency] = useState<string | null>(null);
 
   useEffect(() => {
-    database.localStorage.get('defaultCurrency').then(currency => {
+    database.localStorage.get('defaultCurrency').then((currency) => {
       if (!currency) {
         const [locale] = getLocales();
         if (locale.currencyCode) {
@@ -22,7 +22,8 @@ export const useDefaultCurrency = () => {
   }, []);
 
   const updateTransactionsCurrency = async (newBaseCurrency: string) => {
-    const transactionsCollection = database.collections.get<TransactionModel>('transactions');
+    const transactionsCollection =
+      database.collections.get<TransactionModel>('transactions');
     const transactions = await transactionsCollection.query().fetch();
 
     await database.write(async () => {
@@ -31,7 +32,7 @@ export const useDefaultCurrency = () => {
         const exchangeRate = await getCurrencyConversion(newBaseCurrency, currencyCode);
 
         if (exchangeRate) {
-          await transaction.update(record => {
+          await transaction.update((record) => {
             record.baseCurrencyCode = newBaseCurrency;
             record.amountInBaseCurrency = amount * exchangeRate;
             record.exchangeRate = exchangeRate;

@@ -1,9 +1,9 @@
-import { Bar, CartesianChart, ChartPressState } from 'victory-native';
-import { LinearGradient, useFont, vec, Circle } from '@shopify/react-native-skia';
-import inter from '../../assets/fonts/Inter-Medium.ttf';
+import { Circle, LinearGradient, useFont, vec } from '@shopify/react-native-skia';
 import React from 'react';
-import type { InputFields, NumericalFields } from 'victory-native/dist/types';
 import type { SharedValue } from 'react-native-reanimated';
+import { Bar, CartesianChart, type ChartPressState } from 'victory-native';
+import type { InputFields, NumericalFields } from 'victory-native/dist/types';
+import inter from '../../assets/fonts/Inter-Medium.ttf';
 import { calculateChartDomain, formatYAxisLabel } from '../../lib/chartUtils';
 
 type CartesianChartProps<
@@ -81,7 +81,7 @@ export const BarChart = <
     if (!x) return '';
     const str = x.toString();
     if (str.length <= 4) return str;
-    return str.length > 8 ? str.substring(0, 8) + '...' : str;
+    return str.length > 8 ? `${str.substring(0, 8)}...` : str;
   }, []);
 
   return (
@@ -110,7 +110,8 @@ export const BarChart = <
         formatYLabel: (y: NumericalFields<RawData>[YK]) => formatYAxisLabel(y as number),
         lineColor: 'rgba(255, 255, 255, 0.1)',
         tickCount: Math.min(yTickValues.length, 8),
-      }}>
+      }}
+    >
       {({ points, chartBounds }) => (
         <>
           <Bar
@@ -121,7 +122,8 @@ export const BarChart = <
             roundedCorners={{
               topLeft: 6,
               topRight: 6,
-            }}>
+            }}
+          >
             <LinearGradient
               start={vec(0, 0)}
               end={vec(0, 400)}

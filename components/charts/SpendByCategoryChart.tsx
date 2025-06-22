@@ -1,14 +1,14 @@
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Database, Q } from '@nozbe/watermelondb';
-import { map, Observable } from 'rxjs';
-import { TransactionModel } from '../../database/transaction-model';
-import * as React from 'react';
-import { CategoryModel } from '../../database/category-model';
-import { Button, styled, useWindowDimensions, View, Text } from 'tamagui';
-import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
-import { SpendBarChart } from './SpendBarChart';
 import dayjs from 'dayjs';
+import * as React from 'react';
+import { map, type Observable } from 'rxjs';
+import { Button, styled, Text, useWindowDimensions, View } from 'tamagui';
+import type { CategoryModel } from '../../database/category-model';
+import type { TransactionModel } from '../../database/transaction-model';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { calculateCategorySpending } from '../../lib/transactionAnalytics';
+import { SpendBarChart } from './SpendBarChart';
 
 type SpendByCategoryProps = {
   chartData: SpendByCategoryChartData;
@@ -62,7 +62,7 @@ export const SpendByCategory = withObservables<
       .get<TransactionModel>('transactions')
       .query(Q.where('amountInBaseCurrency', Q.lt(0)), ...dateQueries)
       .observeWithColumns(['categoryId', 'amountInBaseCurrency'])
-      .pipe(map(transactions => calculateCategorySpending(transactions))),
+      .pipe(map((transactions) => calculateCategorySpending(transactions))),
   };
 })(({ chartData, categories, dateFilter, setDateFilter }: SpendByCategoryProps) => {
   const dimensions = useWindowDimensions();
@@ -81,11 +81,11 @@ export const SpendByCategory = withObservables<
       .map(({ category, total }) => ({
         category,
         total,
-        categoryName: categories.find(c => c.id === category)?.name || 'Uncategorized',
+        categoryName: categories.find((c) => c.id === category)?.name || 'Uncategorized',
       }))
       .sort((a, b) => b.total - a.total);
 
-    const nonZeroData = dataWithNames.filter(item => item.total > 0);
+    const nonZeroData = dataWithNames.filter((item) => item.total > 0);
 
     return nonZeroData.slice(0, maxCategories);
   }, [chartData, categories, maxCategories]);
@@ -112,16 +112,16 @@ export const SpendByCategory = withObservables<
       if (maxLength >= 8) {
         const words = str.split(' ');
         if (words.length > 1 && words[0].length <= maxLength - 1) {
-          return words[0] + '...';
+          return `${words[0]}...`;
         }
       }
 
-      return str.substring(0, maxLength - 3) + '...';
+      return `${str.substring(0, maxLength - 3)}...`;
     },
     [processedData.length, dimensions.width]
   );
 
-  const totalCategories = chartData.filter(item => item.total > 0).length;
+  const totalCategories = chartData.filter((item) => item.total > 0).length;
   const hiddenCategories = Math.max(0, totalCategories - maxCategories);
 
   return (
@@ -140,7 +140,8 @@ export const SpendByCategory = withObservables<
                 backgroundColor="rgba(255, 255, 255, 0.1)"
                 paddingHorizontal="$2"
                 paddingVertical="$1"
-                borderRadius="$3">
+                borderRadius="$3"
+              >
                 <Text fontSize={11} color="rgba(255, 255, 255, 0.7)">
                   +{hiddenCategories} more categories
                 </Text>
@@ -154,26 +155,30 @@ export const SpendByCategory = withObservables<
             justifyContent={'center'}
             paddingHorizontal={'$2'}
             flexWrap={'wrap'}
-            alignItems={'center'}>
+            alignItems={'center'}
+          >
             <FilterButton
               active={dateFilter === 'thisMonth'}
               onPress={() => {
                 setDateFilter('thisMonth');
-              }}>
+              }}
+            >
               This month
             </FilterButton>
             <FilterButton
               active={dateFilter === 'lastMonth'}
               onPress={() => {
                 setDateFilter('lastMonth');
-              }}>
+              }}
+            >
               Last month
             </FilterButton>
             <FilterButton
               active={dateFilter === 'thisYear'}
               onPress={() => {
                 setDateFilter('thisYear');
-              }}>
+              }}
+            >
               This year
             </FilterButton>
           </View>
@@ -205,9 +210,14 @@ type WithFiltersProps = {
   database: Database;
 };
 const WithFilters = ({ database }: WithFiltersProps) => {
-  const [dateFilter, setDateFilter] = React.useState<SpendByCategoryDateFilter>('thisMonth');
+  const [dateFilter, setDateFilter] =
+    React.useState<SpendByCategoryDateFilter>('thisMonth');
   return (
-    <SpendByCategory dateFilter={dateFilter} setDateFilter={setDateFilter} database={database} />
+    <SpendByCategory
+      dateFilter={dateFilter}
+      setDateFilter={setDateFilter}
+      database={database}
+    />
   );
 };
 
