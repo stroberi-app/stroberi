@@ -1,15 +1,16 @@
-import React, { useRef, useState } from 'react';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { BottomSheetView, BottomSheetModal } from '@gorhom/bottom-sheet';
-import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
-import { Text, View } from 'tamagui';
-import { LinkButton } from '../button/LinkButton';
 import { PlusCircle } from '@tamagui/lucide-icons';
-import { CategoriesList } from '../CategoriesList';
-import { ManageCategoryItemSheet } from './ManageCategoryItemSheet';
+import type React from 'react';
+import { useRef, useState } from 'react';
+import { Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
+import { LinkButton } from '../button/LinkButton';
+import { CategoriesList } from '../CategoriesList';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { BottomSheetTextInput } from './BottomSheetTextInput';
+import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
+import { ManageCategoryItemSheet } from './ManageCategoryItemSheet';
 
 type ManageCategoriesSheetProps = {
   selectedCategory?: CategoryModel | null;
@@ -53,7 +54,8 @@ export const ManageCategoriesSheet = ({
         animateOnMount={true}
         handleIndicatorStyle={handleIndicatorStyle}
         backdropComponent={CustomBackdrop}
-        backgroundStyle={backgroundStyle}>
+        backgroundStyle={backgroundStyle}
+      >
         <BottomSheetView>
           <View
             flexDirection="row"
@@ -61,7 +63,8 @@ export const ManageCategoriesSheet = ({
             paddingHorizontal="$3"
             width="100%"
             justifyContent="space-between"
-            marginBottom="$2">
+            marginBottom="$2"
+          >
             <Text color="white" fontSize="$6">
               Categories
             </Text>
@@ -69,7 +72,8 @@ export const ManageCategoriesSheet = ({
               alignSelf="center"
               color="white"
               backgroundColor="$green"
-              onPress={() => categorySheet.current?.present()}>
+              onPress={() => categorySheet.current?.present()}
+            >
               <PlusCircle size={18} color="white" />
             </LinkButton>
           </View>

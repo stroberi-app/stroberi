@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router';
-import { Button } from './button/Button';
 import { PlusCircle } from '@tamagui/lucide-icons';
-import * as React from 'react';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Button } from './button/Button';
 
 export const CreateTransactionButtons = () => {
   const router = useRouter();
@@ -17,7 +17,8 @@ export const CreateTransactionButtons = () => {
         color="$stroberi"
         onPress={() => {
           handleTransactionNavigation('expense');
-        }}>
+        }}
+      >
         <PlusCircle color="$stroberi" size={16} strokeWidth={3} /> Expense
       </Button>
       <Button
@@ -27,7 +28,8 @@ export const CreateTransactionButtons = () => {
         paddingHorizontal="$2"
         onPress={() => {
           handleTransactionNavigation('income');
-        }}>
+        }}
+      >
         <PlusCircle color="$green" size={16} strokeWidth={3} /> Income
       </Button>
     </>

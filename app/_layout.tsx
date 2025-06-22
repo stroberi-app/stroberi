@@ -1,20 +1,19 @@
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ActionSheetProvider } from '@expo/react-native-action-sheet';
-
-import { TamaguiProvider } from 'tamagui';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { TamaguiProvider } from 'tamagui';
 import '../tamagui-web.css';
 
-import config from '../tamagui.config';
+import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { database } from '../database';
-import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useSeedCategories } from '../hooks/useSeedCategories';
+import config from '../tamagui.config';
 
 export {
   // Catch any errors thrown by the Layout component.

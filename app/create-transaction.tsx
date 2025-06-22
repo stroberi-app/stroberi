@@ -1,20 +1,27 @@
+import { type BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronRight,
+  Clock,
+  LayoutGrid,
+  User,
+} from '@tamagui/lucide-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { Keyboard } from 'react-native';
 import { Input, Text, TextArea, View, YGroup } from 'tamagui';
 import { LinkButton } from '../components/button/LinkButton';
+import { CreateExpenseItem } from '../components/CreateExpenseItem';
 import { CurrencyInput } from '../components/CurrencyInput';
-import { ArrowLeft, Calendar, ChevronRight, Clock, LayoutGrid, User } from '@tamagui/lucide-icons';
-import { Keyboard } from 'react-native';
-import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CurrencySelect } from '../components/CurrencySelect';
 import { DatePicker } from '../components/DatePicker';
 import { StyledScrollView } from '../components/StyledScrollView';
-import { CreateExpenseItem } from '../components/CreateExpenseItem';
-import { CategoryModel } from '../database/category-model';
-import { createTransaction, updateTransaction } from '../database/helpers';
 import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
-import { CurrencySelect } from '../components/CurrencySelect';
+import type { CategoryModel } from '../database/category-model';
+import { createTransaction, updateTransaction } from '../database/helpers';
+import type { TransactionModel } from '../database/transaction-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
-import { TransactionModel } from '../database/transaction-model';
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -32,14 +39,20 @@ function CreateTransaction() {
 
   const { defaultCurrency } = useDefaultCurrency();
 
-  const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(category ?? null);
-  const [selectedCurrency, setSelectedCurrency] = useState(transaction?.currencyCode ?? 'USD');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(
+    category ?? null
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    transaction?.currencyCode ?? 'USD'
+  );
   const [amount, setAmount] = useState(
     `${transactionType ? (transactionType === 'expense' ? '-' : '') : ''}${transaction?.amount ?? ''}`
   );
   const [note, setNote] = useState(transaction?.note ?? '');
   const [merchantName, setMerchantName] = useState(transaction?.merchant ?? '');
-  const [date, setDate] = useState(transaction?.date ? new Date(transaction.date) : new Date());
+  const [date, setDate] = useState(
+    transaction?.date ? new Date(transaction.date) : new Date()
+  );
 
   const handleSubmit = async () => {
     if (!defaultCurrency) {
@@ -80,7 +93,8 @@ function CreateTransaction() {
             backgroundColor="transparent"
             paddingHorizontal="$2"
             color="gray"
-            onPress={() => router.back()}>
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={20} color="gray" />
             Back
           </LinkButton>
@@ -123,7 +137,8 @@ function CreateTransaction() {
               onPress={() => {
                 Keyboard.dismiss();
                 manageCategoriesSheetRef.current?.present();
-              }}>
+              }}
+            >
               {selectedCategory ? (
                 <View flexDirection="row" alignItems="center" gap="$2">
                   <Text>{selectedCategory.icon}</Text>
@@ -140,12 +155,17 @@ function CreateTransaction() {
           </CreateExpenseItem>
         </YGroup>
         <View mt="$4">
-          <TextArea placeholder="Enter a note" size="$5" value={note} onChangeText={setNote} />
+          <TextArea
+            placeholder="Enter a note"
+            size="$5"
+            value={note}
+            onChangeText={setNote}
+          />
         </View>
       </StyledScrollView>
       <CurrencySelect
         sheetRef={bottomSheetRef}
-        onSelect={currency => {
+        onSelect={(currency) => {
           setSelectedCurrency(currency.code);
           bottomSheetRef.current?.close();
         }}

@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Input, Text, SizeTokens } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
+import { useCallback, useId, useMemo } from 'react';
+import { Input, type SizeTokens, Text, View } from 'tamagui';
 
 type CurrencyInputProps = {
   size?: SizeTokens;
@@ -27,6 +27,7 @@ export function CurrencyInput({
   decimalPlaces = 2,
   onValidationError,
 }: CurrencyInputProps) {
+  const id = useId();
   const validationResult = useMemo(() => {
     if (!value) return { isValid: true, error: null };
 
@@ -36,7 +37,7 @@ export function CurrencyInput({
 
     const numValue = Number(value);
 
-    if (isNaN(numValue)) {
+    if (Number.isNaN(numValue)) {
       return { isValid: false, error: 'Invalid number format' };
     }
 
@@ -45,7 +46,10 @@ export function CurrencyInput({
     }
 
     if (Math.abs(numValue) > maxValue) {
-      return { isValid: false, error: `Amount cannot exceed ${maxValue.toLocaleString()}` };
+      return {
+        isValid: false,
+        error: `Amount cannot exceed ${maxValue.toLocaleString()}`,
+      };
     }
 
     return { isValid: true, error: null };
@@ -76,14 +80,18 @@ export function CurrencyInput({
       if (dotIndex !== -1) {
         const beforeDot = processedText.slice(0, dotIndex);
         const afterDot = processedText.slice(dotIndex + 1).replace(/\./g, '');
-        processedText = beforeDot + '.' + afterDot;
+        processedText = `${beforeDot}.${afterDot}`;
       }
 
       if (dotIndex !== -1 && processedText.length > dotIndex + 1 + decimalPlaces) {
         processedText = processedText.slice(0, dotIndex + 1 + decimalPlaces);
       }
 
-      if (processedText.length > 1 && processedText[0] === '0' && processedText[1] !== '.') {
+      if (
+        processedText.length > 1 &&
+        processedText[0] === '0' &&
+        processedText[1] !== '.'
+      ) {
         processedText = processedText.slice(1);
       }
 
@@ -95,7 +103,7 @@ export function CurrencyInput({
       }
 
       const numValue = Number(finalText);
-      if (!isNaN(numValue) && Math.abs(numValue) > maxValue) {
+      if (!Number.isNaN(numValue) && Math.abs(numValue) > maxValue) {
         onValidationError?.(`Amount cannot exceed ${maxValue.toLocaleString()}`);
         return;
       }
@@ -117,7 +125,8 @@ export function CurrencyInput({
         borderWidth={1}
         borderColor={validationResult.isValid ? '$borderColor' : '$red10'}
         backgroundColor="$gray5"
-        borderRadius="$4">
+        borderRadius="$4"
+      >
         <Input
           borderRadius="$0"
           backgroundColor="transparent"
@@ -128,7 +137,7 @@ export function CurrencyInput({
             fontSize: 32,
             flex: 1,
           }}
-          id="currencyInput"
+          id={`currencyInput-${id}`}
           placeholder="0.00"
           autoFocus={focusOnMount}
           onChangeText={handleTextChange}
@@ -147,7 +156,8 @@ export function CurrencyInput({
           paddingHorizontal="$2"
           backgroundColor="transparent"
           flexDirection="row"
-          alignItems="center">
+          alignItems="center"
+        >
           <Text color="gray" fontSize="$8">
             {selectedCurrency}
           </Text>
@@ -156,12 +166,18 @@ export function CurrencyInput({
       </View>
 
       {!validationResult.isValid && validationResult.error && (
-        <View width="100%" marginTop="$1" paddingHorizontal="$2" accessibilityRole="alert">
+        <View
+          width="100%"
+          marginTop="$1"
+          paddingHorizontal="$2"
+          accessibilityRole="alert"
+        >
           <Text
             color="$red10"
             fontSize="$3"
             textAlign="left"
-            accessibilityLabel={`Input error: ${validationResult.error}`}>
+            accessibilityLabel={`Input error: ${validationResult.error}`}
+          >
             {validationResult.error}
           </Text>
         </View>

@@ -1,9 +1,8 @@
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Database, Q } from '@nozbe/watermelondb';
-import { map, Observable } from 'rxjs';
-import { TransactionModel } from '../../database/transaction-model';
-import * as React from 'react';
 import dayjs from 'dayjs';
+import { map, type Observable } from 'rxjs';
+import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { SpendBarChart } from './SpendBarChart';
 
@@ -30,26 +29,29 @@ export const SpendByType = withObservables<
       .query(Q.where('amountInBaseCurrency', type === 'income' ? Q.gte(0) : Q.lt(0)))
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
-        map(transactions => {
+        map((transactions) => {
           const last6Months = Array.from({ length: 6 }, (_, i) => {
             return dayjs().subtract(i, 'month');
           }).reverse();
 
           return last6Months
-            .map(date => {
+            .map((date) => {
               const month = date.format('MMM');
               const year = date.year();
               const sortKey = date.valueOf();
 
               const total = transactions
-                .filter(transaction => {
+                .filter((transaction) => {
                   const transactionDate = dayjs(transaction.date);
                   return (
                     transactionDate.month() === date.month() &&
                     transactionDate.year() === date.year()
                   );
                 })
-                .reduce((acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency), 0);
+                .reduce(
+                  (acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency),
+                  0
+                );
 
               return {
                 month,
@@ -77,7 +79,7 @@ export const SpendByType = withObservables<
           ? `Spend by Month (${defaultCurrency})`
           : `Income by Month (${defaultCurrency})`
       }
-      isEmpty={chartData.every(el => el.total === 0)}
+      isEmpty={chartData.every((el) => el.total === 0)}
       xKey={'month'}
       yKeys={['total']}
       formatXLabel={formatMonthLabel}

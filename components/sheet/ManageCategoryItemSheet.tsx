@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { createCategory, updateCategory } from '../../database/helpers';
-import { CustomBackdrop } from '../CustomBackdrop';
+import { PlusCircle } from '@tamagui/lucide-icons';
+import React, { useEffect, useState } from 'react';
+import { Keyboard } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import EmojiPicker from 'rn-emoji-keyboard';
+import type { OnEmojiSelected } from 'rn-emoji-keyboard/lib/typescript/contexts/KeyboardContext';
 import { Text, useTheme, View } from 'tamagui';
 import { spendingCategories } from '../../data/emojis';
+import type { CategoryModel } from '../../database/category-model';
+import { createCategory, updateCategory } from '../../database/helpers';
 import { Button } from '../button/Button';
-import { PlusCircle } from '@tamagui/lucide-icons';
-import { backgroundStyle, handleIndicatorStyle } from './constants';
-import EmojiPicker from 'rn-emoji-keyboard';
-import { OnEmojiSelected } from 'rn-emoji-keyboard/lib/typescript/contexts/KeyboardContext';
+import { CustomBackdrop } from '../CustomBackdrop';
 import { BottomSheetTextInput } from './BottomSheetTextInput';
-import { Keyboard } from 'react-native';
-import { CategoryModel } from '../../database/category-model';
+import { backgroundStyle, handleIndicatorStyle } from './constants';
 
 type CreateCategorySheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -42,14 +42,14 @@ export const ManageCategoryItemSheet = ({
     }
   }, [category]);
 
-  const handlePick: OnEmojiSelected = emoji => {
+  const handlePick: OnEmojiSelected = (emoji) => {
     setSelectedIcon(emoji.emoji);
     setIsOpen(false);
   };
 
   const handleSave = () => {
     Keyboard.dismiss();
-    if (category && category.id) {
+    if (category?.id) {
       updateCategory({ id: category.id, name, icon: selectedIcon }).then(() => {
         sheetRef.current?.dismiss();
       });
@@ -74,7 +74,8 @@ export const ManageCategoryItemSheet = ({
       enableDismissOnClose={true}
       backdropComponent={CustomBackdrop}
       handleIndicatorStyle={handleIndicatorStyle}
-      backgroundStyle={backgroundStyle}>
+      backgroundStyle={backgroundStyle}
+    >
       <BottomSheetView>
         <View padding="$2" gap="$2">
           <Text ml="$2">Category Name & Icon</Text>
@@ -93,7 +94,8 @@ export const ManageCategoryItemSheet = ({
               onPress={() => {
                 Keyboard.dismiss();
                 setIsOpen(true);
-              }}>
+              }}
+            >
               <Text width={30} textAlign="center">
                 {selectedIcon}
               </Text>
@@ -138,7 +140,8 @@ export const ManageCategoryItemSheet = ({
         </View>
         <View padding="$4" gap="$2" mb={bottom} mt="auto">
           <Button backgroundColor="$green" onPress={() => handleSave()}>
-            {category ? 'Update' : 'Create'} {!category && <PlusCircle size={18} color="white" />}
+            {category ? 'Update' : 'Create'}{' '}
+            {!category && <PlusCircle size={18} color="white" />}
           </Button>
         </View>
       </BottomSheetView>

@@ -1,27 +1,29 @@
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { DollarSign, FolderInput, FolderOutput, Tags } from '@tamagui/lucide-icons';
+import { useRouter } from 'expo-router';
+import * as React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
-import { DollarSign, FolderInput, FolderOutput, Tags } from '@tamagui/lucide-icons';
-import * as React from 'react';
-import { SettingsItem } from '../../components/settings/SettingsItem';
-import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { CurrencySelect } from '../../components/CurrencySelect';
+import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
+import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
+import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
 import {
   TransactionPreviewSheet,
-  TransactionPreviewSheetRef,
+  type TransactionPreviewSheetRef,
 } from '../../components/sheet/TransactionPreviewSheet';
-import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
-import { useRouter } from 'expo-router';
-import { ExportDateRange } from '../../hooks/useTransactionExport';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import type { ExportDateRange } from '../../hooks/useTransactionExport';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
   const manageCategoriesSheetRef = React.useRef<BottomSheetModal | null>(null);
   const currencySheetRef = React.useRef<BottomSheetModal | null>(null);
   const exportDataSheetRef = React.useRef<BottomSheetModal | null>(null);
-  const transactionPreviewSheetRef = React.useRef<TransactionPreviewSheetRef | null>(null);
+  const transactionPreviewSheetRef = React.useRef<TransactionPreviewSheetRef | null>(
+    null
+  );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency } = useDefaultCurrency();
 
@@ -42,7 +44,8 @@ export default function SettingsScreen() {
       <ScrollView
         style={{ paddingTop: top || 8 }}
         backgroundColor={'$bgPrimary'}
-        paddingHorizontal={'$2'}>
+        paddingHorizontal={'$2'}
+      >
         <Text fontSize={'$8'} fontWeight={'bold'} marginBottom={'$4'}>
           Settings
         </Text>
@@ -120,14 +123,20 @@ export default function SettingsScreen() {
       <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />
       <CurrencySelect
         sheetRef={currencySheetRef}
-        onSelect={currency => {
+        onSelect={(currency) => {
           setDefaultCurrency(currency.code);
           currencySheetRef.current?.close();
         }}
         selectedCurrency={defaultCurrency ?? 'USD'}
       />
-      <ExportDataSheet sheetRef={exportDataSheetRef} onViewTransactions={handleViewTransactions} />
-      <TransactionPreviewSheet ref={transactionPreviewSheetRef} onBack={handleBackToExport} />
+      <ExportDataSheet
+        sheetRef={exportDataSheetRef}
+        onViewTransactions={handleViewTransactions}
+      />
+      <TransactionPreviewSheet
+        ref={transactionPreviewSheetRef}
+        onBack={handleBackToExport}
+      />
       <ImportCSVSheet sheetRef={importCsvSheetRef} />
     </>
   );
