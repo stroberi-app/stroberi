@@ -1,6 +1,5 @@
-import React from 'react';
-import { Text } from 'tamagui';
 import { Check } from '@tamagui/lucide-icons';
+import { Text } from 'tamagui';
 import { LinkButton } from '../button/LinkButton';
 
 type FilterOptionProps = {
@@ -14,7 +13,8 @@ const FilterOption = ({ label, isSelected, onPress, icon }: FilterOptionProps) =
   <LinkButton
     paddingHorizontal="$4"
     onPress={onPress}
-    backgroundColor={isSelected ? '$green' : '$background075'}>
+    backgroundColor={isSelected ? '$green' : '$background075'}
+  >
     <Text>
       {label} {icon}
     </Text>

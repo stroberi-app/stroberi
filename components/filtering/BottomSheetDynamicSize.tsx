@@ -1,5 +1,5 @@
-import React from 'react';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import type React from 'react';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomBackdrop } from '../CustomBackdrop';
@@ -10,7 +10,11 @@ type BottomSheetWrapperProps = {
   children: React.ReactNode;
 } & React.ComponentProps<typeof BottomSheetModal>;
 
-const BottomSheetDynamicSize = ({ sheetRef, children, ...rest }: BottomSheetWrapperProps) => {
+const BottomSheetDynamicSize = ({
+  sheetRef,
+  children,
+  ...rest
+}: BottomSheetWrapperProps) => {
   const { bottom } = useSafeAreaInsets();
   return (
     <BottomSheetModal
@@ -20,7 +24,8 @@ const BottomSheetDynamicSize = ({ sheetRef, children, ...rest }: BottomSheetWrap
       stackBehavior="push"
       handleIndicatorStyle={handleIndicatorStyle}
       backgroundStyle={backgroundStyle}
-      {...rest}>
+      {...rest}
+    >
       <BottomSheetView style={{ paddingBottom: bottom + 16 }}>{children}</BottomSheetView>
     </BottomSheetModal>
   );

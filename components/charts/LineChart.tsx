@@ -1,9 +1,9 @@
-import { Line, CartesianChart, ChartPressState } from 'victory-native';
-import { useFont, Circle } from '@shopify/react-native-skia';
-import inter from '../../assets/fonts/Inter-Medium.ttf';
+import { Circle, useFont } from '@shopify/react-native-skia';
 import React from 'react';
-import type { InputFields, NumericalFields } from 'victory-native/dist/types';
 import type { SharedValue } from 'react-native-reanimated';
+import { CartesianChart, type ChartPressState, Line } from 'victory-native';
+import type { InputFields, NumericalFields } from 'victory-native/dist/types';
+import inter from '../../assets/fonts/Inter-Medium.ttf';
 import { calculateChartDomain, formatYAxisLabel } from '../../lib/chartUtils';
 
 type CartesianChartProps<
@@ -70,7 +70,7 @@ export const LineChart = <
     if (!x) return '';
     const str = x.toString();
     if (str.length <= 4) return str;
-    return str.length > 8 ? str.substring(0, 8) + '...' : str;
+    return str.length > 8 ? `${str.substring(0, 8)}...` : str;
   }, []);
 
   return (
@@ -99,7 +99,8 @@ export const LineChart = <
         formatYLabel: (y: NumericalFields<RawData>[YK]) => formatYAxisLabel(y as number),
         lineColor: 'rgba(255, 255, 255, 0.1)',
         tickCount: Math.min(yTickValues.length, 8),
-      }}>
+      }}
+    >
       {({ points }) => (
         <>
           <Line

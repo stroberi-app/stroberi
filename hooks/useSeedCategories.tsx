@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { database } from '../database';
-import { CategoryModel } from '../database/category-model';
 import { DEFAULT_CATEGORIES } from '../data/defaultCategories';
+import { database } from '../database';
+import type { CategoryModel } from '../database/category-model';
 
 export const useSeedCategories = () => {
   useEffect(() => {
@@ -14,10 +14,12 @@ export const useSeedCategories = () => {
       if (existingCategories.length === 0) {
         await database.write(async () => {
           for (const category of DEFAULT_CATEGORIES) {
-            await database.collections.get<CategoryModel>('categories').create(newCategory => {
-              newCategory.name = category.name;
-              newCategory.icon = category.icon;
-            });
+            await database.collections
+              .get<CategoryModel>('categories')
+              .create((newCategory) => {
+                newCategory.name = category.name;
+                newCategory.icon = category.icon;
+              });
           }
         });
       }

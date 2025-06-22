@@ -1,16 +1,15 @@
-import * as React from 'react';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
+import React, { useCallback, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
-import { Carousel } from '../../components/carousel/Carousel';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
-import { SpendByType } from '../../components/charts/SpendByTypeChart';
-import SpendByCategory from '../../components/charts/SpendByCategoryChart';
-import SpendingTrends from '../../components/charts/SpendingTrendsChart';
-import { useCallback, useMemo } from 'react';
-import SpendOverview from '../../components/home/SpendOverview';
 import { CreateFirstTransactionSection } from '../../components/CreateFirstTransactionSection';
 import { CreateTransactionButtons } from '../../components/CreateTransactionButtons';
+import { Carousel } from '../../components/carousel/Carousel';
+import SpendByCategory from '../../components/charts/SpendByCategoryChart';
+import { SpendByType } from '../../components/charts/SpendByTypeChart';
+import SpendingTrends from '../../components/charts/SpendingTrendsChart';
+import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
+import SpendOverview from '../../components/home/SpendOverview';
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
@@ -24,30 +23,34 @@ export default function HomeScreen() {
       <SpendByCategory database={database} key="spend_by_category" />,
       <SpendingTrends database={database} key="spending_trends" />,
     ],
-    []
+    [database]
   );
-  const renderCarouselItem = useCallback(({ index }: { index: number }) => {
-    const item = carouselItems[index];
-    if (item) {
-      return item;
-    }
+  const renderCarouselItem = useCallback(
+    ({ index }: { index: number }) => {
+      const item = carouselItems[index];
+      if (item) {
+        return item;
+      }
 
-    return <View />;
-  }, []);
+      return <View />;
+    },
+    [carouselItems]
+  );
 
   const carouselData = useMemo(() => {
     return carouselItems.map((_, i) => i);
-  }, []);
+  }, [carouselItems]);
 
   return (
     <>
       <View
         style={{ paddingTop: top || 8, flex: 1 }}
         backgroundColor="$bgPrimary"
-        paddingHorizontal="$2">
+        paddingHorizontal="$2"
+      >
         <HomeTransactionsSection
           database={database}
-          header={transactionCount => (
+          header={(transactionCount) => (
             <>
               <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
                 Overview

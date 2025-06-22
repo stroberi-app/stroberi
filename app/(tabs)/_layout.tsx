@@ -1,11 +1,11 @@
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import { CircleDollarSign, Home, Settings } from '@tamagui/lucide-icons';
-import { Tabs } from 'expo-router';
-import React from 'react';
 import { BlurView } from 'expo-blur';
+import { Tabs } from 'expo-router';
+import type React from 'react';
 import { useTheme } from 'tamagui';
 
-const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = props => {
+const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
   return (
     <BlurView
       style={{
@@ -15,7 +15,8 @@ const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = props => {
         right: 0,
       }}
       intensity={40}
-      tint="dark">
+      tint="dark"
+    >
       <BottomTabBar {...props} />
     </BlurView>
   );
@@ -35,7 +36,8 @@ export default function TabLayout() {
           elevation: 0,
         },
       }}
-      tabBar={CustomTabBar}>
+      tabBar={CustomTabBar}
+    >
       <Tabs.Screen
         name="index"
         options={{

@@ -1,10 +1,10 @@
-import React from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { CustomBackdrop } from '../CustomBackdrop';
-import { Text, View, YStack, XStack, Separator } from 'tamagui';
+import { AlertCircle, Download, FileText, RefreshCw, X } from '@tamagui/lucide-icons';
+import type React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Separator, Text, View, XStack, YStack } from 'tamagui';
 import { Button } from '../button/Button';
-import { FileText, AlertCircle, Download, RefreshCw, X } from '@tamagui/lucide-icons';
+import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 
 export interface ErrorInfo {
@@ -59,7 +59,8 @@ export const ErrorSheet = ({
       enableDynamicSizing={false}
       backdropComponent={CustomBackdrop}
       handleIndicatorStyle={handleIndicatorStyle}
-      backgroundStyle={backgroundStyle}>
+      backgroundStyle={backgroundStyle}
+    >
       <BottomSheetScrollView style={{ paddingHorizontal: 16 }}>
         <View pb={bottom + 16}>
           <XStack justifyContent={'space-between'} alignItems={'center'} mb={'$4'}>
@@ -74,7 +75,8 @@ export const ErrorSheet = ({
               circular
               backgroundColor={'$gray4'}
               onPress={onDismiss}
-              padding={'$2'}>
+              padding={'$2'}
+            >
               <X size={16} color={'$gray11'} />
             </Button>
           </XStack>
@@ -97,7 +99,8 @@ export const ErrorSheet = ({
                   borderWidth={1}
                   borderRadius={'$4'}
                   padding={'$3'}
-                  maxHeight={200}>
+                  maxHeight={200}
+                >
                   <YStack gap={'$2'}>
                     {errorInfo.errors.map((error, index) => (
                       <XStack key={index} alignItems={'flex-start'} gap={'$2'}>
@@ -123,7 +126,11 @@ export const ErrorSheet = ({
 
             <YStack gap={'$3'} mt={'$4'}>
               {errorInfo.showTemplateButton && (
-                <Button fontWeight={'600'} backgroundColor={'$blue9'} onPress={onDownloadTemplate}>
+                <Button
+                  fontWeight={'600'}
+                  backgroundColor={'$blue9'}
+                  onPress={onDownloadTemplate}
+                >
                   <XStack alignItems={'center'} gap={'$2'}>
                     <Download size={18} color={'white'} />
                     <Text color={'white'} fontWeight={'600'}>

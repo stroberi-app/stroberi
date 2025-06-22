@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { Text, View, YGroup } from 'tamagui';
 import { ArrowRight } from '@tamagui/lucide-icons';
+import type * as React from 'react';
 import { TouchableOpacity } from 'react-native';
+import { Text, View, YGroup } from 'tamagui';
 
 type SettingsItemProps = {
   label: string;
@@ -10,7 +10,12 @@ type SettingsItemProps = {
   onPress?: () => void;
 };
 
-export const SettingsItem = ({ label, IconComponent, rightLabel, onPress }: SettingsItemProps) => {
+export const SettingsItem = ({
+  label,
+  IconComponent,
+  rightLabel,
+  onPress,
+}: SettingsItemProps) => {
   const Component = onPress ? TouchableOpacity : View;
   return (
     <YGroup.Item>
@@ -23,7 +28,8 @@ export const SettingsItem = ({ label, IconComponent, rightLabel, onPress }: Sett
             flexDirection="row"
             width="100%"
             justifyContent="space-between"
-            alignItems="center">
+            alignItems="center"
+          >
             <View flexDirection="row" alignItems="center" gap="$2">
               {IconComponent && <IconComponent size={18} />}
               <Text fontSize="$5">{label}</Text>

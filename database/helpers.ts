@@ -1,7 +1,7 @@
-import { TransactionModel } from './transaction-model';
-import { CategoryModel } from './category-model';
-import { database } from './index';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import type { CategoryModel } from './category-model';
+import { database } from './index';
+import type { TransactionModel } from './transaction-model';
 
 export type CreateTransactionPayload = {
   merchant: string;
@@ -39,7 +39,7 @@ export const createTransaction = ({
       }
     }
 
-    return collection.create(tx => {
+    return collection.create((tx) => {
       tx.merchant = merchant;
       tx.amount = amount;
       tx.date = date;
@@ -92,7 +92,7 @@ export const updateTransaction = ({
       }
     }
 
-    return transaction.update(tx => {
+    return transaction.update((tx) => {
       tx.merchant = merchant;
       tx.amount = amount;
       tx.date = date;
@@ -110,17 +110,25 @@ export const updateTransaction = ({
 export const createCategory = ({ name, icon }: { name: string; icon: string }) =>
   database.write(async () => {
     const collection = database.get<CategoryModel>('categories');
-    return collection.create(category => {
+    return collection.create((category) => {
       category.name = name;
       category.icon = icon;
     });
   });
 
-export const updateCategory = ({ id, name, icon }: { id: string; name: string; icon: string }) =>
+export const updateCategory = ({
+  id,
+  name,
+  icon,
+}: {
+  id: string;
+  name: string;
+  icon: string;
+}) =>
   database.write(async () => {
     const collection = database.get<CategoryModel>('categories');
-    collection.find(id).then(category => {
-      category.update(tx => {
+    collection.find(id).then((category) => {
+      category.update((tx) => {
         tx.name = name;
         tx.icon = icon;
       });

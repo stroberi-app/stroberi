@@ -1,12 +1,12 @@
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Database, Q } from '@nozbe/watermelondb';
-import { map, Observable } from 'rxjs';
-import { TransactionModel } from '../../database/transaction-model';
-import * as React from 'react';
 import dayjs from 'dayjs';
+import * as React from 'react';
+import { map, type Observable } from 'rxjs';
+import { Button, styled, View } from 'tamagui';
+import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { SpendLineChart } from './SpendLineChart';
-import { Button, styled, View } from 'tamagui';
 
 type SpendingTrendsProps = {
   chartData: SpendingTrendsChartData;
@@ -35,7 +35,7 @@ export const SpendingTrends = withObservables<
       .query(Q.where('amountInBaseCurrency', Q.lt(0)))
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
-        map(transactions => {
+        map((transactions) => {
           if (trendType === 'daily') {
             const currentMonth = dayjs().startOf('month');
             const today = dayjs();
@@ -49,11 +49,14 @@ export const SpendingTrends = withObservables<
               const sortKey = date.valueOf();
 
               const total = transactions
-                .filter(transaction => {
+                .filter((transaction) => {
                   const transactionDate = dayjs(transaction.date);
                   return transactionDate.isSame(date, 'day');
                 })
-                .reduce((acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency), 0);
+                .reduce(
+                  (acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency),
+                  0
+                );
 
               return {
                 period: dayName,
@@ -67,17 +70,18 @@ export const SpendingTrends = withObservables<
             });
 
             return last30Days
-              .map(date => {
+              .map((date) => {
                 const dayLabel = date.format('DD');
                 const sortKey = date.valueOf();
 
                 const total = transactions
-                  .filter(transaction => {
+                  .filter((transaction) => {
                     const transactionDate = dayjs(transaction.date);
                     return transactionDate.isSame(date, 'day');
                   })
                   .reduce(
-                    (acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency),
+                    (acc, transaction) =>
+                      acc + Math.abs(transaction.amountInBaseCurrency),
                     0
                   );
 
@@ -100,7 +104,7 @@ export const SpendingTrends = withObservables<
                 const sortKey = weekStart.valueOf();
 
                 const total = transactions
-                  .filter(transaction => {
+                  .filter((transaction) => {
                     const transactionDate = dayjs(transaction.date);
                     return (
                       transactionDate.isAfter(weekStart.subtract(1, 'day')) &&
@@ -108,7 +112,8 @@ export const SpendingTrends = withObservables<
                     );
                   })
                   .reduce(
-                    (acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency),
+                    (acc, transaction) =>
+                      acc + Math.abs(transaction.amountInBaseCurrency),
                     0
                   );
 
@@ -134,7 +139,7 @@ export const SpendingTrends = withObservables<
       } else {
         // For weekly view, show only every other label to reduce crowding
         // Find the index of this period in our chart data
-        const dataIndex = chartData.findIndex(item => item.period === period);
+        const dataIndex = chartData.findIndex((item) => item.period === period);
         if (dataIndex !== -1 && dataIndex % 2 !== 0) {
           return '';
         }
@@ -162,12 +167,14 @@ export const SpendingTrends = withObservables<
     <SpendLineChart
       chartData={chartData}
       title={chartTitle}
-      isEmpty={chartData.every(el => el.total === 0)}
+      isEmpty={chartData.every((el) => el.total === 0)}
       xKey={'period'}
       yKeys={['total']}
       formatXLabel={formatPeriodLabel}
       strokeWidth={2}
-      curveType={trendType === 'daily' || trendType === 'last30days' ? 'linear' : 'natural'}
+      curveType={
+        trendType === 'daily' || trendType === 'last30days' ? 'linear' : 'natural'
+      }
       footer={
         <View
           flexDirection={'row'}
@@ -175,16 +182,24 @@ export const SpendingTrends = withObservables<
           justifyContent={'center'}
           paddingHorizontal={'$2'}
           paddingVertical={'$2'}
-          alignItems={'center'}>
-          <FilterButton active={trendType === 'daily'} onPress={() => setTrendType('daily')}>
+          alignItems={'center'}
+        >
+          <FilterButton
+            active={trendType === 'daily'}
+            onPress={() => setTrendType('daily')}
+          >
             This Month
           </FilterButton>
           <FilterButton
             active={trendType === 'last30days'}
-            onPress={() => setTrendType('last30days')}>
+            onPress={() => setTrendType('last30days')}
+          >
             Last 30 Days
           </FilterButton>
-          <FilterButton active={trendType === 'weekly'} onPress={() => setTrendType('weekly')}>
+          <FilterButton
+            active={trendType === 'weekly'}
+            onPress={() => setTrendType('weekly')}
+          >
             Weekly
           </FilterButton>
         </View>
@@ -217,7 +232,13 @@ type WithFiltersProps = {
 
 const WithFilters = ({ database }: WithFiltersProps) => {
   const [trendType, setTrendType] = React.useState<SpendingTrendType>('daily');
-  return <SpendingTrends trendType={trendType} setTrendType={setTrendType} database={database} />;
+  return (
+    <SpendingTrends
+      trendType={trendType}
+      setTrendType={setTrendType}
+      database={database}
+    />
+  );
 };
 
 export default WithFilters;

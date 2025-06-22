@@ -9,16 +9,17 @@ export function calculateChartDomain(
 ): ChartDomainData {
   if (data.length === 0) return { yDomain: [0, 100], yTickValues: [0, 25, 50, 75, 100] };
 
-  const yValues = data.flatMap(item =>
+  const yValues = data.flatMap((item) =>
     yKeys
-      .map(key => {
+      .map((key) => {
         const value = item[key];
         return typeof value === 'number' ? value : parseFloat(String(value) || '0');
       })
-      .filter(val => !isNaN(val))
+      .filter((val) => !Number.isNaN(val))
   );
 
-  if (yValues.length === 0) return { yDomain: [0, 100], yTickValues: [0, 25, 50, 75, 100] };
+  if (yValues.length === 0)
+    return { yDomain: [0, 100], yTickValues: [0, 25, 50, 75, 100] };
 
   const maxValue = Math.max(...yValues);
   const minValue = 0;
@@ -77,7 +78,7 @@ export function calculateChartDomain(
 
 export function formatYAxisLabel(value: number | string): string {
   const numY = typeof value === 'number' ? value : parseFloat(value?.toString() || '0');
-  if (isNaN(numY)) return '0';
+  if (Number.isNaN(numY)) return '0';
 
   if (numY >= 1000000) {
     const millions = numY / 1000000;

@@ -1,27 +1,26 @@
-import dayjs from 'dayjs';
-import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
-import { Button, Text, View, YGroup } from 'tamagui';
-import { Calendar } from '@tamagui/lucide-icons';
-
-import { LinkButton } from '../button/LinkButton';
-import * as React from 'react';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Database, Q } from '@nozbe/watermelondb';
-import { map, Observable } from 'rxjs';
-import { TransactionModel } from '../../database/transaction-model';
-import { formatCurrency } from '../../lib/format';
-import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
-import { CategoryModel } from '../../database/category-model';
-import { InfoItem } from '../InfoItem';
-import { formatDateRange } from '../../lib/date';
-import { DatePicker } from '../DatePicker';
-import BottomSheetDynamicSize from '../filtering/BottomSheetDynamicSize';
+import { Calendar } from '@tamagui/lucide-icons';
+import dayjs from 'dayjs';
+import * as React from 'react';
 import { useState } from 'react';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { map, type Observable } from 'rxjs';
+import { Button, Text, View, YGroup } from 'tamagui';
+import type { CategoryModel } from '../../database/category-model';
+import type { TransactionModel } from '../../database/transaction-model';
+import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { formatDateRange } from '../../lib/date';
+import { formatCurrency } from '../../lib/format';
 import {
   calculateTransactionAnalytics,
-  TransactionAnalytics,
+  type TransactionAnalytics,
 } from '../../lib/transactionAnalytics';
+import { LinkButton } from '../button/LinkButton';
+import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
+import { DatePicker } from '../DatePicker';
+import BottomSheetDynamicSize from '../filtering/BottomSheetDynamicSize';
+import { InfoItem } from '../InfoItem';
 
 type SpendOverviewProps = {
   analytics: TransactionAnalytics;
@@ -50,20 +49,23 @@ const SpendOverview = withObservables<
       .get<TransactionModel>('transactions')
       .query(Q.where('date', Q.gte(fromDate)), Q.where('date', Q.lte(toDate)))
       .observeWithColumns(['categoryId', 'amountInBaseCurrency', 'date'])
-      .pipe(map(transactions => calculateTransactionAnalytics(transactions))),
+      .pipe(map((transactions) => calculateTransactionAnalytics(transactions))),
     categories: database.collections.get<CategoryModel>('categories').query().observe(),
   };
 })(({ analytics, fromDate, toDate, categories, onDatePress }: SpendOverviewProps) => {
   const { defaultCurrency } = useDefaultCurrency();
 
-  const category = categories.find(c => c.id === analytics.highestSpendCategory.category);
+  const category = categories.find(
+    (c) => c.id === analytics.highestSpendCategory.category
+  );
   return (
     <CarouselItemWrapper>
       <View
         justifyContent="flex-start"
         flexDirection="row"
         marginBottom="$4"
-        paddingHorizontal="$3">
+        paddingHorizontal="$3"
+      >
         <LinkButton onPress={onDatePress} color="white" backgroundColor="$gray2">
           <View flexDirection="row" gap="$2" alignItems="center">
             <Text fontSize="$5">{formatDateRange(fromDate, toDate)}</Text>
@@ -71,28 +73,50 @@ const SpendOverview = withObservables<
           </View>
         </LinkButton>
       </View>
-      <YGroup flexDirection="row" paddingHorizontal="$4" justifyContent="space-between" mb="$5">
+      <YGroup
+        flexDirection="row"
+        paddingHorizontal="$4"
+        justifyContent="space-between"
+        mb="$5"
+      >
         <YGroup gap="$5">
           <InfoItem
             title="Period Income"
             color={analytics.totalIncome > 0 ? '$green' : 'white'}
-            value={defaultCurrency ? formatCurrency(analytics.totalIncome, defaultCurrency) : ''}
+            value={
+              defaultCurrency
+                ? formatCurrency(analytics.totalIncome, defaultCurrency)
+                : ''
+            }
           />
           <InfoItem
             title="Period Balance"
             color={
-              analytics.balance > 0 ? '$green' : analytics.balance === 0 ? 'white' : '$stroberi'
+              analytics.balance > 0
+                ? '$green'
+                : analytics.balance === 0
+                  ? 'white'
+                  : '$stroberi'
             }
-            value={defaultCurrency ? formatCurrency(analytics.balance, defaultCurrency) : ''}
+            value={
+              defaultCurrency ? formatCurrency(analytics.balance, defaultCurrency) : ''
+            }
           />
         </YGroup>
         <YGroup paddingHorizontal="$4" gap="$5">
           <InfoItem
             title="Period Spend"
             color={analytics.totalExpense !== 0 ? '$stroberi' : 'white'}
-            value={defaultCurrency ? formatCurrency(analytics.totalExpense, defaultCurrency) : ''}
+            value={
+              defaultCurrency
+                ? formatCurrency(analytics.totalExpense, defaultCurrency)
+                : ''
+            }
           />
-          <InfoItem title="Transaction No." value={analytics.transactionCount.toString()} />
+          <InfoItem
+            title="Transaction No."
+            value={analytics.transactionCount.toString()}
+          />
         </YGroup>
       </YGroup>
       <View paddingHorizontal="$4" gap="$1" mb="$2">
@@ -139,13 +163,19 @@ const WithDateFilter = ({ database }: WithDateFilterProps) => {
             <Text fontSize="$6" fontWeight="bold">
               From Date
             </Text>
-            <DatePicker date={tempFromDate.toDate()} setDate={d => setTempFromDate(dayjs(d))} />
+            <DatePicker
+              date={tempFromDate.toDate()}
+              setDate={(d) => setTempFromDate(dayjs(d))}
+            />
           </View>
           <View flexDirection="row" justifyContent="space-between" alignItems="center">
             <Text fontSize="$6" fontWeight="bold">
               To Date
             </Text>
-            <DatePicker date={tempToDate.toDate()} setDate={d => setTempToDate(dayjs(d))} />
+            <DatePicker
+              date={tempToDate.toDate()}
+              setDate={(d) => setTempToDate(dayjs(d))}
+            />
           </View>
           <Button
             backgroundColor="$green"
@@ -155,7 +185,8 @@ const WithDateFilter = ({ database }: WithDateFilterProps) => {
               setFromDate(tempFromDate);
               setToDate(tempToDate);
               dateSheetRef.current?.close();
-            }}>
+            }}
+          >
             Apply
           </Button>
         </View>
