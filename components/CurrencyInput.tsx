@@ -1,5 +1,5 @@
 import { ChevronRight } from '@tamagui/lucide-icons';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 import { Input, type SizeTokens, Text, View } from 'tamagui';
 
 type CurrencyInputProps = {
@@ -27,6 +27,7 @@ export function CurrencyInput({
   decimalPlaces = 2,
   onValidationError,
 }: CurrencyInputProps) {
+  const id = useId();
   const validationResult = useMemo(() => {
     if (!value) return { isValid: true, error: null };
 
@@ -136,7 +137,7 @@ export function CurrencyInput({
             fontSize: 32,
             flex: 1,
           }}
-          id={`currencyInput-${Math.random()}`}
+          id={`currencyInput-${id}`}
           placeholder="0.00"
           autoFocus={focusOnMount}
           onChangeText={handleTextChange}
