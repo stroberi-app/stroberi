@@ -1,7 +1,6 @@
-import { Text, View } from 'tamagui';
 import { PlusCircle } from '@tamagui/lucide-icons';
-import React from 'react';
 import * as DocumentPickerLib from 'expo-document-picker';
+import { Text, View } from 'tamagui';
 
 export const DocumentPicker = () => {
   return (
@@ -16,7 +15,8 @@ export const DocumentPicker = () => {
       borderColor="$borderColor"
       borderRadius="$4"
       backgroundColor="$gray1"
-      padding="$4">
+      padding="$4"
+    >
       <PlusCircle />
       <Text>Add Attachments</Text>
     </View>

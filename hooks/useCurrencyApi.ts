@@ -4,7 +4,10 @@ const CACHE_KEY_PREFIX = 'currency_conversion_cache_';
 const CACHE_TIMESTAMP_KEY_PREFIX = 'currency_conversion_cache_timestamp_';
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-export const getCurrencyConversion = async (baseCurrency: string, targetCurrency: string) => {
+export const getCurrencyConversion = async (
+  baseCurrency: string,
+  targetCurrency: string
+) => {
   const cacheKey = `${CACHE_KEY_PREFIX}${baseCurrency}_${targetCurrency}`;
   const fetchFromApi = async (url: string) => {
     const response = await fetch(url);
@@ -38,15 +41,13 @@ export const getCurrencyConversion = async (baseCurrency: string, targetCurrency
     const data = await fetchFromApi(primaryUrl);
     await setCachedData(data);
     return data;
-  } catch (error) {
-    console.error('Error fetching from primary API, trying fallback:', error);
+  } catch (_error) {
     try {
       const fallbackUrl = `https://currency-api.pages.dev/v1/currencies/${targetCurrency.toLowerCase()}.json`;
       const data = await fetchFromApi(fallbackUrl);
       await setCachedData(data);
       return data;
-    } catch (fallbackError) {
-      console.error('Error fetching from fallback API:', fallbackError);
+    } catch (_fallbackError) {
       return null;
     }
   }

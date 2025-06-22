@@ -1,15 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
 import {
   BottomSheetFlatList,
   BottomSheetModal,
   BottomSheetView,
   TouchableOpacity,
 } from '@gorhom/bottom-sheet';
-import { currencies, Currency } from '../data/currencies';
-import { ListItem } from './ListItem';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { backgroundStyle, handleIndicatorStyle, snapPoints } from './sheet/constants';
 import { Input, View } from 'tamagui';
+import { type Currency, currencies } from '../data/currencies';
+import { ListItem } from './ListItem';
+import { backgroundStyle, handleIndicatorStyle, snapPoints } from './sheet/constants';
 
 type CurrencySelectProps = {
   selectedCurrency: string;
@@ -17,14 +17,19 @@ type CurrencySelectProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
 };
 
-export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: CurrencySelectProps) => {
+export const CurrencySelect = ({
+  selectedCurrency,
+  onSelect,
+  sheetRef,
+}: CurrencySelectProps) => {
   const renderItem = useCallback(
     ({ item: currency }: { item: Currency }) => (
       <React.Fragment key={currency.code}>
         <TouchableOpacity
           onPress={() => {
             onSelect(currency);
-          }}>
+          }}
+        >
           <ListItem
             name={currency.name}
             extra={currency.code}
@@ -33,7 +38,7 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
         </TouchableOpacity>
       </React.Fragment>
     ),
-    [selectedCurrency]
+    [selectedCurrency, onSelect]
   );
 
   const [search, setSearch] = useState('');
@@ -42,7 +47,7 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
     () =>
       currencies
         .filter(
-          currency =>
+          (currency) =>
             currency.name.toLowerCase().includes(search.toLowerCase()) ||
             currency.code.toLowerCase().includes(search.toLowerCase())
         )
@@ -68,14 +73,19 @@ export const CurrencySelect = ({ selectedCurrency, onSelect, sheetRef }: Currenc
       enableDynamicSizing={false}
       animateOnMount={true}
       handleIndicatorStyle={handleIndicatorStyle}
-      backgroundStyle={backgroundStyle}>
+      backgroundStyle={backgroundStyle}
+    >
       <BottomSheetView>
         <View padding="$2">
-          <Input placeholder="Search currencies" value={search} onChangeText={setSearch} />
+          <Input
+            placeholder="Search currencies"
+            value={search}
+            onChangeText={setSearch}
+          />
         </View>
         <BottomSheetFlatList
           data={filteredData}
-          keyExtractor={i => i.code}
+          keyExtractor={(i) => i.code}
           renderItem={renderItem}
           contentInset={{
             bottom,

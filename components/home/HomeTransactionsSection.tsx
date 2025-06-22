@@ -1,12 +1,12 @@
-import { TransactionModel } from '../../database/transaction-model';
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Database, Q } from '@nozbe/watermelondb';
-import { Observable } from 'rxjs';
-import { Text, YGroup } from 'tamagui';
-import { TransactionItem } from '../TransactionItem';
-import * as React from 'react';
+import type * as React from 'react';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { Observable } from 'rxjs';
+import { Text, YGroup } from 'tamagui';
+import type { TransactionModel } from '../../database/transaction-model';
+import { TransactionItem } from '../TransactionItem';
 
 type RecentTransactionsSectionProps = {
   transactions: TransactionModel[];
@@ -35,7 +35,12 @@ export const HomeTransactionsSection = withObservables<
             <>
               {header(transactions.length)}
               {transactions.length > 0 && (
-                <Text fontSize={'$8'} fontWeight={'bold'} marginTop={'$4'} marginBottom={'$2'}>
+                <Text
+                  fontSize={'$8'}
+                  fontWeight={'bold'}
+                  marginTop={'$4'}
+                  marginBottom={'$2'}
+                >
                   Recent Transactions
                 </Text>
               )}
@@ -43,8 +48,10 @@ export const HomeTransactionsSection = withObservables<
           )}
           itemLayoutAnimation={LinearTransition}
           data={transactions}
-          keyExtractor={transaction => transaction.id}
-          renderItem={({ item: transaction }) => <TransactionItem transaction={transaction} />}
+          keyExtractor={(transaction) => transaction.id}
+          renderItem={({ item: transaction }) => (
+            <TransactionItem transaction={transaction} />
+          )}
         />
       </YGroup>
     </>

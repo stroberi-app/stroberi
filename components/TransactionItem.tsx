@@ -1,18 +1,21 @@
-import { Text, View } from 'tamagui';
-import * as React from 'react';
-import { Pen, Trash2 } from '@tamagui/lucide-icons';
-import { CategoryModel } from '../database/category-model';
-import { TransactionModel } from '../database/transaction-model';
-import { withObservables } from '@nozbe/watermelondb/react';
-import { formatCurrency } from '../lib/format';
-import { useRouter } from 'expo-router';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useActionSheet } from '@expo/react-native-action-sheet';
-import Animated, { SharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { Pressable } from 'react-native';
-import { Observable } from 'rxjs';
+import { withObservables } from '@nozbe/watermelondb/react';
+import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
+import { useRouter } from 'expo-router';
+import { Pressable } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import type { Observable } from 'rxjs';
+import { Text, View } from 'tamagui';
+import type { CategoryModel } from '../database/category-model';
+import type { TransactionModel } from '../database/transaction-model';
 import { DateFormats } from '../lib/date';
+import { formatCurrency } from '../lib/format';
 
 type TransactionItemProps = {
   category?: CategoryModel | null;
@@ -21,7 +24,10 @@ type TransactionItemProps = {
 
 export const TransactionItem = withObservables<
   { transaction: TransactionModel },
-  { transaction: Observable<TransactionModel>; category?: Observable<CategoryModel | null> }
+  {
+    transaction: Observable<TransactionModel>;
+    category?: Observable<CategoryModel | null>;
+  }
 >(['transaction'], ({ transaction }) => {
   return {
     category: transaction.category?.observe(),
@@ -50,14 +56,14 @@ export const TransactionItem = withObservables<
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
       },
-      async buttonIndex => {
+      async (buttonIndex) => {
         if (buttonIndex === 0) {
           await transaction.deleteTx();
         }
       }
     );
   };
-  const renderRightAction = (prog: SharedValue<number>, drag: SharedValue<number>) => {
+  const renderRightAction = (_prog: SharedValue<number>, drag: SharedValue<number>) => {
     const styleAnimation = useAnimatedStyle(() => {
       return {
         transform: [{ translateX: drag.value + 100 }],
@@ -69,13 +75,19 @@ export const TransactionItem = withObservables<
       <Animated.View style={styleAnimation}>
         <View backgroundColor="gray" width={50}>
           <Pressable
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' }}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}
             onPress={() => {
               onEdit();
               drag.value = withTiming(0, { duration: 200 });
             }}
             accessibilityLabel="Edit transaction"
-            accessibilityRole="button">
+            accessibilityRole="button"
+          >
             <Pen height={24} width={24} />
           </Pressable>
         </View>
@@ -90,7 +102,8 @@ export const TransactionItem = withObservables<
             onPress={() => {
               onDelete();
               drag.value = withTiming(0, { duration: 200 });
-            }}>
+            }}
+          >
             <Trash2 height={8} width={8} />
           </Pressable>
         </View>
@@ -104,7 +117,8 @@ export const TransactionItem = withObservables<
       friction={2}
       enableTrackpadTwoFingerGesture
       rightThreshold={40}
-      renderRightActions={renderRightAction}>
+      renderRightActions={renderRightAction}
+    >
       <View
         flexDirection="row"
         alignItems="center"
@@ -112,7 +126,8 @@ export const TransactionItem = withObservables<
         paddingHorizontal="$4"
         gap="$4"
         borderWidth="$0.5"
-        borderColor="$borderColor">
+        borderColor="$borderColor"
+      >
         <Text fontSize="$5">{category?.icon ?? '📦'}</Text>
         <View flexDirection="column" justifyContent="center">
           <Text fontSize="$5" fontWeight="bold">
@@ -125,7 +140,10 @@ export const TransactionItem = withObservables<
           )}
         </View>
         <View marginLeft="auto" alignItems="flex-end">
-          <Text fontSize="$5" color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}>
+          <Text
+            fontSize="$5"
+            color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}
+          >
             {formatCurrency(transaction.amount, transaction.currencyCode)}
           </Text>
           <Text fontSize="$3" color="gray">

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { TransactionModel } from '../database/transaction-model';
 import { Q } from '@nozbe/watermelondb';
-import Papa from 'papaparse';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
 import dayjs from 'dayjs';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import Papa from 'papaparse';
+import { useState } from 'react';
+import type { TransactionModel } from '../database/transaction-model';
 import useToast from './useToast';
 
 export type ExportColumn = {
@@ -77,7 +77,7 @@ const useTransactionExport = () => {
       return 'From date must be before to date';
     }
 
-    if (!columns.some(col => col.checked)) {
+    if (!columns.some((col) => col.checked)) {
       return 'Please select at least one column to export';
     }
 
@@ -123,8 +123,7 @@ const useTransactionExport = () => {
         .unsafeFetchRaw();
 
       return transactions as TransactionExportData[];
-    } catch (error) {
-      console.error('Error fetching transactions for export:', error);
+    } catch (_error) {
       throw new Error('Failed to fetch transactions');
     }
   };
@@ -139,15 +138,17 @@ const useTransactionExport = () => {
       const count = await database.collections
         .get<TransactionModel>('transactions')
         .query(
-          Q.where('date', Q.gte(dayjs(dateRange.fromDate).startOf('day').toDate().getTime())),
+          Q.where(
+            'date',
+            Q.gte(dayjs(dateRange.fromDate).startOf('day').toDate().getTime())
+          ),
           Q.where('date', Q.lte(dayjs(dateRange.toDate).endOf('day').toDate().getTime()))
         )
         .fetchCount();
 
       setPreviewCount(count);
       return count;
-    } catch (error) {
-      console.error('Error loading preview:', error);
+    } catch (_error) {
       setPreviewCount(null);
       return 0;
     } finally {
@@ -159,9 +160,9 @@ const useTransactionExport = () => {
     transactions: TransactionExportData[],
     columns: ExportColumn[]
   ): Record<string, unknown>[] => {
-    return transactions.map(transaction => {
+    return transactions.map((transaction) => {
       const exportRow: Record<string, unknown> = {};
-      columns.forEach(column => {
+      columns.forEach((column) => {
         if (column.checked) {
           exportRow[column.label] = transaction[column.name];
         }
@@ -175,7 +176,8 @@ const useTransactionExport = () => {
     filename: string,
     fileType: 'csv' | 'json'
   ): Promise<void> => {
-    const content = fileType === 'csv' ? Papa.unparse(data) : JSON.stringify(data, null, 2);
+    const content =
+      fileType === 'csv' ? Papa.unparse(data) : JSON.stringify(data, null, 2);
     const mimeType = fileType === 'csv' ? 'text/csv' : 'application/json';
 
     const tempPath = FileSystem.cacheDirectory + filename;
@@ -189,13 +191,14 @@ const useTransactionExport = () => {
     setTimeout(async () => {
       try {
         await FileSystem.deleteAsync(tempPath, { idempotent: true });
-      } catch (error) {
-        console.log('Failed to clean up temp file:', error);
-      }
+      } catch (_error) {}
     }, 5000);
   };
 
-  const generateFilename = (dateRange: ExportDateRange, destination: ExportDestination): string => {
+  const generateFilename = (
+    dateRange: ExportDateRange,
+    destination: ExportDestination
+  ): string => {
     const dateRangeStr = `${dayjs(dateRange.fromDate).format('YYYY-MM-DD')}_to_${dayjs(dateRange.toDate).format('YYYY-MM-DD')}`;
     const extension = destination === 'json' ? 'json' : 'csv';
     return `stroberi_transactions_${dateRangeStr}.${extension}`;
@@ -209,7 +212,10 @@ const useTransactionExport = () => {
     }
 
     if (previewCount === 0) {
-      show({ title: 'No transactions found in the selected date range', preset: 'error' });
+      show({
+        title: 'No transactions found in the selected date range',
+        preset: 'error',
+      });
       return;
     }
 
@@ -236,9 +242,9 @@ const useTransactionExport = () => {
         preset: 'done',
       });
     } catch (error) {
-      console.error('Export error:', error);
       show({
-        title: error instanceof Error ? error.message : 'Export failed. Please try again.',
+        title:
+          error instanceof Error ? error.message : 'Export failed. Please try again.',
         preset: 'error',
       });
     } finally {

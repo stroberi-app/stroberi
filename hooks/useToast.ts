@@ -1,6 +1,6 @@
 import * as Burnt from 'burnt';
+import type { AlertOptions } from 'burnt/build/types';
 import type { SFSymbol } from 'sf-symbols-typescript';
-import { AlertOptions } from 'burnt/build/types';
 
 export interface IconParams {
   ios: {

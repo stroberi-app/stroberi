@@ -1,5 +1,7 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import React from 'react';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
 import { Text, View } from 'tamagui';
 
@@ -11,7 +13,7 @@ type DatePickerProps = {
 
 export const DatePicker = ({ mode = 'date', date, setDate }: DatePickerProps) => {
   const [show, setShow] = React.useState(false);
-  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+  const onChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
     setDate(selectedDate || date);
     setShow(false);
   };
@@ -38,7 +40,8 @@ export const DatePicker = ({ mode = 'date', date, setDate }: DatePickerProps) =>
           borderWidth={2}
           borderRadius={8}
           padding="$2"
-          onPress={() => setShow(true)}>
+          onPress={() => setShow(true)}
+        >
           <Text color="white">
             {mode === 'date' ? date.toLocaleDateString() : date.toLocaleTimeString()}
           </Text>

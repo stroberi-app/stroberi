@@ -14,7 +14,7 @@ export class CategoryModel extends Model {
   }
 
   @writer updateCategory({ name, icon }: { name: string; icon: string }) {
-    return this.prepareUpdate(tx => {
+    return this.prepareUpdate((tx) => {
       tx.name = name;
       tx.icon = icon;
     });

@@ -1,17 +1,16 @@
-import dayjs from 'dayjs';
-import { DateFilters, DateFormats } from '../lib/date';
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Database, Q } from '@nozbe/watermelondb';
-import { Observable } from 'rxjs';
-import { Text } from 'tamagui';
-import { TransactionItem } from './TransactionItem';
-import * as React from 'react';
-import { TransactionModel } from '../database/transaction-model';
-import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
-import { CategoryModel } from '../database/category-model';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
+import dayjs from 'dayjs';
 import { useCallback, useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { Observable } from 'rxjs';
+import { Text } from 'tamagui';
+import type { CategoryModel } from '../database/category-model';
+import type { TransactionModel } from '../database/transaction-model';
+import { type DateFilters, DateFormats } from '../lib/date';
+import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
+import { TransactionItem } from './TransactionItem';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
@@ -31,11 +30,14 @@ const getDateKey = (date: Date) => {
   return dayjsDate.format(
     dayjsDate.year() === dayjs().year()
       ? DateFormats.FullMonthFullDay
-      : DateFormats.FullMonthFullDay + ', YYYY'
+      : `${DateFormats.FullMonthFullDay}, YYYY`
   );
 };
 
-const TransactionsList = ({ transactions, appliedNumberOfFilters }: TransactionsListProps) => {
+const TransactionsList = ({
+  transactions,
+  appliedNumberOfFilters,
+}: TransactionsListProps) => {
   const { bottom } = useSafeAreaInsets();
 
   const data = useMemo(() => {
@@ -132,7 +134,7 @@ const withData = withObservables<
       query = query.extend(Q.where('date', Q.lte(end.getTime())));
     }
     if (categories.length > 0) {
-      query = query.extend(Q.where('categoryId', Q.oneOf(categories.map(c => c.id))));
+      query = query.extend(Q.where('categoryId', Q.oneOf(categories.map((c) => c.id))));
     }
     return {
       transactions: query.observe(),

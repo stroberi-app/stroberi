@@ -1,15 +1,15 @@
 import { Link, useNavigation } from 'expo-router';
+import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { View, Text } from 'tamagui';
-import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, View } from 'tamagui';
 
 export default function NotFoundScreen() {
   const navigation = useNavigation();
   const { top } = useSafeAreaInsets();
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
-  }, []);
+  }, [navigation.setOptions]);
   return (
     <>
       <View padding={10} paddingTop={32 + top} backgroundColor="$black4" flex={1}>

@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { CustomBackdrop } from '../CustomBackdrop';
-import { Spinner, Text, View, YStack, XStack } from 'tamagui';
-import { Button } from '../button/Button';
-import { FolderOutput, AlertCircle, Calendar, Eye } from '@tamagui/lucide-icons';
-import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
-import { DatePicker } from '../DatePicker';
-import useTransactionExport, {
-  ExportColumn,
-  ExportDateRange,
-  ExportDestination,
-  EXTENDED_EXPORT_COLUMNS,
-} from '../../hooks/useTransactionExport';
+import { AlertCircle, Calendar, Eye, FolderOutput } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner, Text, View, XStack, YStack } from 'tamagui';
+import useTransactionExport, {
+  EXTENDED_EXPORT_COLUMNS,
+  type ExportColumn,
+  type ExportDateRange,
+  type ExportDestination,
+} from '../../hooks/useTransactionExport';
+import { Button } from '../button/Button';
+import { CustomBackdrop } from '../CustomBackdrop';
+import { DatePicker } from '../DatePicker';
+import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
 
 type ExportDataSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -22,7 +23,10 @@ type ExportDataSheetProps = {
 
 type DateOption = 'last30' | 'all' | 'custom';
 
-export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataSheetProps) => {
+export const ExportDataSheet = ({
+  sheetRef,
+  onViewTransactions,
+}: ExportDataSheetProps) => {
   const { bottom } = useSafeAreaInsets();
 
   const [fromDate, setFromDate] = useState(() => dayjs().subtract(30, 'days').toDate());
@@ -84,7 +88,8 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
       animateOnMount={true}
       backdropComponent={CustomBackdrop}
       handleIndicatorStyle={handleIndicatorStyle}
-      backgroundStyle={backgroundStyle}>
+      backgroundStyle={backgroundStyle}
+    >
       <View flex={1} pb={bottom}>
         <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View padding="$4" gap="$4" flex={1}>
@@ -104,8 +109,13 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
                   size="$4"
                   variant="outlined"
                   onPress={() => handleDateOptionChange('last30')}
-                  backgroundColor={selectedDateOption === 'last30' ? '$blue5' : 'transparent'}
-                  borderColor={selectedDateOption === 'last30' ? '$blue8' : '$borderColor'}>
+                  backgroundColor={
+                    selectedDateOption === 'last30' ? '$blue5' : 'transparent'
+                  }
+                  borderColor={
+                    selectedDateOption === 'last30' ? '$blue8' : '$borderColor'
+                  }
+                >
                   <Calendar size={16} />
                   <Text fontSize="$4">Last 30 days</Text>
                 </Button>
@@ -114,8 +124,11 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
                   size="$4"
                   variant="outlined"
                   onPress={() => handleDateOptionChange('all')}
-                  backgroundColor={selectedDateOption === 'all' ? '$blue5' : 'transparent'}
-                  borderColor={selectedDateOption === 'all' ? '$blue8' : '$borderColor'}>
+                  backgroundColor={
+                    selectedDateOption === 'all' ? '$blue5' : 'transparent'
+                  }
+                  borderColor={selectedDateOption === 'all' ? '$blue8' : '$borderColor'}
+                >
                   <Calendar size={16} />
                   <Text fontSize="$4">All time</Text>
                 </Button>
@@ -124,8 +137,13 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
                   size="$4"
                   variant="outlined"
                   onPress={() => handleDateOptionChange('custom')}
-                  backgroundColor={selectedDateOption === 'custom' ? '$blue5' : 'transparent'}
-                  borderColor={selectedDateOption === 'custom' ? '$blue8' : '$borderColor'}>
+                  backgroundColor={
+                    selectedDateOption === 'custom' ? '$blue5' : 'transparent'
+                  }
+                  borderColor={
+                    selectedDateOption === 'custom' ? '$blue8' : '$borderColor'
+                  }
+                >
                   <Calendar size={16} />
                   <Text fontSize="$4">Custom range</Text>
                 </Button>
@@ -156,7 +174,8 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
                       backgroundColor="$red2"
                       padding="$3"
                       borderRadius="$3"
-                      mt="$2">
+                      mt="$2"
+                    >
                       <AlertCircle size={16} color="$red10" />
                       <Text fontSize="$3" color="$red10">
                         Please select a valid date range
@@ -181,7 +200,8 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
             onPress={handleViewTransactions}
             disabled={!isDateRangeValid}
             borderColor="$borderColor"
-            backgroundColor="$gray2">
+            backgroundColor="$gray2"
+          >
             <Eye size={18} />
             <Text fontSize="$4">View Transactions</Text>
           </Button>
@@ -194,7 +214,8 @@ export const ExportDataSheet = ({ sheetRef, onViewTransactions }: ExportDataShee
             backgroundColor="$green10"
             onPress={handleExport}
             disabled={isLoading || !isDateRangeValid}
-            opacity={isLoading || !isDateRangeValid ? 0.5 : 1}>
+            opacity={isLoading || !isDateRangeValid ? 0.5 : 1}
+          >
             {isLoading ? (
               <>
                 <Text color="white" fontSize="$4">

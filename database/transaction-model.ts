@@ -1,7 +1,14 @@
-import { Model, Relation } from '@nozbe/watermelondb';
-import { field, readonly, relation, text, writer, date } from '@nozbe/watermelondb/decorators';
-import { CategoryModel } from './category-model';
-import { Associations } from '@nozbe/watermelondb/Model';
+import { Model, type Relation } from '@nozbe/watermelondb';
+import {
+  date,
+  field,
+  readonly,
+  relation,
+  text,
+  writer,
+} from '@nozbe/watermelondb/decorators';
+import type { Associations } from '@nozbe/watermelondb/Model';
+import type { CategoryModel } from './category-model';
 
 export class TransactionModel extends Model {
   static table = 'transactions';
