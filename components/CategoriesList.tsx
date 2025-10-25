@@ -205,7 +205,7 @@ const withData = withObservables<
   return {
     categories: database.collections
       .get<CategoryModel>('categories')
-      .query(Q.where('name', Q.like(`%${search}%`)), Q.sortBy('created_at', 'desc'))
+      .query(Q.where('name', Q.like(`%${search}%`)), Q.sortBy('usageCount', Q.desc))
       .observe(),
   };
 });
