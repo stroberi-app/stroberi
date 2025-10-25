@@ -22,12 +22,14 @@ import type { CategoryModel } from '../database/category-model';
 import { createTransaction, updateTransaction } from '../database/helpers';
 import type { TransactionModel } from '../database/transaction-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
+import useToast from '../hooks/useToast';
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
   const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
   const params = useLocalSearchParams();
   const router = useRouter();
+  const toast = useToast();
 
   const transactionType = params.transactionType as 'expense' | 'income';
   const transaction: TransactionModel | null = params.transaction
@@ -53,30 +55,68 @@ function CreateTransaction() {
   const [date, setDate] = useState(
     transaction?.date ? new Date(transaction.date) : new Date()
   );
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async () => {
-    if (!defaultCurrency) {
+    if (isSaving) {
       return;
     }
-    const payload = {
-      merchant: merchantName,
-      amount: Number(amount),
-      categoryId: selectedCategory?.id ?? null,
-      date,
-      currencyCode: selectedCurrency,
-      note,
-      baseCurrency: defaultCurrency,
-    };
-    if (transaction) {
-      updateTransaction({
-        id: transaction.id,
-        ...payload,
-      }).then(() => {
-        router.back();
+
+    if (!defaultCurrency) {
+      toast.show({
+        title: 'Error',
+        message: 'Default currency not set',
+        preset: 'error',
+        haptic: 'error',
       });
-    } else {
-      createTransaction(payload).then(() => {
-        router.back();
+      return;
+    }
+
+    const amountValue = Number(amount);
+    if (!amount || !Number.isFinite(amountValue) || amountValue === 0) {
+      toast.show({
+        title: 'Invalid Amount',
+        message: 'Please enter a valid amount',
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        merchant: merchantName,
+        amount: amountValue,
+        categoryId: selectedCategory?.id ?? null,
+        date,
+        currencyCode: selectedCurrency,
+        note,
+        baseCurrency: defaultCurrency,
+      };
+
+      if (transaction) {
+        await updateTransaction({
+          id: transaction.id,
+          ...payload,
+        });
+      } else {
+        await createTransaction(payload);
+      }
+
+      setIsSaving(false);
+      router.back();
+    } catch (error) {
+      setIsSaving(false);
+      toast.show({
+        title: 'Error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to save transaction. Please try again.',
+        preset: 'error',
+        haptic: 'error',
       });
     }
   };
@@ -94,12 +134,19 @@ function CreateTransaction() {
             paddingHorizontal="$2"
             color="gray"
             onPress={() => router.back()}
+            disabled={isSaving}
           >
             <ArrowLeft size={20} color="gray" />
             Back
           </LinkButton>
-          <LinkButton color="white" backgroundColor="$green" onPress={handleSubmit}>
-            Save
+          <LinkButton
+            color="white"
+            backgroundColor="$green"
+            onPress={handleSubmit}
+            disabled={isSaving}
+            opacity={isSaving ? 0.6 : 1}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
           </LinkButton>
         </View>
         <View mt="$8">
