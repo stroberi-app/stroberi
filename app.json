@@ -13,7 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stroberi",
-      "buildNumber": "5",
+      "buildNumber": "21",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -21,7 +21,7 @@
     "android": {
       "package": "com.stroberi",
       "icon": "./assets/images/logo-round.png",
-      "versionCode": 5
+      "versionCode": 20
     },
     "web": {
       "bundler": "metro",
