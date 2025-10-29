@@ -24,5 +24,14 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 9,
+      steps: [
+        addColumns({
+          table: 'categories',
+          columns: [{ name: 'usageCount', type: 'number', isOptional: true }],
+        }),
+      ],
+    },
   ],
 });
