@@ -19,6 +19,7 @@ export const useSeedCategories = () => {
               .create((newCategory) => {
                 newCategory.name = category.name;
                 newCategory.icon = category.icon;
+                newCategory.usageCount = 0;
               });
           }
         });
