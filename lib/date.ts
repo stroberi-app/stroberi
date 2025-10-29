@@ -1,9 +1,11 @@
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isToday from 'dayjs/plugin/isToday';
 import isYesterday from 'dayjs/plugin/isYesterday';
 
 dayjs.extend(isToday);
 dayjs.extend(isYesterday);
+dayjs.extend(isSameOrAfter);
 
 export enum DateFormats {
   FullMonthFullDay = 'MMM DD',

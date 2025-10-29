@@ -1,7 +1,13 @@
-import type { Model } from '@nozbe/watermelondb';
+import { type Model, Q } from '@nozbe/watermelondb';
+import dayjs from 'dayjs';
+import '../lib/date';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
 import type { CategoryModel } from './category-model';
 import { database } from './index';
+import type {
+  RecurringFrequency,
+  RecurringTransactionModel,
+} from './recurring-transaction-model';
 import type { TransactionModel } from './transaction-model';
 
 export type CreateTransactionPayload = {
@@ -12,6 +18,7 @@ export type CreateTransactionPayload = {
   currencyCode: string;
   note: string;
   baseCurrency: string;
+  recurringTransactionId?: string;
 };
 export const createTransaction = async ({
   merchant,
@@ -21,6 +28,7 @@ export const createTransaction = async ({
   currencyCode,
   note,
   baseCurrency,
+  recurringTransactionId,
 }: CreateTransactionPayload) => {
   try {
     return await database.write(async () => {
@@ -65,6 +73,7 @@ export const createTransaction = async ({
         tx.baseCurrencyCode = baseCurrencyCode;
         tx.amountInBaseCurrency = amountInBaseCurrency;
         tx.exchangeRate = exchangeRate;
+        tx.recurringTransactionId = recurringTransactionId || null;
         if (categoryCollection) {
           tx.category?.set(categoryCollection);
         }
@@ -266,5 +275,297 @@ export const deleteTransaction = async (transactionId: string) => {
   } catch (error) {
     console.error('Failed to delete transaction:', error);
     throw error instanceof Error ? error : new Error('Failed to delete transaction');
+  }
+};
+
+export const calculateNextDueDate = (
+  frequency: RecurringFrequency,
+  fromDate: Date = new Date()
+): Date => {
+  const current = dayjs(fromDate);
+
+  switch (frequency) {
+    case 'daily':
+      return current.add(1, 'day').toDate();
+    case 'weekly':
+      return current.add(1, 'week').toDate();
+    case 'monthly':
+      return current.add(1, 'month').toDate();
+    case 'yearly':
+      return current.add(1, 'year').toDate();
+    default:
+      return current.add(1, 'month').toDate();
+  }
+};
+
+export const calculateNextDueDateFromStart = (
+  frequency: RecurringFrequency,
+  startDate: Date
+): Date => {
+  let current = dayjs(startDate);
+  const today = dayjs().startOf('day');
+
+  while (current.isBefore(today)) {
+    switch (frequency) {
+      case 'daily':
+        current = current.add(1, 'day');
+        break;
+      case 'weekly':
+        current = current.add(1, 'week');
+        break;
+      case 'monthly':
+        current = current.add(1, 'month');
+        break;
+      case 'yearly':
+        current = current.add(1, 'year');
+        break;
+    }
+  }
+
+  return current.toDate();
+};
+
+export type CreateRecurringTransactionPayload = {
+  merchant: string;
+  amount: number;
+  categoryId: string | null;
+  currencyCode: string;
+  note: string;
+  frequency: RecurringFrequency;
+  startDate: Date;
+  endDate?: Date;
+};
+
+export const createRecurringTransaction = async ({
+  merchant,
+  amount,
+  categoryId,
+  currencyCode,
+  note,
+  frequency,
+  startDate,
+  endDate,
+}: CreateRecurringTransactionPayload) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<RecurringTransactionModel>(
+        'recurring_transactions'
+      );
+
+      let categoryCollection: CategoryModel | null = null;
+      if (categoryId) {
+        try {
+          categoryCollection = await database
+            .get<CategoryModel>('categories')
+            .find(categoryId);
+        } catch {
+          throw new Error(`Category not found: ${categoryId}`);
+        }
+      }
+
+      const nextDueDate = calculateNextDueDateFromStart(frequency, startDate);
+
+      return collection.create((recurring) => {
+        recurring.merchant = merchant;
+        recurring.amount = amount;
+        recurring.currencyCode = currencyCode;
+        recurring.note = note;
+        recurring.frequency = frequency;
+        recurring.startDate = startDate;
+        recurring.endDate = endDate || null;
+        recurring.nextDueDate = nextDueDate;
+        recurring.lastCreatedDate = null;
+        recurring.isActive = true;
+        if (categoryCollection) {
+          recurring.category?.set(categoryCollection);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Failed to create recurring transaction:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to create recurring transaction');
+  }
+};
+
+export const updateRecurringTransaction = async ({
+  id,
+  merchant,
+  amount,
+  categoryId,
+  currencyCode,
+  note,
+  frequency,
+  startDate,
+  endDate,
+}: {
+  id: string;
+} & CreateRecurringTransactionPayload) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<RecurringTransactionModel>(
+        'recurring_transactions'
+      );
+
+      let recurring: RecurringTransactionModel;
+      try {
+        recurring = await collection.find(id);
+      } catch {
+        throw new Error(`Recurring transaction not found: ${id}`);
+      }
+
+      let categoryCollection: CategoryModel | null = null;
+      if (categoryId) {
+        try {
+          categoryCollection = await database
+            .get<CategoryModel>('categories')
+            .find(categoryId);
+        } catch {
+          throw new Error(`Category not found: ${categoryId}`);
+        }
+      }
+
+      const nextDueDate = calculateNextDueDateFromStart(frequency, startDate);
+
+      return recurring.update((rec) => {
+        rec.merchant = merchant;
+        rec.amount = amount;
+        rec.currencyCode = currencyCode;
+        rec.note = note;
+        rec.frequency = frequency;
+        rec.startDate = startDate;
+        rec.endDate = endDate || null;
+        rec.nextDueDate = nextDueDate;
+        if (categoryCollection) {
+          rec.category?.set(categoryCollection);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Failed to update recurring transaction:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to update recurring transaction');
+  }
+};
+
+export const deleteRecurringTransaction = async (recurringId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<RecurringTransactionModel>(
+        'recurring_transactions'
+      );
+
+      let recurring: RecurringTransactionModel;
+      try {
+        recurring = await collection.find(recurringId);
+      } catch {
+        throw new Error(`Recurring transaction not found: ${recurringId}`);
+      }
+
+      await recurring.markAsDeleted();
+      return recurring;
+    });
+  } catch (error) {
+    console.error('Failed to delete recurring transaction:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to delete recurring transaction');
+  }
+};
+
+export const toggleRecurringTransaction = async (recurringId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<RecurringTransactionModel>(
+        'recurring_transactions'
+      );
+
+      let recurring: RecurringTransactionModel;
+      try {
+        recurring = await collection.find(recurringId);
+      } catch {
+        throw new Error(`Recurring transaction not found: ${recurringId}`);
+      }
+
+      return recurring.toggle();
+    });
+  } catch (error) {
+    console.error('Failed to toggle recurring transaction:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to toggle recurring transaction');
+  }
+};
+
+export const checkAndCreateDueTransactions = async (baseCurrency: string) => {
+  try {
+    const recurringCollection = database.get<RecurringTransactionModel>(
+      'recurring_transactions'
+    );
+
+    const activeRecurring = await recurringCollection
+      .query(Q.where('isActive', true))
+      .fetch();
+
+    const now = dayjs();
+    const dueTransactions = activeRecurring.filter((recurring) => {
+      if (recurring.endDate && now.isAfter(dayjs(recurring.endDate))) {
+        return false;
+      }
+      return now.isSameOrAfter(dayjs(recurring.nextDueDate), 'day');
+    });
+
+    if (dueTransactions.length === 0) {
+      return [];
+    }
+
+    const createdTransactions: TransactionModel[] = [];
+
+    for (const recurring of dueTransactions) {
+      try {
+        const transactionDate = dayjs()
+          .hour(dayjs(recurring.startDate).hour())
+          .minute(dayjs(recurring.startDate).minute())
+          .second(0)
+          .millisecond(0)
+          .toDate();
+
+        const transaction = await createTransaction({
+          merchant: recurring.merchant,
+          amount: recurring.amount,
+          categoryId: recurring.category?.id ?? null,
+          date: transactionDate,
+          currencyCode: recurring.currencyCode,
+          note: recurring.note,
+          baseCurrency,
+          recurringTransactionId: recurring.id,
+        });
+
+        const nextDue = calculateNextDueDate(recurring.frequency, new Date());
+
+        await database.write(async () => {
+          await recurring.update((rec) => {
+            rec.nextDueDate = nextDue;
+            rec.lastCreatedDate = new Date();
+          });
+        });
+
+        createdTransactions.push(transaction);
+      } catch (error) {
+        console.error(
+          `Failed to create transaction from recurring ${recurring.id}:`,
+          error
+        );
+      }
+    }
+
+    return createdTransactions;
+  } catch (error) {
+    console.error('Failed to check and create due transactions:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to check and create due transactions');
   }
 };

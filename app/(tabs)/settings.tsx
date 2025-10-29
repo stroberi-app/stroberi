@@ -1,5 +1,11 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { DollarSign, FolderInput, FolderOutput, Tags } from '@tamagui/lucide-icons';
+import {
+  DollarSign,
+  FolderInput,
+  FolderOutput,
+  RefreshCw,
+  Tags,
+} from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +15,7 @@ import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
 import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
+import { ManageRecurringTransactionsSheet } from '../../components/sheet/ManageRecurringTransactionsSheet';
 import {
   TransactionPreviewSheet,
   type TransactionPreviewSheetRef,
@@ -19,6 +26,7 @@ import type { ExportDateRange } from '../../hooks/useTransactionExport';
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
   const manageCategoriesSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const manageRecurringSheetRef = React.useRef<BottomSheetModal | null>(null);
   const currencySheetRef = React.useRef<BottomSheetModal | null>(null);
   const exportDataSheetRef = React.useRef<BottomSheetModal | null>(null);
   const transactionPreviewSheetRef = React.useRef<TransactionPreviewSheetRef | null>(
@@ -68,6 +76,14 @@ export default function SettingsScreen() {
             rightLabel={''}
             onPress={() => {
               manageCategoriesSheetRef.current?.present();
+            }}
+          />
+          <SettingsItem
+            label={'Recurring Transactions'}
+            IconComponent={RefreshCw}
+            rightLabel={''}
+            onPress={() => {
+              manageRecurringSheetRef.current?.present();
             }}
           />
         </YGroup>
@@ -121,6 +137,7 @@ export default function SettingsScreen() {
         <View height={140} />
       </ScrollView>
       <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />
+      <ManageRecurringTransactionsSheet sheetRef={manageRecurringSheetRef} />
       <CurrencySelect
         sheetRef={currencySheetRef}
         onSelect={(currency) => {

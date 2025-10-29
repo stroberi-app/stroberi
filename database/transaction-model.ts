@@ -9,6 +9,7 @@ import {
 } from '@nozbe/watermelondb/decorators';
 import type { Associations } from '@nozbe/watermelondb/Model';
 import type { CategoryModel } from './category-model';
+import type { RecurringTransactionModel } from './recurring-transaction-model';
 
 export class TransactionModel extends Model {
   static table = 'transactions';
@@ -17,19 +18,26 @@ export class TransactionModel extends Model {
       key: 'id',
       type: 'belongs_to',
     },
+    recurring_transactions: {
+      key: 'id',
+      type: 'belongs_to',
+    },
   };
 
   @text('merchant') merchant: string;
   @text('note') note: string;
-  @text('currencyCode') currencyCode: string; // Existing field for original currency
-  @field('amount') amount: number; // Original amount in the transaction's currency
-  @text('baseCurrencyCode') baseCurrencyCode: string; // New field for the base currency
-  @field('amountInBaseCurrency') amountInBaseCurrency: number; // New field for amount in base currency
-  @field('exchangeRate') exchangeRate: number; // New field for the exchange rate used
+  @text('currencyCode') currencyCode: string;
+  @field('amount') amount: number;
+  @text('baseCurrencyCode') baseCurrencyCode: string;
+  @field('amountInBaseCurrency') amountInBaseCurrency: number;
+  @field('exchangeRate') exchangeRate: number;
+  @text('recurringTransactionId') recurringTransactionId: string | null;
 
   @date('date') date: Date;
 
   @relation('categories', 'categoryId') category: Relation<CategoryModel> | null;
+  @relation('recurring_transactions', 'recurringTransactionId')
+  recurringTransaction: Relation<RecurringTransactionModel> | null;
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
