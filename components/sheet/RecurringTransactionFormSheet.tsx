@@ -3,7 +3,6 @@ import {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Calendar,
   ChevronRight,
@@ -13,8 +12,9 @@ import {
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Text, View, YGroup } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
 import {
@@ -32,13 +32,13 @@ import { LinkButton } from '../button/LinkButton';
 import { CreateExpenseItem } from '../CreateExpenseItem';
 import { CurrencyInput } from '../CurrencyInput';
 import { CurrencySelect } from '../CurrencySelect';
-import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { CustomBackdrop } from '../CustomBackdrop';
+import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { DatePicker } from '../DatePicker';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 import { ManageCategoriesSheet } from './ManageCategoriesSheet';
 
-const SNAP_POINTS = ['100%'];
+const SNAP_POINTS = ['90%'];
 
 const FREQUENCY_OPTIONS: { value: RecurringFrequency; label: string }[] = [
   { value: 'daily', label: 'Daily' },
@@ -60,7 +60,7 @@ export const RecurringTransactionFormSheet = ({
 }: RecurringTransactionFormSheetProps) => {
   const { defaultCurrency } = useDefaultCurrency();
   const toast = useToast();
-  const { bottom, top } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
   const currencySheetRef = useRef<BottomSheetModal | null>(null);
   const frequencySheetRef = useRef<BottomSheetModal | null>(null);
@@ -74,11 +74,13 @@ export const RecurringTransactionFormSheet = ({
   const [hasEndDate, setHasEndDate] = useState(false);
   const [endDate, setEndDate] = useState(dayjs().add(1, 'year').toDate());
   const [isSaving, setIsSaving] = useState(false);
+  const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
 
   useEffect(() => {
     if (recurring) {
       setMerchantName(recurring.merchant);
-      setAmount(recurring.amount.toString());
+      setAmount(Math.abs(recurring.amount).toString());
+      setTransactionType(recurring.amount < 0 ? 'expense' : 'income');
       setSelectedCurrency(recurring.currencyCode);
       setFrequency(recurring.frequency);
       setStartDate(recurring.startDate);
@@ -89,6 +91,7 @@ export const RecurringTransactionFormSheet = ({
     } else {
       setMerchantName('');
       setAmount('');
+      setTransactionType('expense');
       setSelectedCurrency(defaultCurrency ?? 'USD');
       setFrequency('monthly');
       setStartDate(new Date());
@@ -97,6 +100,18 @@ export const RecurringTransactionFormSheet = ({
       setSelectedCategory(null);
     }
   }, [recurring, defaultCurrency]);
+
+  const resetForm = useCallback(() => {
+    setMerchantName('');
+    setAmount('');
+    setTransactionType('expense');
+    setSelectedCurrency(defaultCurrency ?? 'USD');
+    setFrequency('monthly');
+    setStartDate(new Date());
+    setHasEndDate(false);
+    setEndDate(dayjs().add(1, 'year').toDate());
+    setSelectedCategory(null);
+  }, [defaultCurrency]);
 
   const handleSubmit = async () => {
     if (isSaving) return;
@@ -115,9 +130,11 @@ export const RecurringTransactionFormSheet = ({
     setIsSaving(true);
 
     try {
+      const finalAmount =
+        transactionType === 'expense' ? -Math.abs(amountValue) : Math.abs(amountValue);
       const payload = {
         merchant: merchantName,
-        amount: amountValue,
+        amount: finalAmount,
         categoryId: selectedCategory?.id ?? null,
         currencyCode: selectedCurrency,
         note: '',
@@ -141,6 +158,7 @@ export const RecurringTransactionFormSheet = ({
           title: 'Recurring transaction created',
           preset: 'done',
         });
+        resetForm();
       }
 
       setIsSaving(false);
@@ -221,18 +239,8 @@ export const RecurringTransactionFormSheet = ({
         stackBehavior="push"
         handleIndicatorStyle={handleIndicatorStyle}
         backgroundStyle={backgroundStyle}
+        enableDynamicSizing={false}
       >
-        <BottomSheetView
-          style={{
-            paddingHorizontal: 16,
-            paddingTop: top || 8,
-            paddingBottom: 8,
-          }}
-        >
-          <Text fontSize="$7" fontWeight="bold" marginBottom="$3">
-            {recurring ? 'Edit' : 'New'} Recurring Transaction
-          </Text>
-        </BottomSheetView>
         <BottomSheetScrollView
           contentContainerStyle={{
             paddingHorizontal: 16,
@@ -240,7 +248,56 @@ export const RecurringTransactionFormSheet = ({
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <View mt="$4">
+          <View mt="$4" mb="$3">
+            <View
+              flexDirection="row"
+              backgroundColor="$bgSecondary"
+              borderRadius="$4"
+              padding="$1"
+              gap="$1"
+            >
+              <View
+                backgroundColor={
+                  transactionType === 'expense' ? '$stroberi' : 'transparent'
+                }
+                borderRadius="$3"
+                flex={1}
+                onPress={() => setTransactionType('expense')}
+                paddingVertical="$3"
+                paddingHorizontal="$4"
+                alignItems="center"
+                pressStyle={{ opacity: 0.8 }}
+              >
+                <Text
+                  fontSize="$4"
+                  fontWeight="600"
+                  color={transactionType === 'expense' ? 'white' : 'gray'}
+                >
+                  Expense
+                </Text>
+              </View>
+              <View
+                backgroundColor={transactionType === 'income' ? '$green' : 'transparent'}
+                borderRadius="$3"
+                flex={1}
+                onPress={() => setTransactionType('income')}
+                paddingVertical="$3"
+                paddingHorizontal="$4"
+                alignItems="center"
+                pressStyle={{ opacity: 0.8 }}
+              >
+                <Text
+                  fontSize="$4"
+                  fontWeight="600"
+                  color={transactionType === 'income' ? 'white' : 'gray'}
+                >
+                  Income
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View mt="$2">
             <CurrencyInput
               onCurrencySelect={() => {
                 Keyboard.dismiss();
@@ -327,7 +384,7 @@ export const RecurringTransactionFormSheet = ({
             </Text>
             {nextOccurrences.map((date, index) => (
               <Text key={index} fontSize="$3" color="gray">
-                {index + 1}. {dayjs(date).format('MMMM D, YYYY [at] h:mm A')}
+                {index + 1}. {dayjs(date).format('MMMM D, YYYY')}
               </Text>
             ))}
           </View>
