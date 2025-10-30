@@ -1,9 +1,5 @@
 import { useActionSheet } from '@expo/react-native-action-sheet';
-import {
-  BottomSheetFlatList,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { Database } from '@nozbe/watermelondb';
 import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
@@ -11,17 +7,17 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { Pen, Plus, Trash2 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import type React from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Pressable, useWindowDimensions } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
-import { Text, View } from 'tamagui';
+import { ScrollView, Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
 import { deleteRecurringTransaction } from '../../database/helpers';
 import type { RecurringTransactionModel } from '../../database/recurring-transaction-model';
@@ -190,7 +186,7 @@ const RecurringItem = withObservables<
           </Text>
           <View>
             <Switch checked={recurring.isActive} onCheckedChange={handleToggle}>
-              <Switch.Thumb />
+              <Switch.Thumb animation="bouncy" />
             </Switch>
           </View>
         </View>
@@ -212,43 +208,34 @@ const RecurringList = ({
   onCreate,
   bottomInset,
 }: RecurringListProps) => {
-  const renderItem = useCallback(
-    ({ item }: { item: RecurringTransactionModel }) => (
-      <RecurringItem recurring={item} onEdit={onEdit} />
-    ),
-    [onEdit]
-  );
-
-  const keyExtractor = useCallback((item: RecurringTransactionModel) => item.id, []);
-
-  const ListEmptyComponent = useMemo(
-    () => (
-      <View paddingVertical="$8" alignItems="center" gap="$3">
-        <Text fontSize="$6" color="gray">
-          No recurring transactions
-        </Text>
-        <Text fontSize="$4" color="gray" textAlign="center" paddingHorizontal="$4">
-          Set up recurring transactions to automatically track regular expenses and income
-        </Text>
-      </View>
-    ),
-    []
-  );
-
+  const { height } = useWindowDimensions();
   return (
-    <>
-      <BottomSheetFlatList
-        data={recurringTransactions}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        ListEmptyComponent={ListEmptyComponent}
-        contentContainerStyle={{ paddingBottom: bottomInset + 80 }}
-      />
+    <BottomSheetView>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 8 }}
+        style={{ height: height - 260 }}
+      >
+        {recurringTransactions.length === 0 ? (
+          <View paddingVertical="$8" alignItems="center" gap="$3">
+            <Text fontSize="$6" color="gray">
+              No recurring transactions
+            </Text>
+            <Text fontSize="$4" color="gray" textAlign="center" paddingHorizontal="$4">
+              Set up recurring transactions to automatically track regular expenses and
+              income
+            </Text>
+          </View>
+        ) : (
+          recurringTransactions.map((recurring) => (
+            <RecurringItem key={recurring.id} recurring={recurring} onEdit={onEdit} />
+          ))
+        )}
+      </ScrollView>
       <BottomSheetView
         style={{
           paddingHorizontal: 16,
           paddingBottom: bottomInset + 16,
-          paddingTop: 8,
+          paddingTop: 16,
         }}
       >
         <Button
@@ -259,7 +246,7 @@ const RecurringList = ({
           Add Recurring Transaction
         </Button>
       </BottomSheetView>
-    </>
+    </BottomSheetView>
   );
 };
 
