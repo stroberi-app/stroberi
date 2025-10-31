@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { database } from '../database';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
+import { useRecurringTransactions } from '../hooks/useRecurringTransactions';
 import { useSeedCategories } from '../hooks/useSeedCategories';
 import config from '../tamagui.config';
 
@@ -39,13 +40,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (interLoaded || interError) {
-      // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync();
     }
   }, [interLoaded, interError]);
 
   useDefaultCurrency();
   useSeedCategories();
+  useRecurringTransactions();
 
   if (!interLoaded && !interError) {
     return null;
