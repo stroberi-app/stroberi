@@ -543,7 +543,8 @@ export const checkAndCreateDueTransactions = async (baseCurrency: string) => {
           recurringTransactionId: recurring.id,
         });
 
-        const nextDue = calculateNextDueDate(recurring.frequency, new Date());
+        const previousDue = recurring.nextDueDate ?? recurring.startDate;
+        const nextDue = calculateNextDueDate(recurring.frequency, previousDue);
 
         await database.write(async () => {
           await recurring.update((rec) => {
