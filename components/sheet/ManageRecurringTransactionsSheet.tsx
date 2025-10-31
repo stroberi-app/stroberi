@@ -96,13 +96,11 @@ const RecurringItem = withObservables<
     yearly: 'Yearly',
   };
 
-  const renderRightAction = (_prog: SharedValue<number>, drag: SharedValue<number>) => {
-    const styleAnimation = useAnimatedStyle(() => {
-      return {
-        transform: [{ translateX: drag.value + 100 }],
-        flexDirection: 'row',
-      };
-    });
+  const RightActions = ({ drag }: { drag: SharedValue<number> }) => {
+    const styleAnimation = useAnimatedStyle(() => ({
+      transform: [{ translateX: drag.value + 100 }],
+      flexDirection: 'row',
+    }));
 
     return (
       <Animated.View style={styleAnimation}>
@@ -143,6 +141,10 @@ const RecurringItem = withObservables<
       </Animated.View>
     );
   };
+
+  const renderRightAction = (_prog: SharedValue<number>, drag: SharedValue<number>) => (
+    <RightActions drag={drag} />
+  );
 
   return (
     <ReanimatedSwipeable
