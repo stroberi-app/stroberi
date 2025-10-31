@@ -1,6 +1,6 @@
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Pen, Trash2 } from '@tamagui/lucide-icons';
+import { Pen, RefreshCw, Trash2 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
@@ -130,9 +130,14 @@ export const TransactionItem = withObservables<
       >
         <Text fontSize="$5">{category?.icon ?? '📦'}</Text>
         <View flexDirection="column" justifyContent="center">
-          <Text fontSize="$5" fontWeight="bold">
-            {category?.name ?? 'Uncategorized'}
-          </Text>
+          <View flexDirection="row" gap="$2" alignItems="center">
+            <Text fontSize="$5" fontWeight="bold">
+              {category?.name ?? 'Uncategorized'}
+            </Text>
+            {transaction.recurringTransactionId && (
+              <RefreshCw size={14} color="$blue10" />
+            )}
+          </View>
           {transaction.merchant && (
             <Text fontSize="$3" color="gray">
               {transaction.merchant}

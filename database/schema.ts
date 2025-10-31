@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 9,
+  version: 10,
   tables: [
     tableSchema({
       name: 'transactions',
@@ -17,6 +17,12 @@ export const schema = appSchema({
         { name: 'baseCurrencyCode', type: 'string' },
         { name: 'amountInBaseCurrency', type: 'number' },
         { name: 'exchangeRate', type: 'number' },
+        {
+          name: 'recurringTransactionId',
+          type: 'string',
+          isOptional: true,
+          isIndexed: true,
+        },
       ],
     }),
     tableSchema({
@@ -27,6 +33,24 @@ export const schema = appSchema({
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
         { name: 'usageCount', type: 'number' },
+      ],
+    }),
+    tableSchema({
+      name: 'recurring_transactions',
+      columns: [
+        { name: 'merchant', type: 'string' },
+        { name: 'amount', type: 'number' },
+        { name: 'currencyCode', type: 'string' },
+        { name: 'note', type: 'string' },
+        { name: 'categoryId', type: 'string', isOptional: true },
+        { name: 'frequency', type: 'string' },
+        { name: 'startDate', type: 'number' },
+        { name: 'endDate', type: 'number', isOptional: true },
+        { name: 'nextDueDate', type: 'number' },
+        { name: 'lastCreatedDate', type: 'number', isOptional: true },
+        { name: 'isActive', type: 'boolean' },
+        { name: 'created_at', type: 'number' },
+        { name: 'updated_at', type: 'number' },
       ],
     }),
   ],
