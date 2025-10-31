@@ -18,7 +18,7 @@ export class RecurringTransactionModel extends Model {
   static table = 'recurring_transactions';
   static associations: Associations = {
     categories: {
-      key: 'id',
+      key: 'categoryId',
       type: 'belongs_to',
     },
   };

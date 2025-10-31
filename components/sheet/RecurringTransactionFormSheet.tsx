@@ -85,6 +85,9 @@ export const RecurringTransactionFormSheet = ({
       setFrequency(recurring.frequency);
       setStartDate(recurring.startDate);
       setHasEndDate(!!recurring.endDate);
+      recurring.category?.fetch().then((cat) => {
+        setSelectedCategory(cat ?? null);
+      });
       if (recurring.endDate) {
         setEndDate(recurring.endDate);
       }
