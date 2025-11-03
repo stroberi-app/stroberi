@@ -10,6 +10,8 @@ Make sure you implement scalable code, that is easy to maintain and doesn't add 
 * Work with yarn
 * Don't write comments
 * You can use context7 if you need to fetch for any up to date documentation
+* Make sure you don't introduce any regression
+* Make sure the types are good after changes
 
 
 Project structure:

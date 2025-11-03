@@ -1,9 +1,10 @@
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
-import { CircleDollarSign, Home, Settings } from '@tamagui/lucide-icons';
+import { CircleDollarSign, Home, Settings, Wallet } from '@tamagui/lucide-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
 import type React from 'react';
 import { useTheme } from 'tamagui';
+import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 
 const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
   return (
@@ -24,6 +25,8 @@ const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
 
 export default function TabLayout() {
   const { brandPrimary, seashell } = useTheme();
+  const { budgetingEnabled } = useBudgetingEnabled();
+
   return (
     <Tabs
       screenOptions={{
@@ -50,6 +53,14 @@ export default function TabLayout() {
         options={{
           title: 'Transactions',
           tabBarIcon: ({ color }) => <CircleDollarSign color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="budgets"
+        options={{
+          title: 'Budgets',
+          tabBarIcon: ({ color }) => <Wallet color={color} />,
+          href: budgetingEnabled ? '/(tabs)/budgets' : null,
         }}
       />
       <Tabs.Screen
