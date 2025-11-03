@@ -8,6 +8,7 @@ import { Carousel } from '../../components/carousel/Carousel';
 import SpendByCategory from '../../components/charts/SpendByCategoryChart';
 import { SpendByType } from '../../components/charts/SpendByTypeChart';
 import SpendingTrends from '../../components/charts/SpendingTrendsChart';
+import BudgetAlertCard from '../../components/home/BudgetAlertCard';
 import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
 import SpendOverview from '../../components/home/SpendOverview';
 
@@ -55,6 +56,7 @@ export default function HomeScreen() {
               <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
                 Overview
               </Text>
+              <BudgetAlertCard database={database} />
               <Carousel renderItem={renderCarouselItem} data={carouselData} />
               {transactionCount > 0 ? (
                 <View flexDirection="row" gap="$2" marginTop="$4" width="100%">

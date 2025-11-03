@@ -2,6 +2,7 @@ import { type Model, Q } from '@nozbe/watermelondb';
 import dayjs from 'dayjs';
 import '../lib/date';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import type { BudgetModel, BudgetPeriod } from './budget-model';
 import type { CategoryModel } from './category-model';
 import { database } from './index';
 import type {
@@ -568,5 +569,173 @@ export const checkAndCreateDueTransactions = async (baseCurrency: string) => {
     throw error instanceof Error
       ? error
       : new Error('Failed to check and create due transactions');
+  }
+};
+
+export type CreateBudgetPayload = {
+  name: string;
+  amount: number;
+  period: BudgetPeriod;
+  startDate: Date;
+  rollover: boolean;
+  alertThreshold: number;
+};
+
+export const createBudget = async ({
+  name,
+  amount,
+  period,
+  startDate,
+  rollover,
+  alertThreshold,
+}: CreateBudgetPayload) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<BudgetModel>('budgets');
+      return collection.create((budget) => {
+        budget.name = name;
+        budget.amount = amount;
+        budget.period = period;
+        budget.startDate = startDate;
+        budget.rollover = rollover;
+        budget.isActive = true;
+        budget.alertThreshold = alertThreshold;
+      });
+    });
+  } catch (error) {
+    console.error('Failed to create budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to create budget');
+  }
+};
+
+export const updateBudget = async ({
+  id,
+  name,
+  amount,
+  period,
+  startDate,
+  rollover,
+  alertThreshold,
+}: {
+  id: string;
+} & CreateBudgetPayload) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<BudgetModel>('budgets');
+
+      let budget: BudgetModel;
+      try {
+        budget = await collection.find(id);
+      } catch {
+        throw new Error(`Budget not found: ${id}`);
+      }
+
+      return budget.updateBudget({
+        name,
+        amount,
+        period,
+        startDate,
+        rollover,
+        alertThreshold,
+      });
+    });
+  } catch (error) {
+    console.error('Failed to update budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to update budget');
+  }
+};
+
+export const deleteBudget = async (budgetId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<BudgetModel>('budgets');
+
+      let budget: BudgetModel;
+      try {
+        budget = await collection.find(budgetId);
+      } catch {
+        throw new Error(`Budget not found: ${budgetId}`);
+      }
+
+      await budget.markAsDeleted();
+      return budget;
+    });
+  } catch (error) {
+    console.error('Failed to delete budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to delete budget');
+  }
+};
+
+export const toggleBudget = async (budgetId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<BudgetModel>('budgets');
+
+      let budget: BudgetModel;
+      try {
+        budget = await collection.find(budgetId);
+      } catch {
+        throw new Error(`Budget not found: ${budgetId}`);
+      }
+
+      return budget.toggle();
+    });
+  } catch (error) {
+    console.error('Failed to toggle budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to toggle budget');
+  }
+};
+
+export const getBudgetStatus = async (
+  budgetId: string,
+  periodStart: Date,
+  periodEnd: Date
+) => {
+  try {
+    const budget = await database.get<BudgetModel>('budgets').find(budgetId);
+
+    const transactions = await database
+      .get<TransactionModel>('transactions')
+      .query(
+        Q.where('date', Q.gte(periodStart.getTime())),
+        Q.where('date', Q.lte(periodEnd.getTime())),
+        Q.where('amountInBaseCurrency', Q.lt(0))
+      )
+      .fetch();
+
+    const spent = transactions.reduce(
+      (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
+      0
+    );
+    const remaining = budget.amount - spent;
+    const percentage = (spent / budget.amount) * 100;
+
+    return {
+      budget,
+      spent,
+      remaining,
+      percentage,
+      status:
+        percentage >= 100
+          ? 'exceeded'
+          : percentage >= budget.alertThreshold
+            ? 'warning'
+            : 'ok',
+    };
+  } catch (error) {
+    console.error('Failed to get budget status:', error);
+    throw error instanceof Error ? error : new Error('Failed to get budget status');
+  }
+};
+
+export const getAllActiveBudgets = async () => {
+  try {
+    return await database
+      .get<BudgetModel>('budgets')
+      .query(Q.where('isActive', true))
+      .fetch();
+  } catch (error) {
+    console.error('Failed to get active budgets:', error);
+    throw error instanceof Error ? error : new Error('Failed to get active budgets');
   }
 };
