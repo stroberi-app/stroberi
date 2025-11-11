@@ -31,7 +31,7 @@ export default function TransactionsScreen() {
   return (
     <>
       <View
-        style={{ paddingTop: top || 8 }}
+        paddingTop={top || '$2'}
         flex={1}
         backgroundColor="$bgPrimary"
         paddingHorizontal="$2"

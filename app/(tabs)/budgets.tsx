@@ -33,7 +33,7 @@ export default function BudgetsScreen() {
   return (
     <>
       <View
-        style={{ paddingTop: top || 8 }}
+        paddingTop={top || '$2'}
         flex={1}
         backgroundColor="$bgPrimary"
         paddingHorizontal="$2"
@@ -47,12 +47,7 @@ export default function BudgetsScreen() {
           <Text fontSize="$8" fontWeight="bold">
             Budgets
           </Text>
-          <LinkButton
-            paddingHorizontal="$3"
-            paddingVertical="$2"
-            backgroundColor="$green"
-            onPress={handleAddBudget}
-          >
+          <LinkButton backgroundColor="$green" onPress={handleAddBudget} size="small">
             <PlusCircle size={20} color="white" />
           </LinkButton>
         </View>

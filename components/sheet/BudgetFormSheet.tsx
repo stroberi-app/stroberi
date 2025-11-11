@@ -16,7 +16,6 @@ import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import '../../lib/date';
 import { formatBudgetPeriod } from '../../lib/budgetUtils';
-import { Button } from '../button/Button';
 import { LinkButton } from '../button/LinkButton';
 import { CreateExpenseItem } from '../CreateExpenseItem';
 import { CurrencyInput } from '../CurrencyInput';
@@ -194,16 +193,15 @@ export const BudgetFormSheet = ({
             <Text color="white" fontSize="$6" fontWeight="bold">
               {budget ? 'Edit Budget' : 'Create Budget'}
             </Text>
-            <Button
+            <LinkButton
               backgroundColor="$green"
-              paddingHorizontal="$4"
-              paddingVertical="$2"
+              color="white"
               onPress={handleSubmit}
               disabled={isSaving}
               opacity={isSaving ? 0.6 : 1}
             >
               {isSaving ? 'Saving...' : 'Save'}
-            </Button>
+            </LinkButton>
           </View>
 
           <BottomSheetScrollView keyboardShouldPersistTaps="handled">

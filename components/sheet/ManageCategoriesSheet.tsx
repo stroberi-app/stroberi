@@ -69,12 +69,11 @@ export const ManageCategoriesSheet = ({
               Categories
             </Text>
             <LinkButton
-              alignSelf="center"
-              color="white"
               backgroundColor="$green"
+              size="small"
               onPress={() => categorySheet.current?.present()}
             >
-              <PlusCircle size={18} color="white" />
+              <PlusCircle size={20} color="white" />
             </LinkButton>
           </View>
           {!noSearch && (

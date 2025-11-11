@@ -1,14 +1,13 @@
 import { database } from '../database';
+import { STORAGE_KEYS } from '../lib/storageKeys';
 
-const CACHE_KEY_PREFIX = 'currency_conversion_cache_';
-const CACHE_TIMESTAMP_KEY_PREFIX = 'currency_conversion_cache_timestamp_';
-const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export const getCurrencyConversion = async (
   baseCurrency: string,
   targetCurrency: string
 ) => {
-  const cacheKey = `${CACHE_KEY_PREFIX}${baseCurrency}_${targetCurrency}`;
+  const cacheKey = `${STORAGE_KEYS.CURRENCY_CONVERSION_CACHE_PREFIX}${baseCurrency}_${targetCurrency}`;
   const fetchFromApi = async (url: string) => {
     const response = await fetch(url);
     const data = await response.json();
@@ -18,7 +17,9 @@ export const getCurrencyConversion = async (
   const getCachedData = async (key: string) => {
     const cachedData = await database.localStorage.get(key);
     const cachedTimestamp = Number(
-      (await database.localStorage.get(CACHE_TIMESTAMP_KEY_PREFIX)) ?? 0
+      (await database.localStorage.get(
+        STORAGE_KEYS.CURRENCY_CONVERSION_CACHE_TIMESTAMP_PREFIX
+      )) ?? 0
     );
     if (cachedData && cachedTimestamp && Date.now() - cachedTimestamp < CACHE_EXPIRY_MS) {
       return JSON.parse(cachedData as string);
@@ -27,7 +28,10 @@ export const getCurrencyConversion = async (
   };
 
   const setCachedData = async (data: number) => {
-    await database.localStorage.set(CACHE_TIMESTAMP_KEY_PREFIX, Date.now());
+    await database.localStorage.set(
+      STORAGE_KEYS.CURRENCY_CONVERSION_CACHE_TIMESTAMP_PREFIX,
+      Date.now()
+    );
     await database.localStorage.set(cacheKey, JSON.stringify(data));
   };
 

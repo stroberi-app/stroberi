@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { database } from '../database/index';
+import { STORAGE_KEYS } from '../lib/storageKeys';
 
 let budgetingEnabledListeners: Array<(enabled: boolean) => void> = [];
 
@@ -15,7 +16,7 @@ export const useBudgetingEnabled = () => {
   useEffect(() => {
     const loadBudgetingSetting = async () => {
       try {
-        const enabled = await database.localStorage.get('budgeting_enabled');
+        const enabled = await database.localStorage.get(STORAGE_KEYS.BUDGETING_ENABLED);
         setBudgetingEnabled(enabled !== 'false');
       } finally {
         setIsLoading(false);
