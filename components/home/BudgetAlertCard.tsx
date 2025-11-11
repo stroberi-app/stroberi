@@ -12,6 +12,7 @@ import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { calculateBudgetPeriodDates } from '../../lib/budgetUtils';
 import { formatCurrency } from '../../lib/format';
+import { STORAGE_KEYS } from '../../lib/storageKeys';
 import { LinkButton } from '../button/LinkButton';
 
 type BudgetAlertData = {
@@ -31,7 +32,9 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
 
   useEffect(() => {
     const loadDismissedState = async () => {
-      const dismissed = await database.localStorage.get('dismissed_budget_alerts');
+      const dismissed = await database.localStorage.get(
+        STORAGE_KEYS.DISMISSED_BUDGET_ALERTS
+      );
       if (dismissed && typeof dismissed === 'string') {
         try {
           const ids = JSON.parse(dismissed) as string[];
@@ -49,7 +52,7 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
     newDismissedIds.add(budgetId);
     setDismissedBudgetIds(newDismissedIds);
     await database.localStorage.set(
-      'dismissed_budget_alerts',
+      STORAGE_KEYS.DISMISSED_BUDGET_ALERTS,
       JSON.stringify(Array.from(newDismissedIds))
     );
   };

@@ -45,7 +45,8 @@ export default function HomeScreen() {
   return (
     <>
       <View
-        style={{ paddingTop: top || 8, flex: 1 }}
+        paddingTop={top || '$2'}
+        flex={1}
         backgroundColor="$bgPrimary"
         paddingHorizontal="$2"
       >

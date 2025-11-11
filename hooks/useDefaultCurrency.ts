@@ -3,17 +3,17 @@ import { useEffect, useState } from 'react';
 import { database } from '../database';
 import type { TransactionModel } from '../database/transaction-model';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import { STORAGE_KEYS } from '../lib/storageKeys';
 
 export const useDefaultCurrency = () => {
   const [defaultCurrency, setDefaultCurrency] = useState<string | null>(null);
 
   useEffect(() => {
-    database.localStorage.get('defaultCurrency').then((currency) => {
+    database.localStorage.get(STORAGE_KEYS.DEFAULT_CURRENCY).then((currency) => {
       if (!currency) {
         const [locale] = getLocales();
         if (locale.currencyCode) {
-          // set some default currency
-          database.localStorage.set('defaultCurrency', locale.currencyCode);
+          database.localStorage.set(STORAGE_KEYS.DEFAULT_CURRENCY, locale.currencyCode);
         }
       } else if (typeof currency === 'string') {
         setDefaultCurrency(currency);
@@ -43,7 +43,7 @@ export const useDefaultCurrency = () => {
   };
 
   const handleSetDefaultCurrency = async (currency: string) => {
-    await database.localStorage.set('defaultCurrency', currency);
+    await database.localStorage.set(STORAGE_KEYS.DEFAULT_CURRENCY, currency);
     setDefaultCurrency(currency);
     await updateTransactionsCurrency(currency);
   };

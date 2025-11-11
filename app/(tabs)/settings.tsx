@@ -30,6 +30,7 @@ import {
 } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
+import { STORAGE_KEYS } from '../../lib/storageKeys';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
@@ -54,7 +55,7 @@ export default function SettingsScreen() {
   const handleBudgetingToggle = async () => {
     const newValue = !localBudgetingEnabled;
     setLocalBudgetingEnabled(newValue);
-    await database.localStorage.set('budgeting_enabled', newValue.toString());
+    await database.localStorage.set(STORAGE_KEYS.BUDGETING_ENABLED, newValue.toString());
     notifyBudgetingEnabledChanged(newValue);
   };
 
@@ -71,7 +72,7 @@ export default function SettingsScreen() {
   return (
     <>
       <ScrollView
-        style={{ paddingTop: top || 8 }}
+        paddingTop={top || '$2'}
         backgroundColor={'$bgPrimary'}
         paddingHorizontal={'$2'}
       >

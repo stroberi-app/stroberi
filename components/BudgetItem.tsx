@@ -1,11 +1,11 @@
 import { Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Edit3, Trash2 } from '@tamagui/lucide-icons';
+import { Trash2 } from '@tamagui/lucide-icons';
 import { Alert } from 'react-native';
 import { map, type Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
 import type { BudgetModel } from '../database/budget-model';
-import { deleteBudget, toggleBudget } from '../database/helpers';
+import { deleteBudget } from '../database/helpers';
 import { database } from '../database/index';
 import type { TransactionModel } from '../database/transaction-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
@@ -17,7 +17,6 @@ import {
 } from '../lib/budgetUtils';
 import { BudgetProgress } from './BudgetProgress';
 import { LinkButton } from './button/LinkButton';
-import { Switch } from './Switch';
 
 type BudgetStatus = {
   spent: number;
@@ -32,7 +31,7 @@ type BudgetItemProps = {
   budgetStatus: BudgetStatus;
 };
 
-const BudgetItemContent = ({ budget, onEdit, budgetStatus }: BudgetItemProps) => {
+const BudgetItemContent = ({ budget, budgetStatus }: BudgetItemProps) => {
   const { defaultCurrency } = useDefaultCurrency();
 
   const handleDelete = () => {
@@ -52,13 +51,13 @@ const BudgetItemContent = ({ budget, onEdit, budgetStatus }: BudgetItemProps) =>
     ]);
   };
 
-  const handleToggle = async () => {
-    try {
-      await toggleBudget(budget.id);
-    } catch {
-      Alert.alert('Error', 'Failed to toggle budget');
-    }
-  };
+  // const handleToggle = async () => {
+  //   try {
+  //     await toggleBudget(budget.id);
+  //   } catch {
+  //     Alert.alert('Error', 'Failed to toggle budget');
+  //   }
+  // };
 
   const progressColor = getBudgetProgressColor(
     budgetStatus.percentage,
@@ -95,19 +94,19 @@ const BudgetItemContent = ({ budget, onEdit, budgetStatus }: BudgetItemProps) =>
           </Text>
         </View>
         <View flexDirection="row" gap="$2" alignItems="center">
-          <LinkButton
+          {/* <LinkButton
             backgroundColor="transparent"
             padding="$2"
             onPress={() => onEdit(budget)}
           >
             <Edit3 size={20} color="$gray11" />
-          </LinkButton>
+          </LinkButton> */}
           <LinkButton backgroundColor="transparent" padding="$2" onPress={handleDelete}>
             <Trash2 size={20} color="$stroberi" />
           </LinkButton>
-          <Switch checked={budget.isActive} onCheckedChange={handleToggle}>
+          {/* <Switch checked={budget.isActive} onCheckedChange={handleToggle}>
             <Switch.Thumb animation="bouncy" />
-          </Switch>
+          </Switch> */}
         </View>
       </View>
 
