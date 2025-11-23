@@ -9,10 +9,11 @@ import {
 } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
 import { CurrencySelect } from '../../components/CurrencySelect';
+import { Switch } from '../../components/Switch';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
@@ -22,11 +23,10 @@ import {
   TransactionPreviewSheet,
   type TransactionPreviewSheetRef,
 } from '../../components/sheet/TransactionPreviewSheet';
-import { Switch } from '../../components/Switch';
 import { database } from '../../database/index';
 import {
-  useBudgetingEnabled,
   notifyBudgetingEnabledChanged,
+  useBudgetingEnabled,
 } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';

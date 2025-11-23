@@ -1,4 +1,4 @@
-import { Q, type Database } from '@nozbe/watermelondb';
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { AlertTriangle, X } from '@tamagui/lucide-icons';
 import { useEffect, useState } from 'react';
