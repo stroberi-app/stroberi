@@ -1,4 +1,4 @@
-import { Q, type Database } from '@nozbe/watermelondb';
+import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { PlusCircle, Wallet } from '@tamagui/lucide-icons';
 import type { Observable } from 'rxjs';

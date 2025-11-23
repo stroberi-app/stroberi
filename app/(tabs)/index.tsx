@@ -1,5 +1,7 @@
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import React, { useCallback, useMemo } from 'react';
+import { useScrollToTop } from '@react-navigation/native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import type Reanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 import { CreateFirstTransactionSection } from '../../components/CreateFirstTransactionSection';
@@ -11,10 +13,14 @@ import SpendingTrends from '../../components/charts/SpendingTrendsChart';
 import BudgetAlertCard from '../../components/home/BudgetAlertCard';
 import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
 import SpendOverview from '../../components/home/SpendOverview';
+import type { TransactionModel } from '../../database/transaction-model';
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
   const database = useDatabase();
+  const scrollRef = useRef<Reanimated.FlatList<TransactionModel>>(null);
+
+  useScrollToTop(scrollRef);
 
   const carouselItems = useMemo(
     () => [
@@ -52,6 +58,7 @@ export default function HomeScreen() {
       >
         <HomeTransactionsSection
           database={database}
+          scrollRef={scrollRef}
           header={(transactionCount) => (
             <>
               <Text fontSize="$8" fontWeight="bold" marginBottom="$2">

@@ -1,6 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import type * as React from 'react';
+import * as React from 'react';
 import Reanimated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
@@ -11,6 +11,7 @@ import { TransactionItem } from '../TransactionItem';
 type RecentTransactionsSectionProps = {
   transactions: TransactionModel[];
   header: (transactionCount: number) => React.ReactNode;
+  scrollRef?: React.RefObject<Reanimated.FlatList<TransactionModel>>;
 };
 export const HomeTransactionsSection = withObservables<
   { database: Database },
@@ -22,12 +23,13 @@ export const HomeTransactionsSection = withObservables<
       .query(Q.sortBy('date', 'desc'), Q.take(20))
       .observe(),
   };
-})(({ transactions, header }: RecentTransactionsSectionProps) => {
+})(({ transactions, header, scrollRef }: RecentTransactionsSectionProps) => {
   const { bottom } = useSafeAreaInsets();
   return (
     <>
       <YGroup>
         <Reanimated.FlatList
+          ref={scrollRef}
           contentInset={{
             bottom: 64 + bottom,
           }}
