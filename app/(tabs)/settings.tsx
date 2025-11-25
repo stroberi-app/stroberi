@@ -5,12 +5,15 @@ import {
   FolderOutput,
   RefreshCw,
   Tags,
+  Wallet,
 } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
 import { CurrencySelect } from '../../components/CurrencySelect';
+import { Switch } from '../../components/Switch';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
@@ -20,8 +23,14 @@ import {
   TransactionPreviewSheet,
   type TransactionPreviewSheetRef,
 } from '../../components/sheet/TransactionPreviewSheet';
+import { database } from '../../database/index';
+import {
+  notifyBudgetingEnabledChanged,
+  useBudgetingEnabled,
+} from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
+import { STORAGE_KEYS } from '../../lib/storageKeys';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
@@ -34,8 +43,21 @@ export default function SettingsScreen() {
   );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency } = useDefaultCurrency();
+  const { budgetingEnabled } = useBudgetingEnabled();
+  const [localBudgetingEnabled, setLocalBudgetingEnabled] = useState(budgetingEnabled);
 
   const router = useRouter();
+
+  useEffect(() => {
+    setLocalBudgetingEnabled(budgetingEnabled);
+  }, [budgetingEnabled]);
+
+  const handleBudgetingToggle = async () => {
+    const newValue = !localBudgetingEnabled;
+    setLocalBudgetingEnabled(newValue);
+    await database.localStorage.set(STORAGE_KEYS.BUDGETING_ENABLED, newValue.toString());
+    notifyBudgetingEnabledChanged(newValue);
+  };
 
   const handleViewTransactions = (dateRange: ExportDateRange) => {
     exportDataSheetRef.current?.dismiss();
@@ -50,7 +72,7 @@ export default function SettingsScreen() {
   return (
     <>
       <ScrollView
-        style={{ paddingTop: top || 8 }}
+        paddingTop={top || '$2'}
         backgroundColor={'$bgPrimary'}
         paddingHorizontal={'$2'}
       >
@@ -86,6 +108,49 @@ export default function SettingsScreen() {
               manageRecurringSheetRef.current?.present();
             }}
           />
+        </YGroup>
+
+        <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
+          Features
+        </Text>
+        <YGroup>
+          <YGroup.Item>
+            <View
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              padding="$3"
+              backgroundColor="$gray2"
+            >
+              <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
+                <View
+                  backgroundColor="$gray4"
+                  borderRadius="$2"
+                  padding="$2"
+                  width={32}
+                  height={32}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Wallet size={18} color="white" />
+                </View>
+                <View flex={1}>
+                  <Text fontSize="$4" fontWeight="500" color="white">
+                    Enable Budgeting
+                  </Text>
+                  <Text fontSize="$2" color="$gray9">
+                    Show budgets tab and features
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                checked={localBudgetingEnabled}
+                onCheckedChange={handleBudgetingToggle}
+              >
+                <Switch.Thumb animation="bouncy" />
+              </Switch>
+            </View>
+          </YGroup.Item>
         </YGroup>
 
         <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>

@@ -71,5 +71,32 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 11,
+      steps: [
+        createTable({
+          name: 'budgets',
+          columns: [
+            { name: 'amount', type: 'number' },
+            { name: 'period', type: 'string' },
+            { name: 'startDate', type: 'number' },
+            { name: 'rollover', type: 'boolean' },
+            { name: 'isActive', type: 'boolean' },
+            { name: 'alertThreshold', type: 'number' },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 12,
+      steps: [
+        addColumns({
+          table: 'budgets',
+          columns: [{ name: 'name', type: 'string' }],
+        }),
+      ],
+    },
   ],
 });
