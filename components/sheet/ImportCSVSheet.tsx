@@ -159,7 +159,10 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         message: 'Choose your CSV file...',
       });
 
-      const res = await DocumentPicker.getDocumentAsync({ type: 'text/csv' });
+      const res = await DocumentPicker.getDocumentAsync({
+        type: ['text/*', 'application/csv'],
+        copyToCacheDirectory: true,
+      });
       if (!res.assets?.[0].uri) {
         setImporting(false);
         return;
