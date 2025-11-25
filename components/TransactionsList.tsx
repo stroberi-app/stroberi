@@ -15,6 +15,7 @@ import { TransactionItem } from './TransactionItem';
 type TransactionsListProps = {
   transactions: TransactionModel[];
   appliedNumberOfFilters?: number;
+  scrollRef?: React.RefObject<FlashList<ListItem>>;
 };
 
 type ListItem = string | TransactionModel;
@@ -37,6 +38,7 @@ const getDateKey = (date: Date) => {
 const TransactionsList = ({
   transactions,
   appliedNumberOfFilters,
+  scrollRef,
 }: TransactionsListProps) => {
   const { bottom } = useSafeAreaInsets();
 
@@ -49,12 +51,10 @@ const TransactionsList = ({
       const key = getDateKey(transaction.date);
 
       if (key !== currentKey) {
-        // Add a new title (section header)
         result.push(key);
         currentKey = key;
       }
 
-      // Add the transaction to the result
       result.push(transaction);
     }
 
@@ -85,6 +85,7 @@ const TransactionsList = ({
 
   return (
     <FlashList
+      ref={scrollRef}
       contentInset={contentInset}
       keyExtractor={keyExtractor}
       data={data}

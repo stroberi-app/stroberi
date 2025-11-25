@@ -10,6 +10,8 @@ Make sure you implement scalable code, that is easy to maintain and doesn't add 
 * Work with yarn
 * Don't write comments
 * You can use context7 if you need to fetch for any up to date documentation
+* Make sure you don't introduce any regression
+* Make sure the types are good after changes
 
 
 Project structure:
@@ -23,3 +25,51 @@ Project structure:
 /database - watermelon db configurations, models, database interactions
 /hooks - shared hooks
 /lib - utilities
+
+
+## **Comprehensive App Analysis**
+
+### **Current Feature Set** 
+
+Your app has a solid foundation with:
+
+1. **Core Transaction Management**
+   - Create, update, delete transactions
+   - Support for both income and expenses
+   - Multi-currency with automatic conversion & caching
+   - Merchant/payee tracking
+   - Notes and timestamps
+
+2. **Categories System**
+   - Custom categories with icons
+   - Usage count tracking for smart suggestions
+   - Manageable through settings
+
+3. **Recurring Transactions** (Active Development)
+   - Daily, weekly, monthly, yearly frequencies
+   - Automatic creation on due dates
+   - Start/end date support
+   - Active/inactive toggles
+
+4. **Analytics & Visualizations**
+   - Spend overview with period income/expense/balance
+   - Spend by category charts
+   - Spend by type (income/expense)
+   - Spending trends over time
+   - Top spending category identification
+
+5. **Filtering & Search**
+   - Date range filters (preset & custom)
+   - Category filters
+   - Multiple filter support
+
+6. **Data Management**
+   - CSV Import/Export
+   - Transaction preview before export
+   - Local-first with WatermelonDB
+
+7. **UX Features**
+   - Carousel for multiple chart views
+   - Bottom sheets for forms
+   - Toast notifications
+   - Date & time pickers

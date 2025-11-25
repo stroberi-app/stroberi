@@ -2,10 +2,16 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isToday from 'dayjs/plugin/isToday';
 import isYesterday from 'dayjs/plugin/isYesterday';
+import updateLocale from 'dayjs/plugin/updateLocale';
 
 dayjs.extend(isToday);
 dayjs.extend(isYesterday);
 dayjs.extend(isSameOrAfter);
+dayjs.extend(updateLocale);
+
+dayjs.updateLocale('en', {
+  weekStart: 1,
+});
 
 export enum DateFormats {
   FullMonthFullDay = 'MMM DD',

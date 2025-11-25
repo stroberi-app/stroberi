@@ -1,8 +1,9 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
+import { useScrollToTop } from '@react-navigation/native';
 import { Filter } from '@tamagui/lucide-icons';
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 import { Button } from '../../components/button/Button';
@@ -24,6 +25,9 @@ export default function TransactionsScreen() {
   const database = useDatabase();
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
+  const scrollRef = useRef(null);
+
+  useScrollToTop(scrollRef);
 
   const appliedNumberOfFilters = [dateFilter, selectedCategories.length].filter(
     Boolean
@@ -31,7 +35,7 @@ export default function TransactionsScreen() {
   return (
     <>
       <View
-        style={{ paddingTop: top || 8 }}
+        paddingTop={top || '$2'}
         flex={1}
         backgroundColor="$bgPrimary"
         paddingHorizontal="$2"
@@ -55,6 +59,7 @@ export default function TransactionsScreen() {
           customRange={dateFilter === 'Custom' ? [fromDate, toDate] : undefined}
           categories={selectedCategories}
           appliedNumberOfFilters={appliedNumberOfFilters}
+          scrollRef={scrollRef}
         />
       </View>
       <BottomSheetDynamicSize sheetRef={sheetRef}>
