@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { from, type Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { Text, View } from 'tamagui';
+import type { BudgetCategoryModel } from '../../database/budget-category-model';
 import type { BudgetModel } from '../../database/budget-model';
 import { database } from '../../database/index';
 import type { TransactionModel } from '../../database/transaction-model';
@@ -182,13 +183,26 @@ const enhance = withObservables<
             for (const budget of budgets) {
               const { start, end } = calculateBudgetPeriodDates(budget);
 
+              const budgetCategories = await database
+                .get<BudgetCategoryModel>('budget_categories')
+                .query(Q.where('budget_id', budget.id))
+                .fetch();
+
+              const categoryIds = budgetCategories.map((bc) => bc.categoryId);
+
+              const baseConditions = [
+                Q.where('date', Q.gte(start.getTime())),
+                Q.where('date', Q.lte(end.getTime())),
+                Q.where('amountInBaseCurrency', Q.lt(0)),
+              ];
+
+              if (categoryIds.length > 0) {
+                baseConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+              }
+
               const transactions = await database
                 .get<TransactionModel>('transactions')
-                .query(
-                  Q.where('date', Q.gte(start.getTime())),
-                  Q.where('date', Q.lte(end.getTime())),
-                  Q.where('amountInBaseCurrency', Q.lt(0))
-                )
+                .query(...baseConditions)
                 .fetch();
 
               const spent = transactions.reduce(

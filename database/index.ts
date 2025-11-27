@@ -1,6 +1,7 @@
 import { Database } from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import { Platform } from 'react-native';
+import { BudgetCategoryModel } from './budget-category-model';
 import { BudgetModel } from './budget-model';
 import { CategoryModel } from './category-model';
 import { migrations } from './migrations';
@@ -16,5 +17,11 @@ const adapter = new SQLiteAdapter({
 
 export const database = new Database({
   adapter,
-  modelClasses: [TransactionModel, CategoryModel, RecurringTransactionModel, BudgetModel],
+  modelClasses: [
+    TransactionModel,
+    CategoryModel,
+    RecurringTransactionModel,
+    BudgetModel,
+    BudgetCategoryModel,
+  ],
 });

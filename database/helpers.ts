@@ -2,6 +2,7 @@ import { type Model, Q } from '@nozbe/watermelondb';
 import dayjs from 'dayjs';
 import '../lib/date';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import type { BudgetCategoryModel } from './budget-category-model';
 import type { BudgetModel, BudgetPeriod } from './budget-model';
 import type { CategoryModel } from './category-model';
 import { database } from './index';
@@ -579,6 +580,7 @@ export type CreateBudgetPayload = {
   startDate: Date;
   rollover: boolean;
   alertThreshold: number;
+  categoryIds?: string[];
 };
 
 export const createBudget = async ({
@@ -588,19 +590,37 @@ export const createBudget = async ({
   startDate,
   rollover,
   alertThreshold,
+  categoryIds = [],
 }: CreateBudgetPayload) => {
   try {
     return await database.write(async () => {
-      const collection = database.get<BudgetModel>('budgets');
-      return collection.create((budget) => {
-        budget.name = name;
-        budget.amount = amount;
-        budget.period = period;
-        budget.startDate = startDate;
-        budget.rollover = rollover;
-        budget.isActive = true;
-        budget.alertThreshold = alertThreshold;
+      const budgetCollection = database.get<BudgetModel>('budgets');
+      const budgetCategoryCollection =
+        database.get<BudgetCategoryModel>('budget_categories');
+
+      const preparedRecords: Model[] = [];
+
+      const budget = budgetCollection.prepareCreate((b) => {
+        b.name = name;
+        b.amount = amount;
+        b.period = period;
+        b.startDate = startDate;
+        b.rollover = rollover;
+        b.isActive = true;
+        b.alertThreshold = alertThreshold;
       });
+      preparedRecords.push(budget);
+
+      for (const categoryId of categoryIds) {
+        const budgetCategory = budgetCategoryCollection.prepareCreate((bc) => {
+          bc._setRaw('budget_id', budget.id);
+          bc._setRaw('category_id', categoryId);
+        });
+        preparedRecords.push(budgetCategory);
+      }
+
+      await database.batch(...preparedRecords);
+      return budget;
     });
   } catch (error) {
     console.error('Failed to create budget:', error);
@@ -616,28 +636,51 @@ export const updateBudget = async ({
   startDate,
   rollover,
   alertThreshold,
+  categoryIds = [],
 }: {
   id: string;
 } & CreateBudgetPayload) => {
   try {
     return await database.write(async () => {
-      const collection = database.get<BudgetModel>('budgets');
+      const budgetCollection = database.get<BudgetModel>('budgets');
+      const budgetCategoryCollection =
+        database.get<BudgetCategoryModel>('budget_categories');
 
       let budget: BudgetModel;
       try {
-        budget = await collection.find(id);
+        budget = await budgetCollection.find(id);
       } catch {
         throw new Error(`Budget not found: ${id}`);
       }
 
-      return budget.updateBudget({
-        name,
-        amount,
-        period,
-        startDate,
-        rollover,
-        alertThreshold,
+      const existingBudgetCategories = await budget.budgetCategories.fetch();
+
+      const preparedRecords: Model[] = [];
+
+      const updatedBudget = budget.prepareUpdate((b) => {
+        b.name = name;
+        b.amount = amount;
+        b.period = period;
+        b.startDate = startDate;
+        b.rollover = rollover;
+        b.alertThreshold = alertThreshold;
       });
+      preparedRecords.push(updatedBudget);
+
+      for (const bc of existingBudgetCategories) {
+        preparedRecords.push(bc.prepareMarkAsDeleted());
+      }
+
+      for (const categoryId of categoryIds) {
+        const budgetCategory = budgetCategoryCollection.prepareCreate((bc) => {
+          bc._setRaw('budget_id', budget.id);
+          bc._setRaw('category_id', categoryId);
+        });
+        preparedRecords.push(budgetCategory);
+      }
+
+      await database.batch(...preparedRecords);
+      return updatedBudget;
     });
   } catch (error) {
     console.error('Failed to update budget:', error);
@@ -648,16 +691,24 @@ export const updateBudget = async ({
 export const deleteBudget = async (budgetId: string) => {
   try {
     return await database.write(async () => {
-      const collection = database.get<BudgetModel>('budgets');
+      const budgetCollection = database.get<BudgetModel>('budgets');
 
       let budget: BudgetModel;
       try {
-        budget = await collection.find(budgetId);
+        budget = await budgetCollection.find(budgetId);
       } catch {
         throw new Error(`Budget not found: ${budgetId}`);
       }
 
-      await budget.markAsDeleted();
+      const budgetCategories = await budget.budgetCategories.fetch();
+
+      const preparedRecords: Model[] = [budget.prepareMarkAsDeleted()];
+
+      for (const bc of budgetCategories) {
+        preparedRecords.push(bc.prepareMarkAsDeleted());
+      }
+
+      await database.batch(...preparedRecords);
       return budget;
     });
   } catch (error) {
@@ -693,14 +744,22 @@ export const getBudgetStatus = async (
 ) => {
   try {
     const budget = await database.get<BudgetModel>('budgets').find(budgetId);
+    const budgetCategories = await budget.budgetCategories.fetch();
+    const categoryIds = budgetCategories.map((bc) => bc.categoryId);
+
+    const baseConditions = [
+      Q.where('date', Q.gte(periodStart.getTime())),
+      Q.where('date', Q.lte(periodEnd.getTime())),
+      Q.where('amountInBaseCurrency', Q.lt(0)),
+    ];
+
+    if (categoryIds.length > 0) {
+      baseConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+    }
 
     const transactions = await database
       .get<TransactionModel>('transactions')
-      .query(
-        Q.where('date', Q.gte(periodStart.getTime())),
-        Q.where('date', Q.lte(periodEnd.getTime())),
-        Q.where('amountInBaseCurrency', Q.lt(0))
-      )
+      .query(...baseConditions)
       .fetch();
 
     const spent = transactions.reduce(

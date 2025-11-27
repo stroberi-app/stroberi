@@ -1,10 +1,15 @@
-import { Model } from '@nozbe/watermelondb';
-import { date, field, readonly, text, writer } from '@nozbe/watermelondb/decorators';
+import { type Query, Model } from '@nozbe/watermelondb';
+import { children, date, field, readonly, text, writer } from '@nozbe/watermelondb/decorators';
+import type { BudgetCategoryModel } from './budget-category-model';
 
 export type BudgetPeriod = 'weekly' | 'monthly' | 'yearly';
 
 export class BudgetModel extends Model {
   static table = 'budgets';
+
+  static associations = {
+    budget_categories: { type: 'has_many' as const, foreignKey: 'budget_id' },
+  };
 
   @text('name') name: string;
   @field('amount') amount: number;
@@ -13,6 +18,8 @@ export class BudgetModel extends Model {
   @field('rollover') rollover: boolean;
   @field('isActive') isActive: boolean;
   @field('alertThreshold') alertThreshold: number;
+
+  @children('budget_categories') budgetCategories: Query<BudgetCategoryModel>;
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;

@@ -98,5 +98,17 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 13,
+      steps: [
+        createTable({
+          name: 'budget_categories',
+          columns: [
+            { name: 'budget_id', type: 'string', isIndexed: true },
+            { name: 'category_id', type: 'string', isIndexed: true },
+          ],
+        }),
+      ],
+    },
   ],
 });
