@@ -5,7 +5,8 @@ export const LinkButton = styled(Button, {
   backgroundColor: '$gray',
   color: '$stroberi',
   borderRadius: '$10',
-
+  flexDirection: 'row',
+  gap: '$2',
   height: 36,
   fontSize: '$5',
   variants: {

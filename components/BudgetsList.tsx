@@ -70,8 +70,10 @@ const BudgetsList = ({ budgets, onAdd, onEdit }: BudgetsListProps) => {
         <LinkButton
           backgroundColor="$green"
           paddingHorizontal="$6"
+          height="auto"
           paddingVertical="$3.5"
           borderRadius="$4"
+          alignSelf="center"
           onPress={onAdd}
         >
           <PlusCircle size={20} color="white" />
