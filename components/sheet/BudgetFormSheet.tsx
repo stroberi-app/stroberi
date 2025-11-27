@@ -1,22 +1,26 @@
 import {
   BottomSheetModal,
   BottomSheetScrollView,
+  BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { Calendar, TrendingUp } from '@tamagui/lucide-icons';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
+import { Calendar, FolderOpen, TrendingUp, X } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Keyboard, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Input, Text, View, YGroup } from 'tamagui';
+import { Input, ScrollView, Text, View, XStack, YGroup } from 'tamagui';
 import type { BudgetModel, BudgetPeriod } from '../../database/budget-model';
+import type { CategoryModel } from '../../database/category-model';
 import { createBudget, updateBudget } from '../../database/helpers';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import '../../lib/date';
 import { formatBudgetPeriod } from '../../lib/budgetUtils';
 import { LinkButton } from '../button/LinkButton';
+import { CategoriesList } from '../CategoriesList';
 import { CreateExpenseItem } from '../CreateExpenseItem';
 import { CurrencyInput } from '../CurrencyInput';
 import { CustomBackdrop } from '../CustomBackdrop';
@@ -63,11 +67,13 @@ export const BudgetFormSheet = ({
   budget,
   onSuccess,
 }: BudgetFormSheetProps) => {
+  const database = useDatabase();
   const { defaultCurrency } = useDefaultCurrency();
   const toast = useToast();
   const { bottom } = useSafeAreaInsets();
   const periodPickerRef = useRef<BottomSheetModal>(null);
   const thresholdPickerRef = useRef<BottomSheetModal>(null);
+  const categoryPickerRef = useRef<BottomSheetModal>(null);
 
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -76,24 +82,36 @@ export const BudgetFormSheet = ({
   const [rollover, setRollover] = useState(false);
   const [alertThreshold, setAlertThreshold] = useState(90);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<CategoryModel[]>([]);
+  const [categorySearch, setCategorySearch] = useState('');
 
   useEffect(() => {
-    if (budget) {
-      setName(budget.name || '');
-      setAmount(budget.amount.toString());
-      setPeriod(budget.period);
-      setStartDate(budget.startDate);
-      setRollover(budget.rollover);
-      setAlertThreshold(budget.alertThreshold);
-    } else {
-      setName('');
-      setAmount('');
-      const defaultPeriod: BudgetPeriod = 'monthly';
-      setPeriod(defaultPeriod);
-      setStartDate(getStartOfPeriod(defaultPeriod));
-      setRollover(false);
-      setAlertThreshold(90);
-    }
+    const loadBudgetData = async () => {
+      if (budget) {
+        setName(budget.name || '');
+        setAmount(budget.amount.toString());
+        setPeriod(budget.period);
+        setStartDate(budget.startDate);
+        setRollover(budget.rollover);
+        setAlertThreshold(budget.alertThreshold);
+
+        const budgetCategories = await budget.budgetCategories.fetch();
+        const categories = await Promise.all(
+          budgetCategories.map((bc) => bc.category.fetch())
+        );
+        setSelectedCategories(categories.filter(Boolean) as CategoryModel[]);
+      } else {
+        setName('');
+        setAmount('');
+        const defaultPeriod: BudgetPeriod = 'monthly';
+        setPeriod(defaultPeriod);
+        setStartDate(getStartOfPeriod(defaultPeriod));
+        setRollover(false);
+        setAlertThreshold(90);
+        setSelectedCategories([]);
+      }
+    };
+    loadBudgetData();
   }, [budget]);
 
   const resetForm = () => {
@@ -104,7 +122,23 @@ export const BudgetFormSheet = ({
     setStartDate(getStartOfPeriod(defaultPeriod));
     setRollover(false);
     setAlertThreshold(90);
+    setSelectedCategories([]);
+    setCategorySearch('');
   };
+
+  const handleCategorySelect = useCallback((category: CategoryModel) => {
+    setSelectedCategories((prev) => {
+      const isSelected = prev.some((c) => c.id === category.id);
+      if (isSelected) {
+        return prev.filter((c) => c.id !== category.id);
+      }
+      return [...prev, category];
+    });
+  }, []);
+
+  const handleRemoveCategory = useCallback((categoryId: string) => {
+    setSelectedCategories((prev) => prev.filter((c) => c.id !== categoryId));
+  }, []);
 
   const handleSubmit = async () => {
     if (isSaving) return;
@@ -123,6 +157,7 @@ export const BudgetFormSheet = ({
     setIsSaving(true);
 
     try {
+      const categoryIds = selectedCategories.map((c) => c.id);
       const payload = {
         name: name.trim() || `${formatBudgetPeriod(period)} Budget`,
         amount: amountValue,
@@ -130,6 +165,7 @@ export const BudgetFormSheet = ({
         startDate,
         rollover,
         alertThreshold,
+        categoryIds,
       };
 
       if (budget) {
@@ -254,7 +290,53 @@ export const BudgetFormSheet = ({
                 <CreateExpenseItem IconComponent={Calendar} label="Start Date">
                   <DatePicker mode="date" date={startDate} setDate={setStartDate} />
                 </CreateExpenseItem>
+
+                <CreateExpenseItem IconComponent={FolderOpen} label="Categories">
+                  <LinkButton
+                    color="white"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      categoryPickerRef.current?.present();
+                    }}
+                    disabled={isSaving}
+                  >
+                    <Text>
+                      {selectedCategories.length === 0
+                        ? 'All Categories'
+                        : `${selectedCategories.length} selected`}
+                    </Text>
+                  </LinkButton>
+                </CreateExpenseItem>
               </YGroup>
+
+              {selectedCategories.length > 0 && (
+                <View marginTop="$3">
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <XStack gap="$2" flexWrap="wrap">
+                      {selectedCategories.map((category) => (
+                        <View
+                          key={category.id}
+                          flexDirection="row"
+                          alignItems="center"
+                          backgroundColor="$gray4"
+                          paddingHorizontal="$3"
+                          paddingVertical="$2"
+                          borderRadius="$4"
+                          gap="$2"
+                        >
+                          <Text fontSize="$3">{category.icon}</Text>
+                          <Text fontSize="$3" color="white">
+                            {category.name}
+                          </Text>
+                          <Pressable onPress={() => handleRemoveCategory(category.id)}>
+                            <X size={14} color="$gray10" />
+                          </Pressable>
+                        </View>
+                      ))}
+                    </XStack>
+                  </ScrollView>
+                </View>
+              )}
 
               <View marginTop="$4">
                 <CheckboxWithLabel
@@ -378,6 +460,63 @@ export const BudgetFormSheet = ({
                 </YGroup.Item>
               ))}
             </YGroup>
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
+
+      <BottomSheetModal
+        ref={categoryPickerRef}
+        snapPoints={['70%']}
+        enableDynamicSizing={false}
+        stackBehavior="push"
+        enablePanDownToClose={true}
+        handleIndicatorStyle={handleIndicatorStyle}
+        backdropComponent={CustomBackdrop}
+        backgroundStyle={backgroundStyle}
+      >
+        <BottomSheetView style={{ flex: 1 }}>
+          <View paddingHorizontal="$4" paddingTop="$2" flex={1}>
+            <View
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
+              marginBottom="$3"
+            >
+              <Text fontSize="$6" fontWeight="bold">
+                Select Categories
+              </Text>
+              <LinkButton
+                backgroundColor="$green"
+                onPress={() => categoryPickerRef.current?.close()}
+              >
+                <Text color="white">Done</Text>
+              </LinkButton>
+            </View>
+            <Text fontSize="$2" color="$gray9" marginBottom="$3">
+              Leave empty to track all expenses
+            </Text>
+            <BottomSheetTextInput
+              placeholder="Search categories..."
+              value={categorySearch}
+              onChangeText={setCategorySearch}
+              style={{
+                backgroundColor: '#2a2a2a',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                marginBottom: 12,
+                color: 'white',
+                fontSize: 16,
+              }}
+              placeholderTextColor="#666"
+            />
+            <CategoriesList
+              database={database}
+              search={categorySearch}
+              onSelect={handleCategorySelect}
+              selectedCategories={selectedCategories}
+              preventClose
+            />
           </View>
         </BottomSheetView>
       </BottomSheetModal>

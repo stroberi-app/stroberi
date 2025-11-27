@@ -2,9 +2,11 @@ import { Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Trash2 } from '@tamagui/lucide-icons';
 import { Alert } from 'react-native';
-import { map, type Observable } from 'rxjs';
-import { Text, View } from 'tamagui';
+import { combineLatest, map, type Observable, of, switchMap } from 'rxjs';
+import { ScrollView, Text, View, XStack } from 'tamagui';
+import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { BudgetModel } from '../database/budget-model';
+import type { CategoryModel } from '../database/category-model';
 import { deleteBudget } from '../database/helpers';
 import { database } from '../database/index';
 import type { TransactionModel } from '../database/transaction-model';
@@ -29,9 +31,10 @@ type BudgetItemProps = {
   budget: BudgetModel;
   onEdit: (budget: BudgetModel) => void;
   budgetStatus: BudgetStatus;
+  categories: CategoryModel[];
 };
 
-const BudgetItemContent = ({ budget, budgetStatus }: BudgetItemProps) => {
+const BudgetItemContent = ({ budget, budgetStatus, categories }: BudgetItemProps) => {
   const { defaultCurrency } = useDefaultCurrency();
 
   const handleDelete = () => {
@@ -50,14 +53,6 @@ const BudgetItemContent = ({ budget, budgetStatus }: BudgetItemProps) => {
       },
     ]);
   };
-
-  // const handleToggle = async () => {
-  //   try {
-  //     await toggleBudget(budget.id);
-  //   } catch {
-  //     Alert.alert('Error', 'Failed to toggle budget');
-  //   }
-  // };
 
   const progressColor = getBudgetProgressColor(
     budgetStatus.percentage,
@@ -94,21 +89,45 @@ const BudgetItemContent = ({ budget, budgetStatus }: BudgetItemProps) => {
           </Text>
         </View>
         <View flexDirection="row" gap="$2" alignItems="center">
-          {/* <LinkButton
-            backgroundColor="transparent"
-            padding="$2"
-            onPress={() => onEdit(budget)}
-          >
-            <Edit3 size={20} color="$gray11" />
-          </LinkButton> */}
           <LinkButton backgroundColor="transparent" padding="$2" onPress={handleDelete}>
             <Trash2 size={20} color="$stroberi" />
           </LinkButton>
-          {/* <Switch checked={budget.isActive} onCheckedChange={handleToggle}>
-            <Switch.Thumb animation="bouncy" />
-          </Switch> */}
         </View>
       </View>
+
+      {categories.length > 0 && (
+        <View marginBottom="$3">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <XStack gap="$2">
+              {categories.map((category) => (
+                <View
+                  key={category.id}
+                  flexDirection="row"
+                  alignItems="center"
+                  backgroundColor="$gray4"
+                  paddingHorizontal="$2"
+                  paddingVertical="$1"
+                  borderRadius="$3"
+                  gap="$1"
+                >
+                  <Text fontSize="$2">{category.icon}</Text>
+                  <Text fontSize="$2" color="$gray11">
+                    {category.name}
+                  </Text>
+                </View>
+              ))}
+            </XStack>
+          </ScrollView>
+        </View>
+      )}
+
+      {categories.length === 0 && (
+        <View marginBottom="$3">
+          <Text fontSize="$2" color="$gray9">
+            All categories
+          </Text>
+        </View>
+      )}
 
       <BudgetProgress
         spent={budgetStatus.spent}
@@ -131,42 +150,74 @@ const BudgetItemContent = ({ budget, budgetStatus }: BudgetItemProps) => {
 
 export const BudgetItem = withObservables<
   { budget: BudgetModel; onEdit: (budget: BudgetModel) => void },
-  { budgetStatus: Observable<BudgetStatus> }
+  {
+    budgetStatus: Observable<BudgetStatus>;
+    categories: Observable<CategoryModel[]>;
+  }
 >(['budget'], ({ budget }) => {
   const periodDates = calculateBudgetPeriodDates(budget);
 
-  return {
-    budgetStatus: database
-      .get<TransactionModel>('transactions')
-      .query(
+  const budgetCategoriesObservable = budget.budgetCategories.observe();
+
+  const categoriesObservable = budgetCategoriesObservable.pipe(
+    switchMap((budgetCategories: BudgetCategoryModel[]) => {
+      if (budgetCategories.length === 0) {
+        return of([]);
+      }
+      const categoryObservables = budgetCategories.map((bc) =>
+        database.get<CategoryModel>('categories').findAndObserve(bc.categoryId)
+      );
+      return combineLatest(categoryObservables);
+    })
+  );
+
+  const budgetStatusObservable = budgetCategoriesObservable.pipe(
+    switchMap((budgetCategories: BudgetCategoryModel[]) => {
+      const categoryIds = budgetCategories.map((bc) => bc.categoryId);
+
+      const baseConditions = [
         Q.where('date', Q.gte(periodDates.start.getTime())),
         Q.where('date', Q.lte(periodDates.end.getTime())),
-        Q.where('amountInBaseCurrency', Q.lt(0))
-      )
-      .observeWithColumns(['amountInBaseCurrency'])
-      .pipe(
-        map((transactions) => {
-          const spent = transactions.reduce(
-            (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
-            0
-          );
-          const remaining = budget.amount - spent;
-          const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+        Q.where('amountInBaseCurrency', Q.lt(0)),
+      ];
 
-          const status =
-            percentage >= 100
-              ? ('exceeded' as const)
-              : percentage >= budget.alertThreshold
-                ? ('warning' as const)
-                : ('ok' as const);
+      if (categoryIds.length > 0) {
+        baseConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+      }
 
-          return {
-            spent,
-            remaining,
-            percentage,
-            status,
-          };
-        })
-      ),
+      return database
+        .get<TransactionModel>('transactions')
+        .query(...baseConditions)
+        .observeWithColumns(['amountInBaseCurrency'])
+        .pipe(
+          map((transactions) => {
+            const spent = transactions.reduce(
+              (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
+              0
+            );
+            const remaining = budget.amount - spent;
+            const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+
+            const status =
+              percentage >= 100
+                ? ('exceeded' as const)
+                : percentage >= budget.alertThreshold
+                  ? ('warning' as const)
+                  : ('ok' as const);
+
+            return {
+              spent,
+              remaining,
+              percentage,
+              status,
+            };
+          })
+        );
+    })
+  );
+
+  return {
+    budgetStatus: budgetStatusObservable,
+    categories: categoriesObservable,
   };
 })(BudgetItemContent);
