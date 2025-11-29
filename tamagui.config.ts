@@ -14,6 +14,7 @@ const tokens = createTokens({
     green: 'hsl(151, 50.0%, 53.2%)',
     greenLight: 'hsl(151, 50.0%, 70.2%)',
     stroberiLight: 'rgb(215,99,80)',
+    yellow: '#F5C211',
   },
 });
 export const tamaguiConfig = createTamagui({
@@ -31,6 +32,7 @@ export const tamaguiConfig = createTamagui({
       green: tokens.color.green,
       greenLight: tokens.color.greenLight,
       stroberiLight: tokens.color.stroberiLight,
+      yellow: tokens.color.yellow,
     },
   },
 });
