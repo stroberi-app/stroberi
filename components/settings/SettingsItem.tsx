@@ -1,13 +1,14 @@
 import { ArrowRight } from '@tamagui/lucide-icons';
 import type * as React from 'react';
 import { TouchableOpacity } from 'react-native';
-import { Text, View, YGroup } from 'tamagui';
+import { Spinner, Text, View, YGroup } from 'tamagui';
 
 type SettingsItemProps = {
   label: string;
   IconComponent?: React.ElementType;
   rightLabel?: string;
   onPress?: () => void;
+  isLoading?: boolean;
 };
 
 export const SettingsItem = ({
@@ -15,6 +16,7 @@ export const SettingsItem = ({
   IconComponent,
   rightLabel,
   onPress,
+  isLoading = false,
 }: SettingsItemProps) => {
   const Component = onPress ? TouchableOpacity : View;
   return (
@@ -35,7 +37,7 @@ export const SettingsItem = ({
               <Text fontSize="$5">{label}</Text>
             </View>
             <View flexDirection="row" alignItems="center" gap="$2">
-              <Text fontSize="$5">{rightLabel}</Text>
+              {isLoading ? <Spinner size="small" /> : <Text fontSize="$5">{rightLabel}</Text>}
               <ArrowRight size={18} color="$gray9" />
             </View>
           </View>
