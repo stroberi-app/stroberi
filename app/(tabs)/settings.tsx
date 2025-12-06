@@ -42,7 +42,7 @@ export default function SettingsScreen() {
     null
   );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
-  const { setDefaultCurrency, defaultCurrency } = useDefaultCurrency();
+  const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } = useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
   const [localBudgetingEnabled, setLocalBudgetingEnabled] = useState(budgetingEnabled);
 
@@ -88,6 +88,7 @@ export default function SettingsScreen() {
             label={'Default Currency'}
             IconComponent={DollarSign}
             rightLabel={defaultCurrency ?? 'Select'}
+            isLoading={isUpdatingCurrency}
             onPress={() => {
               currencySheetRef.current?.present();
             }}
@@ -206,6 +207,9 @@ export default function SettingsScreen() {
       <CurrencySelect
         sheetRef={currencySheetRef}
         onSelect={(currency) => {
+          if (isUpdatingCurrency) {
+            return;
+          }
           setDefaultCurrency(currency.code);
           currencySheetRef.current?.close();
         }}
