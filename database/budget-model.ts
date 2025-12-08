@@ -1,5 +1,12 @@
 import { type Query, Model } from '@nozbe/watermelondb';
-import { children, date, field, readonly, text, writer } from '@nozbe/watermelondb/decorators';
+import {
+  children,
+  date,
+  field,
+  readonly,
+  text,
+  writer,
+} from '@nozbe/watermelondb/decorators';
 import type { BudgetCategoryModel } from './budget-category-model';
 
 export type BudgetPeriod = 'weekly' | 'monthly' | 'yearly';

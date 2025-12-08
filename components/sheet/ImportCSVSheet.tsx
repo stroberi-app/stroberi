@@ -10,11 +10,12 @@ import {
 } from '@tamagui/lucide-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import Papa from 'papaparse';
 import type React from 'react';
 import { useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Sharing from 'expo-sharing';
 import { Progress, Separator, Spinner, Text, View, XStack, YStack } from 'tamagui';
 import { currencies } from '../../data/currencies';
 import type { CategoryModel } from '../../database/category-model';
@@ -25,6 +26,7 @@ import {
 } from '../../database/helpers';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
+import { saveUriToDownloadsOnAndroid } from '../../lib/androidDownloads';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
@@ -465,9 +467,19 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
 Starbucks,-4.50,2024-01-15,Morning coffee,USD,Food & Drink,☕
 Amazon,-29.99,2024-01-14,Book purchase,USD,Shopping,📦
 Salary,3000.00,2024-01-01,Monthly salary,USD,Income,💰`;
-      const uri = `${FileSystem.cacheDirectory}stroberi_csv_template.csv`;
+      const filename = 'stroberi_csv_template.csv';
+      const uri = `${FileSystem.cacheDirectory}${filename}`;
       await FileSystem.writeAsStringAsync(uri, template);
-      await Sharing.shareAsync(uri);
+
+      if (Platform.OS === 'android') {
+        await saveUriToDownloadsOnAndroid({
+          sourceUri: uri,
+          filename,
+          mimeType: 'text/csv',
+        });
+      } else {
+        await Sharing.shareAsync(uri);
+      }
     } catch (_e) {
       showError({
         title: 'Download Failed',

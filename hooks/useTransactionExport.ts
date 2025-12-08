@@ -5,8 +5,10 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import Papa from 'papaparse';
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import type { TransactionModel } from '../database/transaction-model';
 import useToast from './useToast';
+import { saveUriToDownloadsOnAndroid } from '../lib/androidDownloads';
 
 export type ExportColumn = {
   name: string;
@@ -183,10 +185,18 @@ const useTransactionExport = () => {
     const tempPath = FileSystem.cacheDirectory + filename;
     await FileSystem.writeAsStringAsync(tempPath, content);
 
-    await Sharing.shareAsync(tempPath, {
-      dialogTitle: `Save ${fileType.toUpperCase()} File`,
-      mimeType,
-    });
+    if (Platform.OS === 'android') {
+      await saveUriToDownloadsOnAndroid({
+        sourceUri: tempPath,
+        filename,
+        mimeType,
+      });
+    } else {
+      await Sharing.shareAsync(tempPath, {
+        dialogTitle: `Save ${fileType.toUpperCase()} File`,
+        mimeType,
+      });
+    }
 
     setTimeout(async () => {
       try {
