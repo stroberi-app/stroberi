@@ -4134,6 +4134,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@revenuecat/purchases-js-hybrid-mappings@npm:17.21.2":
+  version: 17.21.2
+  resolution: "@revenuecat/purchases-js-hybrid-mappings@npm:17.21.2"
+  dependencies:
+    "@revenuecat/purchases-js": "npm:1.18.4"
+  checksum: 6f35f55389b44a74fa0e0f30c56ee383f0b87d7ba163f2b93b746b193cc52d5010da7e03f38897207eafbebfc894b3edc538631d220da7d59cc88e09f5e7489b
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-js@npm:1.18.4":
+  version: 1.18.4
+  resolution: "@revenuecat/purchases-js@npm:1.18.4"
+  checksum: 7a47329d72a94ba63378aafaa3e68661214df60dbced1ca013dc7ca5e309fc7e57f268c79fa85db11efe26cdc4a7defebfd6945506563da662761218bb6dafa0
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-typescript-internal@npm:17.21.2":
+  version: 17.21.2
+  resolution: "@revenuecat/purchases-typescript-internal@npm:17.21.2"
+  checksum: e40cae648d6dfa99428c207f6099ba6e6ed9b3910f45ceb11952c0ea524492673fa9c8aaa52ca992b486d20166fc8cc3c05fd0363e85485ce26749f2471e231c
+  languageName: node
+  linkType: hard
+
 "@secretlint/core@npm:^9.0.0":
   version: 9.0.0
   resolution: "@secretlint/core@npm:9.0.0"
@@ -13130,6 +13153,40 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-purchases-ui@npm:^9.6.9":
+  version: 9.6.9
+  resolution: "react-native-purchases-ui@npm:9.6.9"
+  dependencies:
+    "@revenuecat/purchases-typescript-internal": "npm:17.21.2"
+  peerDependencies:
+    react: "*"
+    react-native: ">= 0.73.0"
+    react-native-purchases: 9.6.9
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: bedf95f98148dc9fcbe8fdf2db82f9093a708d11c08701f2a39972ab0eb2e2ef401ac725d61c6c8bb772fd42abf8ec80b603af699c13bdc96cc9e629fc976f44
+  languageName: node
+  linkType: hard
+
+"react-native-purchases@npm:^9.6.9":
+  version: 9.6.9
+  resolution: "react-native-purchases@npm:9.6.9"
+  dependencies:
+    "@revenuecat/purchases-js-hybrid-mappings": "npm:17.21.2"
+    "@revenuecat/purchases-typescript-internal": "npm:17.21.2"
+  peerDependencies:
+    react: ">= 16.6.3"
+    react-native: ">= 0.73.0"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 0283c344e80c1d442c5b93b79574949328c34457a116470d6387139c9b922373447912bdb4966e50be14d7e798e32cedd1277a0bae66d31c0745610c7332edc0
+  languageName: node
+  linkType: hard
+
 "react-native-reanimated-carousel@npm:v4.0.0-alpha.12":
   version: 4.0.0-alpha.12
   resolution: "react-native-reanimated-carousel@npm:4.0.0-alpha.12"
@@ -14647,6 +14704,8 @@ __metadata:
     react-native-ios-context-menu: "npm:^2.5.2"
     react-native-ios-utilities: "npm:^4.5.2"
     react-native-keyboard-controller: "npm:^1.14.5"
+    react-native-purchases: "npm:^9.6.9"
+    react-native-purchases-ui: "npm:^9.6.9"
     react-native-reanimated: "npm:~3.16.1"
     react-native-reanimated-carousel: "npm:v4.0.0-alpha.12"
     react-native-safe-area-context: "npm:4.12.0"

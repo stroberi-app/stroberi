@@ -1,15 +1,19 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
+  Crown,
   DollarSign,
   FolderInput,
   FolderOutput,
+  RefreshCcw,
   RefreshCw,
+  ShieldCheck,
   Tags,
   Wallet,
 } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
 import { CurrencySelect } from '../../components/CurrencySelect';
@@ -29,7 +33,9 @@ import {
   useBudgetingEnabled,
 } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { useRevenueCat } from '../../hooks/useRevenueCat';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
+import { REVENUECAT_ENTITLEMENT_ID } from '../../lib/revenuecat';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
 
 export default function SettingsScreen() {
@@ -45,12 +51,29 @@ export default function SettingsScreen() {
   const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } = useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
   const [localBudgetingEnabled, setLocalBudgetingEnabled] = useState(budgetingEnabled);
+  const {
+    hasPro,
+    isLoading: isRevenueCatLoading,
+    isPaywallLoading,
+    isRestoring,
+    error: revenueCatError,
+    presentPaywall,
+    restorePurchases,
+    openCustomerCenter,
+  } = useRevenueCat();
+  const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
 
   const router = useRouter();
 
   useEffect(() => {
     setLocalBudgetingEnabled(budgetingEnabled);
   }, [budgetingEnabled]);
+
+  useEffect(() => {
+    if (revenueCatError) {
+      setSubscriptionMessage(revenueCatError);
+    }
+  }, [revenueCatError]);
 
   const handleBudgetingToggle = async () => {
     const newValue = !localBudgetingEnabled;
@@ -67,6 +90,53 @@ export default function SettingsScreen() {
   const handleBackToExport = () => {
     transactionPreviewSheetRef.current?.dismiss();
     exportDataSheetRef.current?.present();
+  };
+
+  const formatError = (err: unknown) => {
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      'message' in err &&
+      typeof (err as { message?: unknown }).message === 'string'
+    ) {
+      return (err as { message: string }).message;
+    }
+    return 'Something went wrong. Please try again.';
+  };
+
+  const handlePaywall = async () => {
+    setSubscriptionMessage(null);
+    try {
+      const result = await presentPaywall();
+      const proActive = result?.customerInfo?.entitlements.active[REVENUECAT_ENTITLEMENT_ID];
+      if (proActive) {
+        setSubscriptionMessage('Stroberi Pro is active. Thank you for upgrading!');
+      }
+    } catch (err) {
+      Alert.alert('Purchase failed', formatError(err));
+    }
+  };
+
+  const handleRestore = async () => {
+    setSubscriptionMessage(null);
+    try {
+      const restoredInfo = await restorePurchases();
+      const restoredPro = restoredInfo.entitlements.active[REVENUECAT_ENTITLEMENT_ID];
+      setSubscriptionMessage(
+        restoredPro ? 'Purchases restored. Stroberi Pro is active.' : 'No purchases to restore.'
+      );
+    } catch (err) {
+      Alert.alert('Restore failed', formatError(err));
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setSubscriptionMessage(null);
+    try {
+      await openCustomerCenter();
+    } catch (err) {
+      Alert.alert('Manage subscription', formatError(err));
+    }
   };
 
   return (
@@ -110,6 +180,45 @@ export default function SettingsScreen() {
             }}
           />
         </YGroup>
+
+        <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
+          Stroberi Pro
+        </Text>
+        <YGroup>
+          <SettingsItem
+            label={'Stroberi Pro'}
+            IconComponent={ShieldCheck}
+            rightLabel={hasPro ? 'Active' : 'Locked'}
+            isLoading={isRevenueCatLoading || isPaywallLoading}
+            onPress={handlePaywall}
+          />
+          <SettingsItem
+            label={'Upgrade / View Plans'}
+            IconComponent={Crown}
+            rightLabel={hasPro ? 'Thanks!' : 'Upgrade'}
+            isLoading={isPaywallLoading}
+            onPress={handlePaywall}
+          />
+          <SettingsItem
+            label={'Manage Subscription'}
+            IconComponent={Wallet}
+            rightLabel={''}
+            isLoading={isPaywallLoading}
+            onPress={handleManageSubscription}
+          />
+          <SettingsItem
+            label={'Restore Purchases'}
+            IconComponent={RefreshCcw}
+            rightLabel={''}
+            isLoading={isRestoring}
+            onPress={handleRestore}
+          />
+        </YGroup>
+        {subscriptionMessage ? (
+          <Text fontSize="$4" color="$gray9" marginTop="$2">
+            {subscriptionMessage}
+          </Text>
+        ) : null}
 
         <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
           Features
