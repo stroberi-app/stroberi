@@ -5,6 +5,7 @@ import { Tabs } from 'expo-router';
 import type React from 'react';
 import { useTheme } from 'tamagui';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
+import { Platform } from 'react-native';
 
 const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
   return (
@@ -15,7 +16,8 @@ const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
         left: 0,
         right: 0,
       }}
-      intensity={40}
+      intensity={Platform.OS === 'ios' ? 40 : 30}
+      experimentalBlurMethod="dimezisBlurView"
       tint="dark"
     >
       <BottomTabBar {...props} />
