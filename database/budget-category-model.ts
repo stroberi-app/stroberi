@@ -17,4 +17,3 @@ export class BudgetCategoryModel extends Model {
   @immutableRelation('budgets', 'budget_id') budget: Relation<BudgetModel>;
   @immutableRelation('categories', 'category_id') category: Relation<CategoryModel>;
 }
-

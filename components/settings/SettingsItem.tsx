@@ -37,7 +37,11 @@ export const SettingsItem = ({
               <Text fontSize="$5">{label}</Text>
             </View>
             <View flexDirection="row" alignItems="center" gap="$2">
-              {isLoading ? <Spinner size="small" /> : <Text fontSize="$5">{rightLabel}</Text>}
+              {isLoading ? (
+                <Spinner size="small" />
+              ) : (
+                <Text fontSize="$5">{rightLabel}</Text>
+              )}
               <ArrowRight size={18} color="$gray9" />
             </View>
           </View>

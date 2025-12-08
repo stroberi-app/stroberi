@@ -42,7 +42,8 @@ export default function SettingsScreen() {
     null
   );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
-  const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } = useDefaultCurrency();
+  const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } =
+    useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
   const [localBudgetingEnabled, setLocalBudgetingEnabled] = useState(budgetingEnabled);
 
