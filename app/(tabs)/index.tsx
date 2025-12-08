@@ -1,9 +1,11 @@
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useScrollToTop } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef } from 'react';
 import type Reanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
+import { ManageTripsSheet } from '../../components/sheet/ManageTripsSheet';
 import { CreateFirstTransactionSection } from '../../components/CreateFirstTransactionSection';
 import { CreateTransactionButtons } from '../../components/CreateTransactionButtons';
 import { Carousel } from '../../components/carousel/Carousel';
@@ -14,11 +16,15 @@ import BudgetAlertCard from '../../components/home/BudgetAlertCard';
 import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
 import SpendOverview from '../../components/home/SpendOverview';
 import type { TransactionModel } from '../../database/transaction-model';
+import { useActiveTrip } from '../../hooks/useActiveTrip';
+import { LinkButton } from '../../components/button/LinkButton';
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
   const database = useDatabase();
+  const manageTripsSheetRef = useRef<BottomSheetModal | null>(null);
   const scrollRef = useRef<Reanimated.FlatList<TransactionModel>>(null);
+  const { activeTrip, setActiveTrip, isLoadingActiveTrip } = useActiveTrip();
 
   useScrollToTop(scrollRef);
 
@@ -64,6 +70,53 @@ export default function HomeScreen() {
               <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
                 Overview
               </Text>
+              {!isLoadingActiveTrip && (
+                <View marginBottom="$2" gap="$2">
+                  {activeTrip ? (
+                    <View
+                      backgroundColor="$gray3"
+                      borderRadius="$3"
+                      padding="$3"
+                      flexDirection="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      gap="$3"
+                    >
+                      <View gap="$1">
+                        <Text color="$gray9" fontSize="$3">
+                          Travel mode active
+                        </Text>
+                        <Text color="white" fontSize="$5" fontWeight="600">
+                          {activeTrip.name} ({activeTrip.homeCurrencyCode})
+                        </Text>
+                      </View>
+                      <View flexDirection="row" gap="$2">
+                        <LinkButton
+                          backgroundColor="$gray5"
+                          size="small"
+                          onPress={() => manageTripsSheetRef.current?.present()}
+                        >
+                          Switch
+                        </LinkButton>
+                        <LinkButton
+                          backgroundColor="$gray5"
+                          size="small"
+                          onPress={() => setActiveTrip(null)}
+                        >
+                          End
+                        </LinkButton>
+                      </View>
+                    </View>
+                  ) : (
+                    <LinkButton
+                      backgroundColor="$gray5"
+                      onPress={() => manageTripsSheetRef.current?.present()}
+                    >
+                      Enable travel mode
+                    </LinkButton>
+                  )}
+                </View>
+              )}
               <BudgetAlertCard database={database} />
               <Carousel renderItem={renderCarouselItem} data={carouselData} />
               {transactionCount > 0 ? (
@@ -77,6 +130,17 @@ export default function HomeScreen() {
           )}
         />
       </View>
+      <ManageTripsSheet
+        sheetRef={manageTripsSheetRef}
+        allowClearSelection
+        onSelectTrip={(trip) => {
+          if (trip) {
+            setActiveTrip(trip.id);
+          } else {
+            setActiveTrip(null);
+          }
+        }}
+      />
     </>
   );
 }

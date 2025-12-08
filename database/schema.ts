@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 13,
+  version: 18,
   tables: [
     tableSchema({
       name: 'transactions',
@@ -17,6 +17,10 @@ export const schema = appSchema({
         { name: 'baseCurrencyCode', type: 'string' },
         { name: 'amountInBaseCurrency', type: 'number' },
         { name: 'exchangeRate', type: 'number' },
+        { name: 'tripId', type: 'string', isOptional: true, isIndexed: true },
+        { name: 'tripCurrencyCode', type: 'string', isOptional: true },
+        { name: 'amountInTripCurrency', type: 'number', isOptional: true },
+        { name: 'tripExchangeRate', type: 'number', isOptional: true },
         {
           name: 'recurringTransactionId',
           type: 'string',
@@ -72,6 +76,50 @@ export const schema = appSchema({
       columns: [
         { name: 'budget_id', type: 'string', isIndexed: true },
         { name: 'category_id', type: 'string', isIndexed: true },
+      ],
+    }),
+    tableSchema({
+      name: 'trips',
+      columns: [
+        { name: 'name', type: 'string' },
+        { name: 'homeCurrencyCode', type: 'string' },
+        { name: 'startDate', type: 'number', isOptional: true },
+        { name: 'endDate', type: 'number', isOptional: true },
+        { name: 'isArchived', type: 'boolean' },
+        { name: 'created_at', type: 'number' },
+        { name: 'updated_at', type: 'number' },
+      ],
+    }),
+    tableSchema({
+      name: 'trip_budgets',
+      columns: [
+        { name: 'trip_id', type: 'string', isIndexed: true },
+        { name: 'name', type: 'string' },
+        { name: 'amount', type: 'number' },
+        { name: 'currencyCode', type: 'string' },
+        { name: 'type', type: 'string' },
+        { name: 'alertThreshold', type: 'number' },
+        { name: 'isActive', type: 'boolean' },
+        { name: 'created_at', type: 'number' },
+        { name: 'updated_at', type: 'number' },
+      ],
+    }),
+    tableSchema({
+      name: 'trip_budget_categories',
+      columns: [
+        { name: 'trip_budget_id', type: 'string', isIndexed: true },
+        { name: 'category_id', type: 'string', isIndexed: true },
+      ],
+    }),
+    tableSchema({
+      name: 'fx_snapshots',
+      columns: [
+        { name: 'trip_id', type: 'string', isOptional: true, isIndexed: true },
+        { name: 'baseCurrencyCode', type: 'string' },
+        { name: 'counterCurrencyCode', type: 'string' },
+        { name: 'rate', type: 'number' },
+        { name: 'source', type: 'string', isOptional: true },
+        { name: 'captured_at', type: 'number' },
       ],
     }),
   ],

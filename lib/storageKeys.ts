@@ -4,4 +4,5 @@ export const STORAGE_KEYS = {
   DEFAULT_CURRENCY: 'defaultCurrency',
   CURRENCY_CONVERSION_CACHE_PREFIX: 'currency_conversion_cache_',
   CURRENCY_CONVERSION_CACHE_TIMESTAMP_PREFIX: 'currency_conversion_cache_timestamp_',
+  ACTIVE_TRIP_ID: 'active_trip_id',
 } as const;

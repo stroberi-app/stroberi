@@ -3,6 +3,7 @@ import {
   DollarSign,
   FolderInput,
   FolderOutput,
+  Plane,
   RefreshCw,
   Tags,
   Wallet,
@@ -23,11 +24,13 @@ import {
   TransactionPreviewSheet,
   type TransactionPreviewSheetRef,
 } from '../../components/sheet/TransactionPreviewSheet';
+import { ManageTripsSheet } from '../../components/sheet/ManageTripsSheet';
 import { database } from '../../database/index';
 import {
   notifyBudgetingEnabledChanged,
   useBudgetingEnabled,
 } from '../../hooks/useBudgetingEnabled';
+import { useActiveTrip } from '../../hooks/useActiveTrip';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
@@ -42,10 +45,12 @@ export default function SettingsScreen() {
     null
   );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const manageTripsSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } =
     useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
   const [localBudgetingEnabled, setLocalBudgetingEnabled] = useState(budgetingEnabled);
+  const { activeTrip, setActiveTrip } = useActiveTrip();
 
   const router = useRouter();
 
@@ -108,6 +113,14 @@ export default function SettingsScreen() {
             rightLabel={''}
             onPress={() => {
               manageRecurringSheetRef.current?.present();
+            }}
+          />
+          <SettingsItem
+            label={'Travel Mode (Trips)'}
+            IconComponent={Plane}
+            rightLabel={activeTrip ? activeTrip.name : 'Off'}
+            onPress={() => {
+              manageTripsSheetRef.current?.present();
             }}
           />
         </YGroup>
@@ -225,6 +238,13 @@ export default function SettingsScreen() {
         onBack={handleBackToExport}
       />
       <ImportCSVSheet sheetRef={importCsvSheetRef} />
+      <ManageTripsSheet
+        sheetRef={manageTripsSheetRef}
+        allowClearSelection
+        onSelectTrip={(trip) => {
+          setActiveTrip(trip ? trip.id : null);
+        }}
+      />
     </>
   );
 }

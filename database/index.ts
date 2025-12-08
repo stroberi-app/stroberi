@@ -4,9 +4,13 @@ import { Platform } from 'react-native';
 import { BudgetCategoryModel } from './budget-category-model';
 import { BudgetModel } from './budget-model';
 import { CategoryModel } from './category-model';
+import { FxSnapshotModel } from './fx-snapshot-model';
 import { migrations } from './migrations';
 import { RecurringTransactionModel } from './recurring-transaction-model';
 import { schema } from './schema';
+import { TripBudgetCategoryModel } from './trip-budget-category-model';
+import { TripBudgetModel } from './trip-budget-model';
+import { TripModel } from './trip-model';
 import { TransactionModel } from './transaction-model';
 
 const adapter = new SQLiteAdapter({
@@ -23,5 +27,9 @@ export const database = new Database({
     RecurringTransactionModel,
     BudgetModel,
     BudgetCategoryModel,
+    TripModel,
+    TripBudgetModel,
+    TripBudgetCategoryModel,
+    FxSnapshotModel,
   ],
 });

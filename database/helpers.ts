@@ -1,16 +1,21 @@
 import { type Model, Q } from '@nozbe/watermelondb';
 import dayjs from 'dayjs';
 import '../lib/date';
+import { STORAGE_KEYS } from '../lib/storageKeys';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
 import type { BudgetCategoryModel } from './budget-category-model';
 import type { BudgetModel, BudgetPeriod } from './budget-model';
 import type { CategoryModel } from './category-model';
 import { database } from './index';
+import type { FxSnapshotModel } from './fx-snapshot-model';
 import type {
   RecurringFrequency,
   RecurringTransactionModel,
 } from './recurring-transaction-model';
 import type { TransactionModel } from './transaction-model';
+import type { TripBudgetModel, TripBudgetType } from './trip-budget-model';
+import type { TripBudgetCategoryModel } from './trip-budget-category-model';
+import type { TripModel } from './trip-model';
 
 export type CreateTransactionPayload = {
   merchant: string;
@@ -21,6 +26,7 @@ export type CreateTransactionPayload = {
   note: string;
   baseCurrency: string;
   recurringTransactionId?: string;
+  tripId?: string | null;
 };
 export const createTransaction = async ({
   merchant,
@@ -31,6 +37,7 @@ export const createTransaction = async ({
   note,
   baseCurrency,
   recurringTransactionId,
+  tripId,
 }: CreateTransactionPayload) => {
   try {
     return await database.write(async () => {
@@ -64,6 +71,33 @@ export const createTransaction = async ({
         }
       }
 
+      let resolvedTrip: TripModel | null = null;
+      let tripCurrencyCode: string | null = null;
+      let amountInTripCurrency: number | null = null;
+      let tripExchangeRate: number | null = null;
+
+      if (tripId) {
+        try {
+          resolvedTrip = await database.get<TripModel>('trips').find(tripId);
+          tripCurrencyCode = resolvedTrip.homeCurrencyCode;
+          if (tripCurrencyCode === currencyCode) {
+            tripExchangeRate = 1;
+            amountInTripCurrency = amount;
+          } else if (tripCurrencyCode === baseCurrencyCode) {
+            tripExchangeRate = exchangeRate;
+            amountInTripCurrency = amountInBaseCurrency;
+          } else {
+            const rate = await getCurrencyConversion(tripCurrencyCode, currencyCode);
+            if (rate) {
+              tripExchangeRate = rate;
+              amountInTripCurrency = amount * rate;
+            }
+          }
+        } catch {
+          throw new Error(`Trip not found: ${tripId}`);
+        }
+      }
+
       const preparedRecords = [];
 
       const transaction = collection.prepareCreate((tx) => {
@@ -75,6 +109,10 @@ export const createTransaction = async ({
         tx.baseCurrencyCode = baseCurrencyCode;
         tx.amountInBaseCurrency = amountInBaseCurrency;
         tx.exchangeRate = exchangeRate;
+        tx.tripId = resolvedTrip ? resolvedTrip.id : null;
+        tx.tripCurrencyCode = tripCurrencyCode;
+        tx.amountInTripCurrency = amountInTripCurrency;
+        tx.tripExchangeRate = tripExchangeRate;
         tx.recurringTransactionId = recurringTransactionId || null;
         if (categoryCollection) {
           tx.category?.set(categoryCollection);
@@ -107,6 +145,7 @@ export const updateTransaction = async ({
   currencyCode,
   note,
   baseCurrency,
+  tripId,
 }: {
   id: string;
   merchant: string;
@@ -116,6 +155,7 @@ export const updateTransaction = async ({
   currencyCode: string;
   note: string;
   baseCurrency: string;
+  tripId?: string | null;
 }) => {
   try {
     return await database.write(async () => {
@@ -159,6 +199,36 @@ export const updateTransaction = async ({
         }
       }
 
+      const nextTripId =
+        typeof tripId === 'undefined' ? (transaction.tripId as string | null) : tripId;
+
+      let resolvedTrip: TripModel | null = null;
+      let tripCurrencyCode: string | null = null;
+      let amountInTripCurrency: number | null = null;
+      let tripExchangeRate: number | null = null;
+
+      if (nextTripId) {
+        try {
+          resolvedTrip = await database.get<TripModel>('trips').find(nextTripId);
+          tripCurrencyCode = resolvedTrip.homeCurrencyCode;
+          if (tripCurrencyCode === currencyCode) {
+            tripExchangeRate = 1;
+            amountInTripCurrency = amount;
+          } else if (tripCurrencyCode === baseCurrencyCode) {
+            tripExchangeRate = exchangeRate;
+            amountInTripCurrency = amountInBaseCurrency;
+          } else {
+            const rate = await getCurrencyConversion(tripCurrencyCode, currencyCode);
+            if (rate) {
+              tripExchangeRate = rate;
+              amountInTripCurrency = amount * rate;
+            }
+          }
+        } catch {
+          throw new Error(`Trip not found: ${nextTripId}`);
+        }
+      }
+
       const preparedRecords = [];
 
       const updated = transaction.prepareUpdate((tx) => {
@@ -170,6 +240,10 @@ export const updateTransaction = async ({
         tx.baseCurrencyCode = baseCurrencyCode;
         tx.amountInBaseCurrency = amountInBaseCurrency;
         tx.exchangeRate = exchangeRate;
+        tx.tripId = resolvedTrip ? resolvedTrip.id : null;
+        tx.tripCurrencyCode = tripCurrencyCode;
+        tx.amountInTripCurrency = amountInTripCurrency;
+        tx.tripExchangeRate = tripExchangeRate;
         if (categoryCollection) {
           tx.category?.set(categoryCollection);
         }
@@ -796,5 +870,429 @@ export const getAllActiveBudgets = async () => {
   } catch (error) {
     console.error('Failed to get active budgets:', error);
     throw error instanceof Error ? error : new Error('Failed to get active budgets');
+  }
+};
+
+export type CreateTripPayload = {
+  name: string;
+  homeCurrencyCode: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+};
+
+export const createTrip = async ({
+  name,
+  homeCurrencyCode,
+  startDate = null,
+  endDate = null,
+}: CreateTripPayload) => {
+  try {
+    return await database.write(async () => {
+      const tripCollection = database.get<TripModel>('trips');
+      return tripCollection.create((trip) => {
+        trip.name = name;
+        trip.homeCurrencyCode = homeCurrencyCode;
+        trip.startDate = startDate;
+        trip.endDate = endDate;
+        trip.isArchived = false;
+      });
+    });
+  } catch (error) {
+    console.error('Failed to create trip:', error);
+    throw error instanceof Error ? error : new Error('Failed to create trip');
+  }
+};
+
+export const updateTrip = async ({
+  id,
+  name,
+  homeCurrencyCode,
+  startDate = null,
+  endDate = null,
+  isArchived,
+}: { id: string } & CreateTripPayload & { isArchived: boolean }) => {
+  try {
+    return await database.write(async () => {
+      let trip: TripModel;
+      try {
+        trip = await database.get<TripModel>('trips').find(id);
+      } catch {
+        throw new Error(`Trip not found: ${id}`);
+      }
+
+      return trip.updateTrip({
+        name,
+        homeCurrencyCode,
+        startDate,
+        endDate,
+        isArchived,
+      });
+    });
+  } catch (error) {
+    console.error('Failed to update trip:', error);
+    throw error instanceof Error ? error : new Error('Failed to update trip');
+  }
+};
+
+export const archiveTrip = async (tripId: string) => {
+  try {
+    return await database.write(async () => {
+      let trip: TripModel;
+      try {
+        trip = await database.get<TripModel>('trips').find(tripId);
+      } catch {
+        throw new Error(`Trip not found: ${tripId}`);
+      }
+
+      return trip.archive();
+    });
+  } catch (error) {
+    console.error('Failed to archive trip:', error);
+    throw error instanceof Error ? error : new Error('Failed to archive trip');
+  }
+};
+
+export const setActiveTripId = async (tripId: string | null) => {
+  try {
+    if (tripId) {
+      await database.localStorage.set(STORAGE_KEYS.ACTIVE_TRIP_ID, tripId);
+    } else {
+      await database.localStorage.set(STORAGE_KEYS.ACTIVE_TRIP_ID, '');
+    }
+  } catch (error) {
+    console.error('Failed to set active trip id:', error);
+  }
+};
+
+export const getActiveTripId = async (): Promise<string | null> => {
+  try {
+    const stored = await database.localStorage.get(STORAGE_KEYS.ACTIVE_TRIP_ID);
+    return typeof stored === 'string' && stored.length > 0 ? stored : null;
+  } catch (error) {
+    console.error('Failed to read active trip id:', error);
+    return null;
+  }
+};
+
+export const getActiveTrip = async (): Promise<TripModel | null> => {
+  const tripId = await getActiveTripId();
+  if (!tripId) return null;
+
+  try {
+    return await database.get<TripModel>('trips').find(tripId);
+  } catch {
+    return null;
+  }
+};
+
+export type CreateTripBudgetPayload = {
+  tripId: string;
+  name: string;
+  amount: number;
+  currencyCode: string;
+  type: TripBudgetType;
+  alertThreshold: number;
+  categoryIds?: string[];
+  isActive?: boolean;
+};
+
+export const createTripBudget = async ({
+  tripId,
+  name,
+  amount,
+  currencyCode,
+  type,
+  alertThreshold,
+  categoryIds = [],
+  isActive = true,
+}: CreateTripBudgetPayload) => {
+  try {
+    return await database.write(async () => {
+      const trip = await database.get<TripModel>('trips').find(tripId);
+      const budgetCollection = database.get<TripBudgetModel>('trip_budgets');
+      const budgetCategoryCollection =
+        database.get<TripBudgetCategoryModel>('trip_budget_categories');
+
+      const preparedRecords: Model[] = [];
+
+      const budget = budgetCollection.prepareCreate((b) => {
+        b.tripId = trip.id;
+        b.name = name;
+        b.amount = amount;
+        b.currencyCode = currencyCode;
+        b.type = type;
+        b.alertThreshold = alertThreshold;
+        b.isActive = isActive;
+      });
+      preparedRecords.push(budget);
+
+      for (const categoryId of categoryIds) {
+        const budgetCategory = budgetCategoryCollection.prepareCreate((bc) => {
+          bc.tripBudgetId = budget.id;
+          bc.categoryId = categoryId;
+        });
+        preparedRecords.push(budgetCategory);
+      }
+
+      await database.batch(...preparedRecords);
+      return budget;
+    });
+  } catch (error) {
+    console.error('Failed to create trip budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to create trip budget');
+  }
+};
+
+export const updateTripBudget = async ({
+  id,
+  name,
+  amount,
+  currencyCode,
+  type,
+  alertThreshold,
+  categoryIds = [],
+  isActive = true,
+}: { id: string } & CreateTripBudgetPayload) => {
+  try {
+    return await database.write(async () => {
+      const budgetCollection = database.get<TripBudgetModel>('trip_budgets');
+      const budgetCategoryCollection =
+        database.get<TripBudgetCategoryModel>('trip_budget_categories');
+
+      let budget: TripBudgetModel;
+      try {
+        budget = await budgetCollection.find(id);
+      } catch {
+        throw new Error(`Trip budget not found: ${id}`);
+      }
+
+      const existingBudgetCategories = await budget.tripBudgetCategories.fetch();
+
+      const preparedRecords: Model[] = [];
+
+      const updatedBudget = budget.prepareUpdate((b) => {
+        b.name = name;
+        b.amount = amount;
+        b.currencyCode = currencyCode;
+        b.type = type;
+        b.alertThreshold = alertThreshold;
+        b.isActive = isActive;
+      });
+      preparedRecords.push(updatedBudget);
+
+      for (const bc of existingBudgetCategories) {
+        preparedRecords.push(bc.prepareMarkAsDeleted());
+      }
+
+      for (const categoryId of categoryIds) {
+        const budgetCategory = budgetCategoryCollection.prepareCreate((bc) => {
+          bc.tripBudgetId = budget.id;
+          bc.categoryId = categoryId;
+        });
+        preparedRecords.push(budgetCategory);
+      }
+
+      await database.batch(...preparedRecords);
+      return updatedBudget;
+    });
+  } catch (error) {
+    console.error('Failed to update trip budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to update trip budget');
+  }
+};
+
+export const deleteTripBudget = async (budgetId: string) => {
+  try {
+    return await database.write(async () => {
+      const budgetCollection = database.get<TripBudgetModel>('trip_budgets');
+
+      let budget: TripBudgetModel;
+      try {
+        budget = await budgetCollection.find(budgetId);
+      } catch {
+        throw new Error(`Trip budget not found: ${budgetId}`);
+      }
+
+      const budgetCategories = await budget.tripBudgetCategories.fetch();
+
+      const preparedRecords: Model[] = [budget.prepareMarkAsDeleted()];
+
+      for (const bc of budgetCategories) {
+        preparedRecords.push(bc.prepareMarkAsDeleted());
+      }
+
+      await database.batch(...preparedRecords);
+      return budget;
+    });
+  } catch (error) {
+    console.error('Failed to delete trip budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to delete trip budget');
+  }
+};
+
+export const toggleTripBudget = async (budgetId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<TripBudgetModel>('trip_budgets');
+
+      let budget: TripBudgetModel;
+      try {
+        budget = await collection.find(budgetId);
+      } catch {
+        throw new Error(`Trip budget not found: ${budgetId}`);
+      }
+
+      return budget.toggle();
+    });
+  } catch (error) {
+    console.error('Failed to toggle trip budget:', error);
+    throw error instanceof Error ? error : new Error('Failed to toggle trip budget');
+  }
+};
+
+export const getTripBudgetStatus = async (
+  tripBudgetId: string,
+  periodStart: Date,
+  periodEnd: Date
+) => {
+  try {
+    const budget = await database.get<TripBudgetModel>('trip_budgets').find(tripBudgetId);
+    const [trip, budgetCategories] = await Promise.all([
+      budget.trip.fetch(),
+      budget.tripBudgetCategories.fetch(),
+    ]);
+
+    if (!trip) {
+      throw new Error('Trip missing for this budget');
+    }
+
+    const categoryIds = budgetCategories.map((bc) => bc.categoryId);
+
+    const conditions = [
+      Q.where('tripId', trip.id),
+      Q.where('date', Q.gte(periodStart.getTime())),
+      Q.where('date', Q.lte(periodEnd.getTime())),
+    ];
+
+    if (budget.type === 'category' && categoryIds.length > 0) {
+      conditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+    }
+
+    const transactions = await database
+      .get<TransactionModel>('transactions')
+      .query(...conditions)
+      .fetch();
+
+    const spent = transactions.reduce((sum, tx) => {
+      if (tx.amount >= 0) return sum;
+
+      const amountForBudget =
+        tx.amountInTripCurrency ??
+        tx.amountInBaseCurrency ??
+        tx.amount;
+
+      return sum + Math.abs(amountForBudget);
+    }, 0);
+
+    const remaining = budget.amount - spent;
+    const percentage = budget.amount === 0 ? 0 : (spent / budget.amount) * 100;
+
+    return {
+      budget,
+      trip,
+      spent,
+      remaining,
+      percentage,
+      status:
+        percentage >= 100
+          ? 'exceeded'
+          : percentage >= budget.alertThreshold
+            ? 'warning'
+            : 'ok',
+    };
+  } catch (error) {
+    console.error('Failed to get trip budget status:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to get trip budget status');
+  }
+};
+
+export type FxSnapshotPayload = {
+  baseCurrencyCode: string;
+  counterCurrencyCode: string;
+  rate: number;
+  source?: string | null;
+  capturedAt?: Date;
+  tripId?: string | null;
+};
+
+export const createFxSnapshot = async ({
+  baseCurrencyCode,
+  counterCurrencyCode,
+  rate,
+  source = null,
+  capturedAt = new Date(),
+  tripId = null,
+}: FxSnapshotPayload) => {
+  try {
+    return await database.write(async () => {
+      const snapshotCollection = database.get<FxSnapshotModel>('fx_snapshots');
+      let linkedTripId: string | null = null;
+
+      if (tripId) {
+        try {
+          const trip = await database.get<TripModel>('trips').find(tripId);
+          linkedTripId = trip.id;
+        } catch {
+          throw new Error(`Trip not found: ${tripId}`);
+        }
+      }
+
+      return snapshotCollection.create((snapshot) => {
+        snapshot.baseCurrencyCode = baseCurrencyCode;
+        snapshot.counterCurrencyCode = counterCurrencyCode;
+        snapshot.rate = rate;
+        snapshot.source = source ?? null;
+        snapshot.capturedAt = capturedAt;
+        snapshot.tripId = linkedTripId;
+      });
+    });
+  } catch (error) {
+    console.error('Failed to create FX snapshot:', error);
+    throw error instanceof Error ? error : new Error('Failed to create FX snapshot');
+  }
+};
+
+export const getLatestFxSnapshot = async ({
+  baseCurrencyCode,
+  counterCurrencyCode,
+  tripId,
+}: {
+  baseCurrencyCode: string;
+  counterCurrencyCode: string;
+  tripId?: string | null;
+}) => {
+  try {
+    const snapshots = await database
+      .get<FxSnapshotModel>('fx_snapshots')
+      .query(
+        Q.where('baseCurrencyCode', baseCurrencyCode),
+        Q.where('counterCurrencyCode', counterCurrencyCode),
+        Q.sortBy('captured_at', 'desc')
+      )
+      .fetch();
+
+    if (tripId) {
+      const tripSpecific = snapshots.find((snapshot) => snapshot.tripId === tripId);
+      if (tripSpecific) {
+        return tripSpecific;
+      }
+    }
+
+    return snapshots[0] ?? null;
+  } catch (error) {
+    console.error('Failed to fetch FX snapshot:', error);
+    throw error instanceof Error ? error : new Error('Failed to fetch FX snapshot');
   }
 };

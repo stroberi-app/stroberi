@@ -1,10 +1,12 @@
 import { type BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
 import {
   ArrowLeft,
   Calendar,
   ChevronRight,
   Clock,
   LayoutGrid,
+  Plane,
   User,
 } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -18,15 +20,20 @@ import { CurrencySelect } from '../components/CurrencySelect';
 import { DatePicker } from '../components/DatePicker';
 import { StyledScrollView } from '../components/StyledScrollView';
 import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
+import { ManageTripsSheet } from '../components/sheet/ManageTripsSheet';
 import type { CategoryModel } from '../database/category-model';
 import { createTransaction, updateTransaction } from '../database/helpers';
 import type { TransactionModel } from '../database/transaction-model';
+import type { TripModel } from '../database/trip-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
+import { useActiveTrip } from '../hooks/useActiveTrip';
 import useToast from '../hooks/useToast';
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
   const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
+  const manageTripsSheetRef = useRef<BottomSheetModal | null>(null);
+  const database = useDatabase();
   const params = useLocalSearchParams();
   const router = useRouter();
   const toast = useToast();
@@ -40,9 +47,13 @@ function CreateTransaction() {
     : null;
 
   const { defaultCurrency } = useDefaultCurrency();
+  const { activeTrip } = useActiveTrip();
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(
     category ?? null
+  );
+  const [selectedTrip, setSelectedTrip] = useState<TripModel | null>(
+    (transaction as unknown as { trip?: TripModel })?.trip ?? null
   );
   const [selectedCurrency, setSelectedCurrency] = useState(
     transaction?.currencyCode ?? 'USD'
@@ -56,6 +67,28 @@ function CreateTransaction() {
     transaction?.date ? new Date(transaction.date) : new Date()
   );
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    !transaction?.currencyCode && defaultCurrency && setSelectedCurrency(defaultCurrency);
+  }, [defaultCurrency, transaction?.currencyCode]);
+
+  useEffect(() => {
+    if (!transaction && activeTrip) {
+      setSelectedTrip(activeTrip);
+    }
+  }, [activeTrip, transaction]);
+
+  useEffect(() => {
+    const tripId = (transaction as unknown as { tripId?: string })?.tripId;
+    if (!tripId) {
+      return;
+    }
+    database
+      .get<TripModel>('trips')
+      .find(tripId)
+      .then((trip) => setSelectedTrip(trip))
+      .catch(() => setSelectedTrip(null));
+  }, [database, transaction]);
 
   const handleSubmit = async () => {
     if (isSaving) {
@@ -94,6 +127,7 @@ function CreateTransaction() {
         currencyCode: selectedCurrency,
         note,
         baseCurrency: defaultCurrency,
+        tripId: selectedTrip?.id ?? null,
       };
 
       if (transaction) {
@@ -120,10 +154,6 @@ function CreateTransaction() {
       });
     }
   };
-
-  useEffect(() => {
-    !transaction?.currencyCode && defaultCurrency && setSelectedCurrency(defaultCurrency);
-  }, [defaultCurrency, transaction?.currencyCode]);
 
   return (
     <BottomSheetModalProvider>
@@ -200,6 +230,28 @@ function CreateTransaction() {
               )}
             </LinkButton>
           </CreateExpenseItem>
+          <CreateExpenseItem IconComponent={Plane} label="Trip">
+            <LinkButton
+              color="white"
+              onPress={() => {
+                Keyboard.dismiss();
+                manageTripsSheetRef.current?.present();
+              }}
+            >
+              {selectedTrip ? (
+                <View flexDirection="row" alignItems="center" gap="$2">
+                  <Text>{selectedTrip.name}</Text>
+                  <Text color="$gray8">({selectedTrip.homeCurrencyCode})</Text>
+                  <ChevronRight color="white" size={18} />
+                </View>
+              ) : (
+                <View flexDirection="row" alignItems="center" gap="$2">
+                  <Text>None</Text>
+                  <ChevronRight color="white" size={18} />
+                </View>
+              )}
+            </LinkButton>
+          </CreateExpenseItem>
         </YGroup>
         <View mt="$4">
           <TextArea
@@ -222,6 +274,11 @@ function CreateTransaction() {
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         sheetRef={manageCategoriesSheetRef}
+      />
+      <ManageTripsSheet
+        sheetRef={manageTripsSheetRef}
+        onSelectTrip={(trip) => setSelectedTrip(trip)}
+        allowClearSelection
       />
     </BottomSheetModalProvider>
   );
