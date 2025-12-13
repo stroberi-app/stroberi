@@ -21,7 +21,7 @@
     "android": {
       "package": "com.stroberi",
       "icon": "./assets/images/logo-round.png",
-      "versionCode": 31
+      "versionCode": 34
     },
     "web": {
       "bundler": "metro",
@@ -44,7 +44,7 @@
             "targetSdkVersion": 35,
             "compileSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "kotlinVersion": "1.8.10",
+            "kotlinVersion": "1.9.25",
             "packagingOptions": {
               "pickFirst": [
                 "**/libc++_shared.so"

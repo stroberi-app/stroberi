@@ -26,7 +26,7 @@ import {
 } from '../../database/helpers';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
-import { saveUriToDownloadsOnAndroid } from '../../lib/androidDownloads';
+import { doExport } from '../../lib/downloads';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
@@ -257,9 +257,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               setProgress((prev) =>
                 prev
                   ? {
-                      ...prev,
-                      message: `Creating ${newCategoriesToCreate.size} new categor${newCategoriesToCreate.size > 1 ? 'ies' : 'y'}...`,
-                    }
+                    ...prev,
+                    message: `Creating ${newCategoriesToCreate.size} new categor${newCategoriesToCreate.size > 1 ? 'ies' : 'y'}...`,
+                  }
                   : null
               );
               await sleep(100);
@@ -287,9 +287,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
             setProgress((prev) =>
               prev
                 ? {
-                    ...prev,
-                    message: 'Checking your transactions...',
-                  }
+                  ...prev,
+                  message: 'Checking your transactions...',
+                }
                 : null
             );
             await sleep(100);
@@ -341,10 +341,10 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               setProgress((prev) =>
                 prev
                   ? {
-                      ...prev,
-                      current: Math.min(i + BATCH_SIZE, results.data.length),
-                      message: `Validated ${Math.min(i + BATCH_SIZE, results.data.length)} out of ${results.data.length} transactions`,
-                    }
+                    ...prev,
+                    current: Math.min(i + BATCH_SIZE, results.data.length),
+                    message: `Validated ${Math.min(i + BATCH_SIZE, results.data.length)} out of ${results.data.length} transactions`,
+                  }
                   : null
               );
 
@@ -390,10 +390,10 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               setProgress((prev) =>
                 prev
                   ? {
-                      ...prev,
-                      current,
-                      message: `Added ${current} out of ${validTransactions.length} transactions`,
-                    }
+                    ...prev,
+                    current,
+                    message: `Added ${current} out of ${validTransactions.length} transactions`,
+                  }
                   : null
               );
             });
@@ -407,9 +407,8 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
 
             toast.show({
               title: '🎉 Import successful!',
-              message: `Successfully imported ${validTransactions.length} ${
-                validTransactions.length === 1 ? 'transaction' : 'transactions'
-              } to your account.`,
+              message: `Successfully imported ${validTransactions.length} ${validTransactions.length === 1 ? 'transaction' : 'transactions'
+                } to your account.`,
               preset: 'custom',
               duration: 4,
             });
@@ -468,18 +467,7 @@ Starbucks,-4.50,2024-01-15,Morning coffee,USD,Food & Drink,☕
 Amazon,-29.99,2024-01-14,Book purchase,USD,Shopping,📦
 Salary,3000.00,2024-01-01,Monthly salary,USD,Income,💰`;
       const filename = 'stroberi_csv_template.csv';
-      const uri = `${FileSystem.cacheDirectory}${filename}`;
-      await FileSystem.writeAsStringAsync(uri, template);
-
-      if (Platform.OS === 'android') {
-        await saveUriToDownloadsOnAndroid({
-          sourceUri: uri,
-          filename,
-          mimeType: 'text/csv',
-        });
-      } else {
-        await Sharing.shareAsync(uri);
-      }
+      await doExport(filename, template, 'text/csv');
     } catch (_e) {
       showError({
         title: 'Download Failed',

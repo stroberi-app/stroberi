@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Platform } from 'react-native';
 import type { TransactionModel } from '../database/transaction-model';
 import useToast from './useToast';
-import { saveUriToDownloadsOnAndroid } from '../lib/androidDownloads';
+import { doExport } from '../lib/downloads';
 
 export type ExportColumn = {
   name: string;
@@ -182,27 +182,8 @@ const useTransactionExport = () => {
       fileType === 'csv' ? Papa.unparse(data) : JSON.stringify(data, null, 2);
     const mimeType = fileType === 'csv' ? 'text/csv' : 'application/json';
 
-    const tempPath = FileSystem.cacheDirectory + filename;
-    await FileSystem.writeAsStringAsync(tempPath, content);
 
-    if (Platform.OS === 'android') {
-      await saveUriToDownloadsOnAndroid({
-        sourceUri: tempPath,
-        filename,
-        mimeType,
-      });
-    } else {
-      await Sharing.shareAsync(tempPath, {
-        dialogTitle: `Save ${fileType.toUpperCase()} File`,
-        mimeType,
-      });
-    }
-
-    setTimeout(async () => {
-      try {
-        await FileSystem.deleteAsync(tempPath, { idempotent: true });
-      } catch (_error) {}
-    }, 5000);
+    await doExport(filename, content, mimeType);
   };
 
   const generateFilename = (
