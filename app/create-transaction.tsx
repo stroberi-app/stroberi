@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Clock,
   LayoutGrid,
+  Plane,
   User,
 } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -18,15 +19,23 @@ import { CurrencySelect } from '../components/CurrencySelect';
 import { DatePicker } from '../components/DatePicker';
 import { StyledScrollView } from '../components/StyledScrollView';
 import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
+import { TripSelect } from '../components/TripSelect';
 import type { CategoryModel } from '../database/category-model';
-import { createTransaction, updateTransaction } from '../database/helpers';
+import {
+  createTransaction,
+  getActiveTrips,
+  updateTransaction,
+} from '../database/helpers';
 import type { TransactionModel } from '../database/transaction-model';
+import type { TripModel } from '../database/trip-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
+import { useTripsEnabled } from '../hooks/useTripsEnabled';
 import useToast from '../hooks/useToast';
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
   const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
+  const tripSelectSheetRef = useRef<BottomSheetModal | null>(null);
   const params = useLocalSearchParams();
   const router = useRouter();
   const toast = useToast();
@@ -40,10 +49,12 @@ function CreateTransaction() {
     : null;
 
   const { defaultCurrency } = useDefaultCurrency();
+  const { tripsEnabled } = useTripsEnabled();
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(
     category ?? null
   );
+  const [selectedTrip, setSelectedTrip] = useState<TripModel | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState(
     transaction?.currencyCode ?? 'USD'
   );
@@ -94,6 +105,7 @@ function CreateTransaction() {
         currencyCode: selectedCurrency,
         note,
         baseCurrency: defaultCurrency,
+        tripId: selectedTrip?.id ?? null,
       };
 
       if (transaction) {
@@ -120,6 +132,40 @@ function CreateTransaction() {
       });
     }
   };
+
+  const handleTripSelect = (trip: TripModel | null) => {
+    setSelectedTrip(trip);
+    // Auto-select trip's preferred currency if available
+    if (trip?.currencyCode) {
+      setSelectedCurrency(trip.currencyCode);
+    }
+  };
+
+  // Auto-populate with active trip when creating a new transaction
+  useEffect(() => {
+    const loadActiveTrip = async () => {
+      // Only for new transactions (not editing) and if trips are enabled
+      if (!transaction && tripsEnabled) {
+        try {
+          const activeTrips = await getActiveTrips();
+          // Find most recent active trip (not archived, end date null or in future)
+          const now = Date.now();
+          const currentTrip = activeTrips.find(
+            (t) => !t.isArchived && (!t.endDate || t.endDate.getTime() >= now)
+          );
+          if (currentTrip) {
+            setSelectedTrip(currentTrip);
+            if (currentTrip.currencyCode) {
+              setSelectedCurrency(currentTrip.currencyCode);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load active trip:', error);
+        }
+      }
+    };
+    loadActiveTrip();
+  }, [transaction, tripsEnabled]);
 
   useEffect(() => {
     !transaction?.currencyCode && defaultCurrency && setSelectedCurrency(defaultCurrency);
@@ -200,6 +246,30 @@ function CreateTransaction() {
               )}
             </LinkButton>
           </CreateExpenseItem>
+          {tripsEnabled && (
+            <CreateExpenseItem IconComponent={Plane} label="Trip">
+              <LinkButton
+                color="white"
+                onPress={() => {
+                  Keyboard.dismiss();
+                  tripSelectSheetRef.current?.present();
+                }}
+              >
+                {selectedTrip ? (
+                  <View flexDirection="row" alignItems="center" gap="$2">
+                    <Text>{selectedTrip.icon}</Text>
+                    <Text>{selectedTrip.name}</Text>
+                    <ChevronRight color="white" size={18} />
+                  </View>
+                ) : (
+                  <View flexDirection="row" alignItems="center" gap="$2">
+                    <Text>No Trip</Text>
+                    <ChevronRight color="white" size={18} />
+                  </View>
+                )}
+              </LinkButton>
+            </CreateExpenseItem>
+          )}
         </YGroup>
         <View mt="$4">
           <TextArea
@@ -222,6 +292,11 @@ function CreateTransaction() {
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         sheetRef={manageCategoriesSheetRef}
+      />
+      <TripSelect
+        sheetRef={tripSelectSheetRef}
+        selectedTrip={selectedTrip}
+        onSelect={handleTripSelect}
       />
     </BottomSheetModalProvider>
   );

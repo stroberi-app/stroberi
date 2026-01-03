@@ -8,6 +8,7 @@ import { migrations } from './migrations';
 import { RecurringTransactionModel } from './recurring-transaction-model';
 import { schema } from './schema';
 import { TransactionModel } from './transaction-model';
+import { TripModel } from './trip-model';
 
 const adapter = new SQLiteAdapter({
   schema,
@@ -23,5 +24,6 @@ export const database = new Database({
     RecurringTransactionModel,
     BudgetModel,
     BudgetCategoryModel,
+    TripModel,
   ],
 });

@@ -10,6 +10,7 @@ import { Carousel } from '../../components/carousel/Carousel';
 import SpendByCategory from '../../components/charts/SpendByCategoryChart';
 import { SpendByType } from '../../components/charts/SpendByTypeChart';
 import SpendingTrends from '../../components/charts/SpendingTrendsChart';
+import ActiveTripCard from '../../components/home/ActiveTripCard';
 import BudgetAlertCard from '../../components/home/BudgetAlertCard';
 import { HomeTransactionsSection } from '../../components/home/HomeTransactionsSection';
 import SpendOverview from '../../components/home/SpendOverview';
@@ -65,6 +66,7 @@ export default function HomeScreen() {
                 Overview
               </Text>
               <BudgetAlertCard database={database} />
+              <ActiveTripCard database={database} />
               <Carousel renderItem={renderCarouselItem} data={carouselData} />
               {transactionCount > 0 ? (
                 <View flexDirection="row" gap="$2" marginTop="$4" width="100%">

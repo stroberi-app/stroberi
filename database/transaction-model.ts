@@ -10,6 +10,7 @@ import {
 import type { Associations } from '@nozbe/watermelondb/Model';
 import type { CategoryModel } from './category-model';
 import type { RecurringTransactionModel } from './recurring-transaction-model';
+import type { TripModel } from './trip-model';
 
 export class TransactionModel extends Model {
   static table = 'transactions';
@@ -19,6 +20,10 @@ export class TransactionModel extends Model {
       type: 'belongs_to',
     },
     recurring_transactions: {
+      key: 'id',
+      type: 'belongs_to',
+    },
+    trips: {
       key: 'id',
       type: 'belongs_to',
     },
@@ -32,12 +37,14 @@ export class TransactionModel extends Model {
   @field('amountInBaseCurrency') amountInBaseCurrency: number;
   @field('exchangeRate') exchangeRate: number;
   @text('recurringTransactionId') recurringTransactionId: string | null;
+  @text('tripId') tripId: string | null;
 
   @date('date') date: Date;
 
   @relation('categories', 'categoryId') category: Relation<CategoryModel> | null;
   @relation('recurring_transactions', 'recurringTransactionId')
   recurringTransaction: Relation<RecurringTransactionModel> | null;
+  @relation('trips', 'tripId') trip: Relation<TripModel> | null;
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
