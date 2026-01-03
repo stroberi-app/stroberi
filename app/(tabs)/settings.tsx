@@ -3,8 +3,10 @@ import {
   DollarSign,
   FolderInput,
   FolderOutput,
+  Plane,
   RefreshCw,
   Tags,
+  TrendingUp,
   Wallet,
 } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
@@ -28,6 +30,11 @@ import {
   notifyBudgetingEnabledChanged,
   useBudgetingEnabled,
 } from '../../hooks/useBudgetingEnabled';
+import { notifyTripsEnabledChanged, useTripsEnabled } from '../../hooks/useTripsEnabled';
+import {
+  notifyAdvancedAnalyticsEnabledChanged,
+  useAdvancedAnalyticsEnabled,
+} from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
@@ -45,7 +52,13 @@ export default function SettingsScreen() {
   const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } =
     useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
+  const { tripsEnabled } = useTripsEnabled();
+  const { advancedAnalyticsEnabled } = useAdvancedAnalyticsEnabled();
   const [localBudgetingEnabled, setLocalBudgetingEnabled] = useState(budgetingEnabled);
+  const [localTripsEnabled, setLocalTripsEnabled] = useState(tripsEnabled);
+  const [localAnalyticsEnabled, setLocalAnalyticsEnabled] = useState(
+    advancedAnalyticsEnabled
+  );
 
   const router = useRouter();
 
@@ -53,11 +66,36 @@ export default function SettingsScreen() {
     setLocalBudgetingEnabled(budgetingEnabled);
   }, [budgetingEnabled]);
 
+  useEffect(() => {
+    setLocalTripsEnabled(tripsEnabled);
+  }, [tripsEnabled]);
+
+  useEffect(() => {
+    setLocalAnalyticsEnabled(advancedAnalyticsEnabled);
+  }, [advancedAnalyticsEnabled]);
+
   const handleBudgetingToggle = async () => {
     const newValue = !localBudgetingEnabled;
     setLocalBudgetingEnabled(newValue);
     await database.localStorage.set(STORAGE_KEYS.BUDGETING_ENABLED, newValue.toString());
     notifyBudgetingEnabledChanged(newValue);
+  };
+
+  const handleTripsToggle = async () => {
+    const newValue = !localTripsEnabled;
+    setLocalTripsEnabled(newValue);
+    await database.localStorage.set(STORAGE_KEYS.TRIPS_ENABLED, newValue.toString());
+    notifyTripsEnabledChanged(newValue);
+  };
+
+  const handleAnalyticsToggle = async () => {
+    const newValue = !localAnalyticsEnabled;
+    setLocalAnalyticsEnabled(newValue);
+    await database.localStorage.set(
+      STORAGE_KEYS.ADVANCED_ANALYTICS_ENABLED,
+      newValue.toString()
+    );
+    notifyAdvancedAnalyticsEnabledChanged(newValue);
   };
 
   const handleViewTransactions = (dateRange: ExportDateRange) => {
@@ -148,6 +186,77 @@ export default function SettingsScreen() {
               <Switch
                 checked={localBudgetingEnabled}
                 onCheckedChange={handleBudgetingToggle}
+              >
+                <Switch.Thumb animation="bouncy" />
+              </Switch>
+            </View>
+          </YGroup.Item>
+          <YGroup.Item>
+            <View
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              padding="$3"
+              backgroundColor="$gray2"
+            >
+              <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
+                <View
+                  backgroundColor="$gray4"
+                  borderRadius="$2"
+                  padding="$2"
+                  width={32}
+                  height={32}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Plane size={18} color="white" />
+                </View>
+                <View flex={1}>
+                  <Text fontSize="$4" fontWeight="500" color="white">
+                    Enable Trips
+                  </Text>
+                  <Text fontSize="$2" color="$gray9">
+                    Track spending by trip
+                  </Text>
+                </View>
+              </View>
+              <Switch checked={localTripsEnabled} onCheckedChange={handleTripsToggle}>
+                <Switch.Thumb animation="bouncy" />
+              </Switch>
+            </View>
+          </YGroup.Item>
+          <YGroup.Item>
+            <View
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              padding="$3"
+              backgroundColor="$gray2"
+            >
+              <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
+                <View
+                  backgroundColor="$gray4"
+                  borderRadius="$2"
+                  padding="$2"
+                  width={32}
+                  height={32}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <TrendingUp size={18} color="white" />
+                </View>
+                <View flex={1}>
+                  <Text fontSize="$4" fontWeight="500" color="white">
+                    Advanced Analytics
+                  </Text>
+                  <Text fontSize="$2" color="$gray9">
+                    Deep financial insights & scores
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                checked={localAnalyticsEnabled}
+                onCheckedChange={handleAnalyticsToggle}
               >
                 <Switch.Thumb animation="bouncy" />
               </Switch>

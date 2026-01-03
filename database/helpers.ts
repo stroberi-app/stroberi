@@ -11,6 +11,7 @@ import type {
   RecurringTransactionModel,
 } from './recurring-transaction-model';
 import type { TransactionModel } from './transaction-model';
+import type { TripModel } from './trip-model';
 
 export type CreateTransactionPayload = {
   merchant: string;
@@ -21,6 +22,7 @@ export type CreateTransactionPayload = {
   note: string;
   baseCurrency: string;
   recurringTransactionId?: string;
+  tripId?: string | null;
 };
 export const createTransaction = async ({
   merchant,
@@ -31,6 +33,7 @@ export const createTransaction = async ({
   note,
   baseCurrency,
   recurringTransactionId,
+  tripId,
 }: CreateTransactionPayload) => {
   try {
     return await database.write(async () => {
@@ -76,6 +79,7 @@ export const createTransaction = async ({
         tx.amountInBaseCurrency = amountInBaseCurrency;
         tx.exchangeRate = exchangeRate;
         tx.recurringTransactionId = recurringTransactionId || null;
+        tx.tripId = tripId || null;
         if (categoryCollection) {
           tx.category?.set(categoryCollection);
         }
@@ -107,6 +111,7 @@ export const updateTransaction = async ({
   currencyCode,
   note,
   baseCurrency,
+  tripId,
 }: {
   id: string;
   merchant: string;
@@ -116,6 +121,7 @@ export const updateTransaction = async ({
   currencyCode: string;
   note: string;
   baseCurrency: string;
+  tripId?: string | null;
 }) => {
   try {
     return await database.write(async () => {
@@ -170,6 +176,7 @@ export const updateTransaction = async ({
         tx.baseCurrencyCode = baseCurrencyCode;
         tx.amountInBaseCurrency = amountInBaseCurrency;
         tx.exchangeRate = exchangeRate;
+        tx.tripId = tripId !== undefined ? tripId : tx.tripId;
         if (categoryCollection) {
           tx.category?.set(categoryCollection);
         }
@@ -796,5 +803,180 @@ export const getAllActiveBudgets = async () => {
   } catch (error) {
     console.error('Failed to get active budgets:', error);
     throw error instanceof Error ? error : new Error('Failed to get active budgets');
+  }
+};
+
+// ============================================
+// TRIP FUNCTIONS
+// ============================================
+
+export type CreateTripPayload = {
+  name: string;
+  icon: string;
+  currencyCode?: string | null;
+  startDate: Date;
+  endDate?: Date | null;
+};
+
+export const createTrip = async ({
+  name,
+  icon,
+  currencyCode,
+  startDate,
+  endDate,
+}: CreateTripPayload) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<TripModel>('trips');
+      return collection.create((trip) => {
+        trip.name = name;
+        trip.icon = icon;
+        trip.currencyCode = currencyCode || null;
+        trip.startDate = startDate;
+        trip.endDate = endDate || null;
+        trip.isArchived = false;
+      });
+    });
+  } catch (error) {
+    console.error('Failed to create trip:', error);
+    throw error instanceof Error ? error : new Error('Failed to create trip');
+  }
+};
+
+export const updateTrip = async ({
+  id,
+  name,
+  icon,
+  currencyCode,
+  startDate,
+  endDate,
+}: {
+  id: string;
+} & CreateTripPayload) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<TripModel>('trips');
+
+      let trip: TripModel;
+      try {
+        trip = await collection.find(id);
+      } catch {
+        throw new Error(`Trip not found: ${id}`);
+      }
+
+      return trip.update((t) => {
+        t.name = name;
+        t.icon = icon;
+        t.currencyCode = currencyCode || null;
+        t.startDate = startDate;
+        t.endDate = endDate || null;
+      });
+    });
+  } catch (error) {
+    console.error('Failed to update trip:', error);
+    throw error instanceof Error ? error : new Error('Failed to update trip');
+  }
+};
+
+export const deleteTrip = async (tripId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<TripModel>('trips');
+
+      let trip: TripModel;
+      try {
+        trip = await collection.find(tripId);
+      } catch {
+        throw new Error(`Trip not found: ${tripId}`);
+      }
+
+      await trip.markAsDeleted();
+      return trip;
+    });
+  } catch (error) {
+    console.error('Failed to delete trip:', error);
+    throw error instanceof Error ? error : new Error('Failed to delete trip');
+  }
+};
+
+export const toggleTripArchive = async (tripId: string) => {
+  try {
+    return await database.write(async () => {
+      const collection = database.get<TripModel>('trips');
+
+      let trip: TripModel;
+      try {
+        trip = await collection.find(tripId);
+      } catch {
+        throw new Error(`Trip not found: ${tripId}`);
+      }
+
+      return trip.toggleArchive();
+    });
+  } catch (error) {
+    console.error('Failed to toggle trip archive:', error);
+    throw error instanceof Error ? error : new Error('Failed to toggle trip archive');
+  }
+};
+
+export const getTripSpending = async (tripId: string) => {
+  try {
+    const trip = await database.get<TripModel>('trips').find(tripId);
+    const transactions = await database
+      .get<TransactionModel>('transactions')
+      .query(Q.where('tripId', tripId))
+      .fetch();
+
+    // If trip has a preferred currency, sum transactions in that currency
+    // Otherwise, use the base currency amounts
+    const useTripCurrency = !!trip.currencyCode;
+
+    let totalSpent = 0;
+    let totalIncome = 0;
+
+    if (useTripCurrency) {
+      // Sum transactions that match the trip's currency in their original amount
+      const tripCurrencyTransactions = transactions.filter(
+        (tx) => tx.currencyCode === trip.currencyCode
+      );
+      totalSpent = tripCurrencyTransactions
+        .filter((tx) => tx.amount < 0)
+        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      totalIncome = tripCurrencyTransactions
+        .filter((tx) => tx.amount > 0)
+        .reduce((sum, tx) => sum + tx.amount, 0);
+    } else {
+      // Use base currency amounts for all transactions
+      totalSpent = transactions
+        .filter((tx) => tx.amountInBaseCurrency < 0)
+        .reduce((sum, tx) => sum + Math.abs(tx.amountInBaseCurrency), 0);
+      totalIncome = transactions
+        .filter((tx) => tx.amountInBaseCurrency > 0)
+        .reduce((sum, tx) => sum + tx.amountInBaseCurrency, 0);
+    }
+
+    return {
+      trip,
+      totalSpent,
+      totalIncome,
+      netAmount: totalIncome - totalSpent,
+      transactionCount: transactions.length,
+      currencyCode: trip.currencyCode, // Return the currency used for display
+    };
+  } catch (error) {
+    console.error('Failed to get trip spending:', error);
+    throw error instanceof Error ? error : new Error('Failed to get trip spending');
+  }
+};
+
+export const getActiveTrips = async () => {
+  try {
+    return await database
+      .get<TripModel>('trips')
+      .query(Q.where('isArchived', false))
+      .fetch();
+  } catch (error) {
+    console.error('Failed to get active trips:', error);
+    throw error instanceof Error ? error : new Error('Failed to get active trips');
   }
 };
