@@ -110,5 +110,42 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 14,
+      steps: [
+        createTable({
+          name: 'trips',
+          columns: [
+            { name: 'name', type: 'string' },
+            { name: 'icon', type: 'string' },
+            { name: 'startDate', type: 'number' },
+            { name: 'endDate', type: 'number', isOptional: true },
+            { name: 'isArchived', type: 'boolean' },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+        addColumns({
+          table: 'transactions',
+          columns: [
+            {
+              name: 'tripId',
+              type: 'string',
+              isOptional: true,
+              isIndexed: true,
+            },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 15,
+      steps: [
+        addColumns({
+          table: 'trips',
+          columns: [{ name: 'currencyCode', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
   ],
 });
