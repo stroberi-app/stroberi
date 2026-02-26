@@ -14,6 +14,7 @@ import { database } from '../database';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useRecurringTransactions } from '../hooks/useRecurringTransactions';
 import { useSeedCategories } from '../hooks/useSeedCategories';
+import { useRevenueCatBootstrap } from '../hooks/useRevenueCat';
 import config from '../tamagui.config';
 
 export {
@@ -47,6 +48,7 @@ export default function RootLayout() {
   useDefaultCurrency();
   useSeedCategories();
   useRecurringTransactions();
+  useRevenueCatBootstrap();
 
   if (!interLoaded && !interError) {
     return null;
