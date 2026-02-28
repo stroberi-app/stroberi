@@ -91,11 +91,9 @@ const TripsList = ({ trips, onAdd, onEdit, onPress }: TripsListProps) => {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       {activeTrips.length > 0 && (
-        <>
-          {activeTrips.map((trip) => (
-            <TripItem key={trip.id} trip={trip} onEdit={onEdit} onPress={onPress} />
-          ))}
-        </>
+        activeTrips.map((trip) => (
+          <TripItem key={trip.id} trip={trip} onEdit={onEdit} onPress={onPress} />
+        ))
       )}
 
       {archivedTrips.length > 0 && (

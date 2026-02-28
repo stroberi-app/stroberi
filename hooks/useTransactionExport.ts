@@ -1,11 +1,8 @@
 import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import dayjs from 'dayjs';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import Papa from 'papaparse';
 import { useState } from 'react';
-import { Platform } from 'react-native';
 import type { TransactionModel } from '../database/transaction-model';
 import useToast from './useToast';
 import { doExport } from '../lib/downloads';
@@ -181,8 +178,6 @@ const useTransactionExport = () => {
     const content =
       fileType === 'csv' ? Papa.unparse(data) : JSON.stringify(data, null, 2);
     const mimeType = fileType === 'csv' ? 'text/csv' : 'application/json';
-
-
     await doExport(filename, content, mimeType);
   };
 
@@ -202,17 +197,16 @@ const useTransactionExport = () => {
       return;
     }
 
-    if (previewCount === 0) {
-      show({
-        title: 'No transactions found in the selected date range',
-        preset: 'error',
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
       const transactions = await fetchTransactionsForExport(options.dateRange);
+      if (transactions.length === 0) {
+        show({
+          title: 'No transactions found in the selected date range',
+          preset: 'error',
+        });
+        return;
+      }
       const formattedData = formatDataForExport(transactions, options.columns);
 
       const filename = generateFilename(options.dateRange, options.destination);

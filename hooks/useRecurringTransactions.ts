@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { checkAndCreateDueTransactions } from '../database/helpers';
-import { useDefaultCurrency } from './useDefaultCurrency';
 
-export const useRecurringTransactions = () => {
-  const { defaultCurrency } = useDefaultCurrency();
+export const useRecurringTransactions = (defaultCurrency: string | null) => {
   const hasRunInitialCheck = useRef(false);
 
   const checkDueTransactions = useCallback(async () => {

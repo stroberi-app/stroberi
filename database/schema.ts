@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 15,
+  version: 16,
   tables: [
     tableSchema({
       name: 'transactions',
@@ -17,6 +17,7 @@ export const schema = appSchema({
         { name: 'baseCurrencyCode', type: 'string' },
         { name: 'amountInBaseCurrency', type: 'number' },
         { name: 'exchangeRate', type: 'number' },
+        { name: 'conversionStatus', type: 'string', isOptional: true },
         {
           name: 'recurringTransactionId',
           type: 'string',

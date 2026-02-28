@@ -1,7 +1,6 @@
 import {
     AlertTriangle,
     CalendarClock,
-    ChevronRight,
     Smile,
     TrendingUp,
 } from '@tamagui/lucide-icons';

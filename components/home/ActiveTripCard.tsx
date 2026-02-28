@@ -4,8 +4,7 @@ import { Plane } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
-import { from, type Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
 import { getTripSpending } from '../../database/helpers';
 import type { TripModel } from '../../database/trip-model';
@@ -46,7 +45,7 @@ const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
       };
       loadSpending();
     }
-  }, [activeTrip?.id]);
+  }, [activeTrip]);
 
   if (!tripsEnabled || !activeTrip) {
     return null;

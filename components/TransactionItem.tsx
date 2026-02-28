@@ -42,8 +42,7 @@ export const TransactionItem = withObservables<
     router.push({
       pathname: '/create-transaction',
       params: {
-        transaction: JSON.stringify(transaction._raw),
-        category: JSON.stringify(category?._raw),
+        transactionId: transaction.id,
       },
     });
   };
@@ -104,7 +103,7 @@ export const TransactionItem = withObservables<
               drag.value = withTiming(0, { duration: 200 });
             }}
           >
-            <Trash2 height={8} width={8} />
+            <Trash2 height={20} width={20} />
           </Pressable>
         </View>
       </Animated.View>
