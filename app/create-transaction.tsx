@@ -72,7 +72,7 @@ function CreateTransaction() {
     ? (JSON.parse(params.category as string) as CategoryModel)
     : null;
 
-  const { defaultCurrency } = useDefaultCurrency();
+  const { defaultCurrency, isDefaultCurrencyLoaded } = useDefaultCurrency();
   const { tripsEnabled } = useTripsEnabled();
 
   const [transaction, setTransaction] = useState<TransactionModel | null>(
@@ -293,10 +293,10 @@ function CreateTransaction() {
   }, [defaultCurrency, transaction?.currencyCode]);
 
   useEffect(() => {
-    if (!defaultCurrency) {
+    if (isDefaultCurrencyLoaded && !defaultCurrency) {
       bottomSheetRef.current?.present();
     }
-  }, [defaultCurrency]);
+  }, [defaultCurrency, isDefaultCurrencyLoaded]);
 
   return (
     <BottomSheetModalProvider>
