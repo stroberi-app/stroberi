@@ -15,23 +15,38 @@ const notifyDefaultCurrencyChanged = (currency: string | null) => {
 export const useDefaultCurrency = () => {
   const [defaultCurrency, setDefaultCurrency] = useState<string | null>(null);
   const [isUpdatingCurrency, setIsUpdatingCurrency] = useState(false);
+  const [isDefaultCurrencyLoaded, setIsDefaultCurrencyLoaded] = useState(false);
 
   useEffect(() => {
-    database.localStorage.get(STORAGE_KEYS.DEFAULT_CURRENCY).then((currency) => {
-      if (!currency) {
-        const [locale] = getLocales();
-        if (locale.currencyCode) {
-          database.localStorage.set(STORAGE_KEYS.DEFAULT_CURRENCY, locale.currencyCode);
-          setDefaultCurrency(locale.currencyCode);
+    let isMounted = true;
+
+    const loadDefaultCurrency = async () => {
+      try {
+        const currency = await database.localStorage.get(STORAGE_KEYS.DEFAULT_CURRENCY);
+        if (!currency) {
+          const [locale] = getLocales();
+          if (locale.currencyCode) {
+            database.localStorage.set(STORAGE_KEYS.DEFAULT_CURRENCY, locale.currencyCode);
+            setDefaultCurrency(locale.currencyCode);
+          }
+        } else if (typeof currency === 'string') {
+          setDefaultCurrency(currency);
         }
-      } else if (typeof currency === 'string') {
-        setDefaultCurrency(currency);
+      } catch (error) {
+        console.error('Failed to load default currency:', error);
+      } finally {
+        if (isMounted) {
+          setIsDefaultCurrencyLoaded(true);
+        }
       }
-    });
+    };
+
+    loadDefaultCurrency();
 
     defaultCurrencyListeners.push(setDefaultCurrency);
 
     return () => {
+      isMounted = false;
       defaultCurrencyListeners = defaultCurrencyListeners.filter(
         (listener) => listener !== setDefaultCurrency
       );
@@ -137,5 +152,6 @@ export const useDefaultCurrency = () => {
     defaultCurrency,
     setDefaultCurrency: handleSetDefaultCurrency,
     isUpdatingCurrency,
+    isDefaultCurrencyLoaded,
   };
 };
