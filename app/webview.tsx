@@ -14,7 +14,7 @@ const WebViewScreen = () => {
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
-  }, [navigation.setOptions]);
+  }, [navigation]);
 
   if (typeof url !== 'string') {
     return (

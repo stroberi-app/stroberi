@@ -15,12 +15,14 @@ type CurrencySelectProps = {
   selectedCurrency: string;
   onSelect: (currency: Currency) => void;
   sheetRef: React.RefObject<BottomSheetModal>;
+  containerComponent?: React.ComponentType<React.PropsWithChildren>;
 };
 
 export const CurrencySelect = ({
   selectedCurrency,
   onSelect,
   sheetRef,
+  containerComponent,
 }: CurrencySelectProps) => {
   const renderItem = useCallback(
     ({ item: currency }: { item: Currency }) => (
@@ -68,6 +70,7 @@ export const CurrencySelect = ({
     <BottomSheetModal
       enableContentPanningGesture={false}
       ref={sheetRef}
+      containerComponent={containerComponent}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       enableDynamicSizing={false}

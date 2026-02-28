@@ -5,7 +5,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { Calendar, DollarSign, Smile } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Text, View, YGroup } from 'tamagui';
@@ -75,6 +75,15 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
   const [hasEndDate, setHasEndDate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  const resetForm = useCallback(() => {
+    setName('');
+    setIcon('✈️');
+    setCurrencyCode(null);
+    setStartDate(new Date());
+    setEndDate(null);
+    setHasEndDate(false);
+  }, []);
+
   useEffect(() => {
     if (trip) {
       setName(trip.name);
@@ -86,16 +95,7 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
     } else {
       resetForm();
     }
-  }, [trip]);
-
-  const resetForm = () => {
-    setName('');
-    setIcon('✈️');
-    setCurrencyCode(null);
-    setStartDate(new Date());
-    setEndDate(null);
-    setHasEndDate(false);
-  };
+  }, [trip, resetForm]);
 
   const handleSubmit = async () => {
     if (isSaving) return;
@@ -104,6 +104,16 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
       toast.show({
         title: 'Missing Name',
         message: 'Please enter a trip name',
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
+    if (hasEndDate && endDate && dayjs(endDate).isBefore(dayjs(startDate), 'day')) {
+      toast.show({
+        title: 'Invalid Date Range',
+        message: 'End date must be on or after the start date',
         preset: 'error',
         haptic: 'error',
       });

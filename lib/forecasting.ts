@@ -179,7 +179,6 @@ export function generateSmartInsights(
 
     // 2. Unusual Spending (Anomalies)
     if (categories.length > 0) {
-        const today = new Date();
         const startOfMonth = dayjs().startOf('month').toDate();
         const endOfMonth = dayjs().endOf('month').toDate();
 

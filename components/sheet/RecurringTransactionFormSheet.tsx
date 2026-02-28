@@ -130,6 +130,16 @@ export const RecurringTransactionFormSheet = ({
       return;
     }
 
+    if (hasEndDate && dayjs(endDate).isBefore(dayjs(startDate), 'day')) {
+      toast.show({
+        title: 'Invalid Date Range',
+        message: 'End date must be on or after the start date',
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
     setIsSaving(true);
 
     try {

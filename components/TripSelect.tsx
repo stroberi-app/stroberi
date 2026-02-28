@@ -4,14 +4,16 @@ import {
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { Q } from '@nozbe/watermelondb';
+import { type Database, Q } from '@nozbe/watermelondb';
+import { withObservables } from '@nozbe/watermelondb/react';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Plane, X } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
 import type { TripModel } from '../database/trip-model';
 import { CustomBackdrop } from './CustomBackdrop';
@@ -22,31 +24,27 @@ type TripSelectProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
   selectedTrip: TripModel | null;
   onSelect: (trip: TripModel | null) => void;
+  containerComponent?: React.ComponentType<React.PropsWithChildren>;
 };
 
-export const TripSelect = ({ sheetRef, selectedTrip, onSelect }: TripSelectProps) => {
-  const database = useDatabase();
+type TripSelectViewProps = TripSelectProps & {
+  trips: TripModel[];
+};
+
+const TripSelectView = ({
+  sheetRef,
+  selectedTrip,
+  onSelect,
+  trips,
+  containerComponent,
+}: TripSelectViewProps) => {
   const { bottom } = useSafeAreaInsets();
-  const [trips, setTrips] = useState<TripModel[]>([]);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    const loadTrips = async () => {
-      try {
-        const allTrips = await database
-          .get<TripModel>('trips')
-          .query(Q.where('isArchived', false), Q.sortBy('startDate', Q.desc))
-          .fetch();
-        setTrips(allTrips);
-      } catch (error) {
-        console.error('Failed to load trips:', error);
-      }
-    };
-    loadTrips();
-  }, [database]);
-
-  const filteredTrips = trips.filter((trip) =>
-    trip.name.toLowerCase().includes(search.toLowerCase())
+  const filteredTrips = useMemo(
+    () =>
+      trips.filter((trip) => trip.name.toLowerCase().includes(search.toLowerCase())),
+    [trips, search]
   );
 
   const handleSelect = (trip: TripModel | null) => {
@@ -57,6 +55,7 @@ export const TripSelect = ({ sheetRef, selectedTrip, onSelect }: TripSelectProps
   return (
     <BottomSheetModal
       ref={sheetRef}
+      containerComponent={containerComponent}
       snapPoints={['60%']}
       enableDynamicSizing={false}
       enablePanDownToClose={true}
@@ -188,4 +187,21 @@ export const TripSelect = ({ sheetRef, selectedTrip, onSelect }: TripSelectProps
       </BottomSheetView>
     </BottomSheetModal>
   );
+};
+
+const withTrips = withObservables<
+  { database: Database } & TripSelectProps,
+  { trips: Observable<TripModel[]> }
+>(['database'], ({ database }) => ({
+  trips: database
+    .get<TripModel>('trips')
+    .query(Q.where('isArchived', false), Q.sortBy('startDate', Q.desc))
+    .observe(),
+}));
+
+const EnhancedTripSelect = withTrips(TripSelectView);
+
+export const TripSelect = (props: TripSelectProps) => {
+  const database = useDatabase();
+  return <EnhancedTripSelect {...props} database={database} />;
 };

@@ -245,7 +245,7 @@ export const TransactionPreviewSheet = forwardRef<
                           >
                             {formatAmount(transaction.amount, transaction.currencyCode)}
                           </Text>
-                          {transaction.currencyCode !== 'USD' && (
+                          {transaction.currencyCode !== transaction.baseCurrencyCode && (
                             <Text fontSize="$2" color="$gray10">
                               {transaction.currencyCode}
                             </Text>
