@@ -5,16 +5,18 @@ import dayjs from 'dayjs';
 import { useCallback, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
-import { Text } from 'tamagui';
+import { Text, View } from 'tamagui';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import { type DateFilters, DateFormats } from '../lib/date';
+import { Button } from './button/Button';
 import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
 import { TransactionItem } from './TransactionItem';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
   appliedNumberOfFilters?: number;
+  onClearFilters?: () => void;
   scrollRef?: React.RefObject<FlashList<ListItem>>;
 };
 
@@ -38,6 +40,7 @@ const getDateKey = (date: Date) => {
 const TransactionsList = ({
   transactions,
   appliedNumberOfFilters,
+  onClearFilters,
   scrollRef,
 }: TransactionsListProps) => {
   const { bottom } = useSafeAreaInsets();
@@ -79,7 +82,27 @@ const TransactionsList = ({
     };
   }, [bottom]);
 
-  if (transactions.length === 0 && appliedNumberOfFilters === 0) {
+  if (transactions.length === 0) {
+    if ((appliedNumberOfFilters ?? 0) > 0) {
+      return (
+        <View flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$3">
+          <Text color="white" fontWeight="bold" fontSize="$7">
+            No matches found
+          </Text>
+          <Text color="$gray10" textAlign="center">
+            No transactions match your current filters.
+          </Text>
+          <Button
+            backgroundColor="$green"
+            onPress={onClearFilters}
+            disabled={!onClearFilters}
+          >
+            Clear filters
+          </Button>
+        </View>
+      );
+    }
+
     return <CreateFirstTransactionSection mt="30%" />;
   }
 

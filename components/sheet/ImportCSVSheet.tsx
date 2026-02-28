@@ -13,17 +13,21 @@ import * as FileSystem from 'expo-file-system';
 import Papa from 'papaparse';
 import type React from 'react';
 import { useRef, useState } from 'react';
-import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Sharing from 'expo-sharing';
 import { Progress, Separator, Spinner, Text, View, XStack, YStack } from 'tamagui';
 import { currencies } from '../../data/currencies';
 import type { CategoryModel } from '../../database/category-model';
 import {
   type CreateTransactionPayload,
+  createTransactionsBatch,
   createCategory,
-  createTransaction,
 } from '../../database/helpers';
+import type { ImportResult } from '../../features/import/types';
+import {
+  type CSVRow,
+  normalizeCurrencyCode,
+  validateCSVRow,
+} from '../../features/import/validation';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import { doExport } from '../../lib/downloads';
@@ -31,16 +35,6 @@ import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 import { type ErrorInfo, ErrorSheet } from './ErrorSheet';
-
-interface CSVRow {
-  merchant: string;
-  amount: string;
-  date: string;
-  note?: string;
-  currencyCode: string;
-  category?: string;
-  categoryIcon?: string;
-}
 
 type ImportCSVSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -55,6 +49,7 @@ interface ImportProgress {
 
 const snapPoints = ['65%'];
 const BATCH_SIZE = 10;
+const supportedCurrencyCodes = currencies.map((currency) => currency.code);
 
 export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
   const toast = useToast();
@@ -97,51 +92,31 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
     }, 300);
   };
 
-  const validateCSVRow = (row: CSVRow, index: number): string[] => {
-    const errors: string[] = [];
-    const { amount, date, currencyCode } = row;
-
-    if (!amount || !date || !currencyCode) {
-      errors.push(
-        `Row ${index + 1}: Missing required fields (merchant, amount, date, or currency)`
-      );
-    }
-
-    if (amount && Number.isNaN(Number(amount))) {
-      errors.push(`Row ${index + 1}: Amount must be a valid number`);
-    }
-
-    if (date) {
-      const parsedDate = new Date(date);
-      if (Number.isNaN(parsedDate.getTime())) {
-        errors.push(`Row ${index + 1}: Date format is invalid (use YYYY-MM-DD)`);
-      }
-    }
-
-    if (currencyCode && !currencies.some((currency) => currency.code === currencyCode)) {
-      errors.push(`Row ${index + 1}: Currency code '${currencyCode}' is not supported`);
-    }
-
-    return errors;
-  };
-
   const processTransactionsInBatches = async (
     transactions: CreateTransactionPayload[],
     updateProgress: (current: number) => void
   ) => {
     const totalBatches = Math.ceil(transactions.length / BATCH_SIZE);
+    const importResult: ImportResult = {
+      importedCount: 0,
+      failed: [],
+    };
 
     for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
       const start = batchIndex * BATCH_SIZE;
       const end = Math.min(start + BATCH_SIZE, transactions.length);
       const batch = transactions.slice(start, end);
 
-      await Promise.all(batch.map((transaction) => createTransaction(transaction)));
+      const batchResult = await createTransactionsBatch(batch);
+      importResult.importedCount += batchResult.importedCount;
+      importResult.failed.push(...batchResult.failed);
 
-      updateProgress(end);
+      updateProgress(importResult.importedCount);
 
       await sleep(50);
     }
+
+    return importResult;
   };
 
   const handleImport = async () => {
@@ -167,6 +142,20 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       });
       if (!res.assets?.[0].uri) {
         setImporting(false);
+        return;
+      }
+
+      const importBaseCurrency = defaultCurrency;
+      if (!importBaseCurrency) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: 'Default Currency Required',
+          message:
+            'Set your default currency in Settings > Default Currency, then retry import.',
+          type: 'validation',
+          showRetryButton: false,
+        });
         return;
       }
 
@@ -231,7 +220,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               .query()
               .fetch();
             const existingCategoryMap = new Map(
-              existingCategories.map((c) => [c.name, c])
+              existingCategories.map((c) => [c.name.trim().toLowerCase(), c])
             );
 
             const newCategoriesToCreate = new Map<
@@ -240,14 +229,15 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
             >();
             for (const row of results.data) {
               const { category, categoryIcon } = row;
+              const normalizedCategoryName = category?.trim();
               if (
-                category &&
+                normalizedCategoryName &&
                 categoryIcon &&
-                !existingCategoryMap.has(category) &&
-                !newCategoriesToCreate.has(category)
+                !existingCategoryMap.has(normalizedCategoryName.toLowerCase()) &&
+                !newCategoriesToCreate.has(normalizedCategoryName.toLowerCase())
               ) {
-                newCategoriesToCreate.set(category, {
-                  name: category,
+                newCategoriesToCreate.set(normalizedCategoryName.toLowerCase(), {
+                  name: normalizedCategoryName,
                   icon: categoryIcon,
                 });
               }
@@ -298,7 +288,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               .get<CategoryModel>('categories')
               .query()
               .fetch();
-            const categoryMap = new Map(allCategories.map((c) => [c.name, c.id]));
+            const categoryMap = new Map(
+              allCategories.map((c) => [c.name.trim().toLowerCase(), c.id])
+            );
             const validTransactions: CreateTransactionPayload[] = [];
             const allErrors: string[] = [];
 
@@ -317,24 +309,34 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                   continue;
                 }
 
-                const validationErrors = validateCSVRow(row, rowIndex);
+                const validationErrors = validateCSVRow(
+                  row,
+                  rowIndex,
+                  supportedCurrencyCodes
+                );
                 if (validationErrors.length > 0) {
                   allErrors.push(...validationErrors);
                   continue;
                 }
 
                 const { merchant, amount, date, note, currencyCode, category } = row;
+                const normalizedCurrencyCode = normalizeCurrencyCode(currencyCode);
+                const normalizedMerchant = merchant.trim();
+                const normalizedCategory = category?.trim().toLowerCase();
 
-                const categoryId = category ? (categoryMap.get(category) ?? null) : null;
+                const categoryId = normalizedCategory
+                  ? (categoryMap.get(normalizedCategory) ?? null)
+                  : null;
 
                 validTransactions.push({
-                  merchant,
+                  merchant: normalizedMerchant,
                   amount: Number(amount),
                   date: new Date(date),
-                  note: note || '',
-                  currencyCode,
+                  note: note?.trim() || '',
+                  currencyCode: normalizedCurrencyCode,
                   categoryId,
-                  baseCurrency: defaultCurrency as string,
+                  baseCurrency: importBaseCurrency,
+                  sourceRowNumber: rowIndex + 1,
                 });
               }
 
@@ -386,41 +388,93 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
               message: 'Adding transactions to your account...',
             });
 
-            await processTransactionsInBatches(validTransactions, (current) => {
+            const importResult = await processTransactionsInBatches(
+              validTransactions,
+              (current) => {
+                setProgress((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        current,
+                        message: `Added ${current} out of ${validTransactions.length} transactions`,
+                      }
+                    : null
+                );
+              }
+            );
+
+            if (importResult.failed.length > 0) {
               setProgress((prev) =>
                 prev
                   ? {
                     ...prev,
-                    current,
-                    message: `Added ${current} out of ${validTransactions.length} transactions`,
+                    current: importResult.importedCount,
+                    message: `Imported ${importResult.importedCount} of ${validTransactions.length}; ${importResult.failed.length} skipped`,
                   }
                   : null
               );
-            });
+            }
 
             setProgress({
               phase: 'complete',
-              current: validTransactions.length,
+              current: importResult.importedCount,
               total: validTransactions.length,
               message: 'All done! Your transactions are ready.',
             });
 
-            toast.show({
-              title: '🎉 Import successful!',
-              message: `Successfully imported ${validTransactions.length} ${validTransactions.length === 1 ? 'transaction' : 'transactions'
-                } to your account.`,
-              preset: 'custom',
-              duration: 4,
-            });
+            if (importResult.importedCount > 0 && importResult.failed.length === 0) {
+              toast.show({
+                title: '🎉 Import successful!',
+                message: `Successfully imported ${importResult.importedCount} ${importResult.importedCount === 1 ? 'transaction' : 'transactions'} to your account.`,
+                preset: 'custom',
+                duration: 4,
+              });
+            } else if (importResult.importedCount > 0) {
+              toast.show({
+                title: 'Import completed with issues',
+                message: `Imported ${importResult.importedCount} transactions and skipped ${importResult.failed.length} rows.`,
+                preset: 'custom',
+                duration: 5,
+              });
 
-            await sleep(1500);
-            sheetRef.current?.dismiss();
+              showError({
+                title: 'Some Rows Were Skipped',
+                message:
+                  'A few rows could not be imported. Review the details below and retry those rows if needed.',
+                errors: importResult.failed
+                  .slice(0, 10)
+                  .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+                type: 'validation',
+                showTemplateButton: false,
+                showRetryButton: false,
+              });
+            } else {
+              showError({
+                title: 'No Transactions Imported',
+                message:
+                  'No rows could be imported. Review the issues below and try again.',
+                errors: importResult.failed
+                  .slice(0, 10)
+                  .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+                type: 'validation',
+                showTemplateButton: true,
+                showRetryButton: true,
+              });
+            }
 
-            // Reset states after dismissing the sheet
-            setTimeout(() => {
+            if (importResult.importedCount > 0) {
+              await sleep(1500);
+              sheetRef.current?.dismiss();
+
+              // Reset states after dismissing the sheet
+              setTimeout(() => {
+                setImporting(false);
+                setProgress(null);
+              }, 500);
+            } else {
               setImporting(false);
               setProgress(null);
-            }, 500);
+            }
           } catch (_error) {
             setImporting(false);
             setProgress(null);

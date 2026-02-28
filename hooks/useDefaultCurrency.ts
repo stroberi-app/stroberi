@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { database } from '../database';
 import type { TransactionModel } from '../database/transaction-model';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import type { ConversionResult } from '../lib/currencyConversion';
 import { STORAGE_KEYS } from '../lib/storageKeys';
 
 let defaultCurrencyListeners: Array<(currency: string | null) => void> = [];
@@ -48,16 +49,18 @@ export const useDefaultCurrency = () => {
     const rateEntries = await Promise.all(
       uniqueCurrencies.map(async (currencyCode) => {
         if (currencyCode === newBaseCurrency) {
-          return [currencyCode, 1] as const;
+          return [currencyCode, { rate: 1, status: 'ok' } satisfies ConversionResult] as const;
         }
 
-        const exchangeRate = await getCurrencyConversion(newBaseCurrency, currencyCode);
+        const conversion = await getCurrencyConversion(newBaseCurrency, currencyCode);
 
-        return exchangeRate ? ([currencyCode, exchangeRate] as const) : null;
+        return [currencyCode, conversion] as const;
       })
     );
 
-    return new Map(rateEntries.filter(Boolean) as [string, number][]);
+    return new Map(
+      rateEntries.filter(Boolean) as [string, ConversionResult][]
+    );
   };
 
   const updateTransactionsCurrency = async (newBaseCurrency: string) => {
@@ -80,16 +83,29 @@ export const useDefaultCurrency = () => {
 
     await database.write(async () => {
       const updates = transactions.flatMap((transaction) => {
-        const exchangeRate = exchangeRates.get(transaction.currencyCode);
-        if (!exchangeRate) {
+        const conversion = exchangeRates.get(transaction.currencyCode);
+        if (!conversion) {
           return [];
         }
+
+        const exchangeRate = conversion.rate;
+        const conversionStatus = conversion.status;
+        const isMissingRate =
+          transaction.currencyCode !== newBaseCurrency && exchangeRate === null;
 
         return [
           transaction.prepareUpdate((record) => {
             record.baseCurrencyCode = newBaseCurrency;
-            record.amountInBaseCurrency = transaction.amount * exchangeRate;
-            record.exchangeRate = exchangeRate;
+            if (isMissingRate) {
+              record.amountInBaseCurrency = transaction.amount;
+              record.exchangeRate = 1;
+              record.conversionStatus = 'missing_rate';
+              return;
+            }
+
+            record.amountInBaseCurrency = transaction.amount * (exchangeRate ?? 1);
+            record.exchangeRate = exchangeRate ?? 1;
+            record.conversionStatus = conversionStatus;
           }),
         ];
       });

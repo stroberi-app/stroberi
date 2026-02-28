@@ -30,6 +30,17 @@ export const SpendByType = withObservables<
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {
+          const totalsByMonthKey = new Map<string, number>();
+          for (const transaction of transactions) {
+            const transactionDate = dayjs(transaction.date);
+            const monthKey = transactionDate.format('YYYY-MM');
+            const currentTotal = totalsByMonthKey.get(monthKey) ?? 0;
+            totalsByMonthKey.set(
+              monthKey,
+              currentTotal + Math.abs(transaction.amountInBaseCurrency)
+            );
+          }
+
           const last6Months = Array.from({ length: 6 }, (_, i) => {
             return dayjs().subtract(i, 'month');
           }).reverse();
@@ -39,19 +50,8 @@ export const SpendByType = withObservables<
               const month = date.format('MMM');
               const year = date.year();
               const sortKey = date.valueOf();
-
-              const total = transactions
-                .filter((transaction) => {
-                  const transactionDate = dayjs(transaction.date);
-                  return (
-                    transactionDate.month() === date.month() &&
-                    transactionDate.year() === date.year()
-                  );
-                })
-                .reduce(
-                  (acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency),
-                  0
-                );
+              const monthKey = date.format('YYYY-MM');
+              const total = totalsByMonthKey.get(monthKey) ?? 0;
 
               return {
                 month,

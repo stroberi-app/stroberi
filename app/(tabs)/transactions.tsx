@@ -59,6 +59,12 @@ export default function TransactionsScreen() {
           customRange={dateFilter === 'Custom' ? [fromDate, toDate] : undefined}
           categories={selectedCategories}
           appliedNumberOfFilters={appliedNumberOfFilters}
+          onClearFilters={() => {
+            setDateFilter(null);
+            setSelectedCategories([]);
+            setFromDate(new Date());
+            setToDate(new Date());
+          }}
           scrollRef={scrollRef}
         />
       </View>

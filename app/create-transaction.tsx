@@ -1,4 +1,8 @@
-import { type BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetModalProvider,
+  type BottomSheetModal,
+} from '@gorhom/bottom-sheet';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 import {
   ArrowLeft,
   Calendar,
@@ -9,8 +13,15 @@ import {
   User,
 } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import {
+  InteractionManager,
+  Keyboard,
+  Platform,
+  StyleSheet,
+  View as RNView,
+} from 'react-native';
+import { FullWindowOverlay } from 'react-native-screens';
 import { Input, Text, TextArea, View, YGroup } from 'tamagui';
 import { LinkButton } from '../components/button/LinkButton';
 import { CreateExpenseItem } from '../components/CreateExpenseItem';
@@ -21,6 +32,7 @@ import { StyledScrollView } from '../components/StyledScrollView';
 import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
 import { TripSelect } from '../components/TripSelect';
 import type { CategoryModel } from '../database/category-model';
+import { database } from '../database/index';
 import {
   createTransaction,
   getActiveTrips,
@@ -28,9 +40,18 @@ import {
 } from '../database/helpers';
 import type { TransactionModel } from '../database/transaction-model';
 import type { TripModel } from '../database/trip-model';
+import { MissingCurrencyRateError } from '../lib/currencyConversion';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../hooks/useTripsEnabled';
 import useToast from '../hooks/useToast';
+
+const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
+  <FullWindowOverlay>
+    <RNView style={StyleSheet.absoluteFill}>{children}</RNView>
+  </FullWindowOverlay>
+);
+
+const modalContainerComponent = Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -39,20 +60,26 @@ function CreateTransaction() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const toast = useToast();
+  const { showActionSheetWithOptions } = useActionSheet();
 
-  const transactionType = params.transactionType as 'expense' | 'income';
-  const transaction: TransactionModel | null = params.transaction
-    ? JSON.parse(params.transaction as string)
+  const transactionType = params.transactionType as 'expense' | 'income' | undefined;
+  const transactionId =
+    typeof params.transactionId === 'string' ? params.transactionId : null;
+  const legacyTransaction = params.transaction
+    ? (JSON.parse(params.transaction as string) as TransactionModel)
     : null;
-  const category: CategoryModel | null = params.category
-    ? JSON.parse(params.category as string)
+  const legacyCategory = params.category
+    ? (JSON.parse(params.category as string) as CategoryModel)
     : null;
 
   const { defaultCurrency } = useDefaultCurrency();
   const { tripsEnabled } = useTripsEnabled();
 
+  const [transaction, setTransaction] = useState<TransactionModel | null>(
+    legacyTransaction ?? null
+  );
   const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(
-    category ?? null
+    legacyCategory ?? null
   );
   const [selectedTrip, setSelectedTrip] = useState<TripModel | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState(
@@ -64,11 +91,67 @@ function CreateTransaction() {
   const [note, setNote] = useState(transaction?.note ?? '');
   const [merchantName, setMerchantName] = useState(transaction?.merchant ?? '');
   const [date, setDate] = useState(
-    transaction?.date ? new Date(transaction.date) : new Date()
+    legacyTransaction?.date ? new Date(legacyTransaction.date) : new Date()
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [amountValidationError, setAmountValidationError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
+  const presentSheet = (sheetRef: RefObject<BottomSheetModal | null>) => {
+    Keyboard.dismiss();
+    InteractionManager.runAfterInteractions(() => {
+      sheetRef.current?.present();
+    });
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTransactionById = async () => {
+      if (!transactionId) {
+        return;
+      }
+
+      try {
+        const transactionRecord = await database
+          .get<TransactionModel>('transactions')
+          .find(transactionId);
+        const categoryRecord = await transactionRecord.category?.fetch();
+        const tripRecord = transactionRecord.tripId
+          ? await database.get<TripModel>('trips').find(transactionRecord.tripId)
+          : null;
+
+        if (!isMounted) {
+          return;
+        }
+
+        setTransaction(transactionRecord);
+        setSelectedCategory(categoryRecord ?? null);
+        setSelectedTrip(tripRecord);
+        setSelectedCurrency(transactionRecord.currencyCode);
+        setAmount(transactionRecord.amount.toString());
+        setNote(transactionRecord.note ?? '');
+        setMerchantName(transactionRecord.merchant ?? '');
+        setDate(new Date(transactionRecord.date));
+      } catch (error) {
+        console.error('Failed to load transaction details:', error);
+      }
+    };
+
+    loadTransactionById();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [transactionId]);
+
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    if (amountValidationError) {
+      setAmountValidationError(null);
+    }
+  };
+
+  const handleSubmit = async (allowMissingRate = false) => {
     if (isSaving) {
       return;
     }
@@ -84,6 +167,16 @@ function CreateTransaction() {
     }
 
     const amountValue = Number(amount);
+    if (amountValidationError) {
+      toast.show({
+        title: 'Invalid Amount',
+        message: amountValidationError,
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
     if (!amount || !Number.isFinite(amountValue) || amountValue === 0) {
       toast.show({
         title: 'Invalid Amount',
@@ -106,20 +199,48 @@ function CreateTransaction() {
         note,
         baseCurrency: defaultCurrency,
         tripId: selectedTrip?.id ?? null,
+        allowMissingRate,
       };
 
-      if (transaction) {
-        await updateTransaction({
-          id: transaction.id,
-          ...payload,
+      const savedTransaction = transaction
+        ? await updateTransaction({
+            id: transaction.id,
+            ...payload,
+          })
+        : await createTransaction(payload);
+
+      if (savedTransaction.conversionStatus === 'stale') {
+        toast.show({
+          title: 'Rate Warning',
+          message:
+            'Saved using a stale exchange rate. Update your connection to refresh rates.',
+          preset: 'custom',
+          haptic: 'warning',
         });
-      } else {
-        await createTransaction(payload);
       }
 
       setIsSaving(false);
       router.back();
     } catch (error) {
+      if (error instanceof MissingCurrencyRateError && !allowMissingRate) {
+        setIsSaving(false);
+        showActionSheetWithOptions(
+          {
+            title: 'Exchange Rate Unavailable',
+            message:
+              'No live conversion rate is available right now. Save anyway using 1:1 and mark this transaction for later review?',
+            options: ['Save Anyway', 'Cancel'],
+            cancelButtonIndex: 1,
+          },
+          (buttonIndex) => {
+            if (buttonIndex === 0) {
+              handleSubmit(true);
+            }
+          }
+        );
+        return;
+      }
+
       setIsSaving(false);
       toast.show({
         title: 'Error',
@@ -145,7 +266,7 @@ function CreateTransaction() {
   useEffect(() => {
     const loadActiveTrip = async () => {
       // Only for new transactions (not editing) and if trips are enabled
-      if (!transaction && tripsEnabled) {
+      if (!transaction && !transactionId && tripsEnabled) {
         try {
           const activeTrips = await getActiveTrips();
           // Find most recent active trip (not archived, end date null or in future)
@@ -165,15 +286,21 @@ function CreateTransaction() {
       }
     };
     loadActiveTrip();
-  }, [transaction, tripsEnabled]);
+  }, [transaction, transactionId, tripsEnabled]);
 
   useEffect(() => {
     !transaction?.currencyCode && defaultCurrency && setSelectedCurrency(defaultCurrency);
   }, [defaultCurrency, transaction?.currencyCode]);
 
+  useEffect(() => {
+    if (!defaultCurrency) {
+      bottomSheetRef.current?.present();
+    }
+  }, [defaultCurrency]);
+
   return (
     <BottomSheetModalProvider>
-      <StyledScrollView keyboardShouldPersistTaps="handled">
+      <StyledScrollView keyboardShouldPersistTaps="always">
         <View flexDirection="row" justifyContent="space-between" alignItems="center">
           <LinkButton
             backgroundColor="transparent"
@@ -188,23 +315,38 @@ function CreateTransaction() {
           <LinkButton
             color="white"
             backgroundColor="$green"
-            onPress={handleSubmit}
-            disabled={isSaving}
-            opacity={isSaving ? 0.6 : 1}
+            onPress={() => handleSubmit(false)}
+            disabled={isSaving || !defaultCurrency}
+            opacity={isSaving || !defaultCurrency ? 0.6 : 1}
           >
             {isSaving ? 'Saving...' : 'Save'}
           </LinkButton>
         </View>
+        {!defaultCurrency && (
+          <View
+            mt="$3"
+            mb="$1"
+            padding="$2"
+            borderRadius="$3"
+            backgroundColor="$gray3"
+            borderColor="$yellow"
+            borderWidth={1}
+          >
+            <Text color="$yellow" fontSize="$2">
+              Set your default currency to continue.
+            </Text>
+          </View>
+        )}
         <View mt="$8">
           <CurrencyInput
             onCurrencySelect={() => {
-              Keyboard.dismiss();
-              bottomSheetRef.current?.present();
+              presentSheet(bottomSheetRef);
             }}
             selectedCurrency={selectedCurrency}
             value={amount}
-            onChangeText={setAmount}
+            onChangeText={handleAmountChange}
             focusOnMount={!transaction}
+            onValidationError={setAmountValidationError}
           />
         </View>
 
@@ -228,8 +370,7 @@ function CreateTransaction() {
             <LinkButton
               color="white"
               onPress={() => {
-                Keyboard.dismiss();
-                manageCategoriesSheetRef.current?.present();
+                presentSheet(manageCategoriesSheetRef);
               }}
             >
               {selectedCategory ? (
@@ -251,8 +392,7 @@ function CreateTransaction() {
               <LinkButton
                 color="white"
                 onPress={() => {
-                  Keyboard.dismiss();
-                  tripSelectSheetRef.current?.present();
+                  presentSheet(tripSelectSheetRef);
                 }}
               >
                 {selectedTrip ? (
@@ -282,6 +422,7 @@ function CreateTransaction() {
       </StyledScrollView>
       <CurrencySelect
         sheetRef={bottomSheetRef}
+        containerComponent={modalContainerComponent}
         onSelect={(currency) => {
           setSelectedCurrency(currency.code);
           bottomSheetRef.current?.close();
@@ -292,11 +433,13 @@ function CreateTransaction() {
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         sheetRef={manageCategoriesSheetRef}
+        containerComponent={modalContainerComponent}
       />
       <TripSelect
         sheetRef={tripSelectSheetRef}
         selectedTrip={selectedTrip}
         onSelect={handleTripSelect}
+        containerComponent={modalContainerComponent}
       />
     </BottomSheetModalProvider>
   );

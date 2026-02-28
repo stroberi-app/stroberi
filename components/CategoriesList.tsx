@@ -114,7 +114,7 @@ const Component = ({
                 drag.value = withTiming(0, { duration: 200 });
               }}
             >
-              <Trash2 height={8} width={8} />
+              <Trash2 height={20} width={20} />
             </Pressable>
           </View>
         </RightActionView>

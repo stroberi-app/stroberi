@@ -1,7 +1,9 @@
 import { type Model, Q } from '@nozbe/watermelondb';
 import dayjs from 'dayjs';
+import type { ConversionStatus } from '../lib/currencyConversion';
 import '../lib/date';
 import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import { MissingCurrencyRateError } from '../lib/currencyConversion';
 import type { BudgetCategoryModel } from './budget-category-model';
 import type { BudgetModel, BudgetPeriod } from './budget-model';
 import type { CategoryModel } from './category-model';
@@ -23,7 +25,198 @@ export type CreateTransactionPayload = {
   baseCurrency: string;
   recurringTransactionId?: string;
   tripId?: string | null;
+  allowMissingRate?: boolean;
+  sourceRowNumber?: number;
 };
+
+type ResolvedConversion = {
+  baseCurrencyCode: string;
+  amountInBaseCurrency: number;
+  exchangeRate: number;
+  conversionStatus: ConversionStatus;
+};
+
+const resolveConversion = async ({
+  amount,
+  baseCurrency,
+  currencyCode,
+  allowMissingRate = false,
+}: {
+  amount: number;
+  baseCurrency: string;
+  currencyCode: string;
+  allowMissingRate?: boolean;
+}): Promise<ResolvedConversion> => {
+  if (baseCurrency === currencyCode) {
+    return {
+      baseCurrencyCode: baseCurrency,
+      amountInBaseCurrency: amount,
+      exchangeRate: 1,
+      conversionStatus: 'ok',
+    };
+  }
+
+  const conversion = await getCurrencyConversion(baseCurrency, currencyCode);
+  if (conversion.rate !== null) {
+    return {
+      baseCurrencyCode: baseCurrency,
+      amountInBaseCurrency: amount * conversion.rate,
+      exchangeRate: conversion.rate,
+      conversionStatus: conversion.status,
+    };
+  }
+
+  if (!allowMissingRate) {
+    throw new MissingCurrencyRateError(baseCurrency, currencyCode);
+  }
+
+  return {
+    baseCurrencyCode: baseCurrency,
+    amountInBaseCurrency: amount,
+    exchangeRate: 1,
+    conversionStatus: 'missing_rate',
+  };
+};
+
+export type CreateTransactionsBatchResult = {
+  importedCount: number;
+  failed: Array<{ row: number; reason: string }>;
+};
+
+export const createTransactionsBatch = async (
+  transactions: CreateTransactionPayload[]
+): Promise<CreateTransactionsBatchResult> => {
+  if (!transactions.length) {
+    return { importedCount: 0, failed: [] };
+  }
+
+  const failed: Array<{ row: number; reason: string }> = [];
+
+  const uniqueCategoryIds = Array.from(
+    new Set(
+      transactions
+        .map((transaction) => transaction.categoryId)
+        .filter((categoryId): categoryId is string => Boolean(categoryId))
+    )
+  );
+
+  const categoryMap = new Map<string, CategoryModel>();
+  if (uniqueCategoryIds.length > 0) {
+    const categories = await database
+      .get<CategoryModel>('categories')
+      .query(Q.where('id', Q.oneOf(uniqueCategoryIds)))
+      .fetch();
+
+    for (const category of categories) {
+      categoryMap.set(category.id, category);
+    }
+  }
+
+  const normalizedTransactions: Array<
+    Omit<CreateTransactionPayload, 'allowMissingRate'> & {
+      resolvedConversion: ResolvedConversion;
+      category: CategoryModel | null;
+    }
+  > = [];
+
+  for (const transaction of transactions) {
+    const row = transaction.sourceRowNumber ?? -1;
+
+    const category =
+      transaction.categoryId === null
+        ? null
+        : (categoryMap.get(transaction.categoryId) ?? null);
+
+    if (transaction.categoryId && !category) {
+      failed.push({
+        row,
+        reason: `Category not found: ${transaction.categoryId}`,
+      });
+      continue;
+    }
+
+    try {
+      const resolvedConversion = await resolveConversion({
+        amount: transaction.amount,
+        baseCurrency: transaction.baseCurrency,
+        currencyCode: transaction.currencyCode,
+        allowMissingRate: transaction.allowMissingRate,
+      });
+
+      normalizedTransactions.push({
+        ...transaction,
+        category,
+        resolvedConversion,
+      });
+    } catch (error) {
+      failed.push({
+        row,
+        reason: error instanceof Error ? error.message : 'Failed currency conversion',
+      });
+    }
+  }
+
+  if (!normalizedTransactions.length) {
+    return {
+      importedCount: 0,
+      failed,
+    };
+  }
+
+  await database.write(async () => {
+    const collection = database.get<TransactionModel>('transactions');
+    const preparedRecords: Model[] = [];
+    const categoryUsageIncrements = new Map<string, number>();
+
+    for (const transaction of normalizedTransactions) {
+      const preparedTransaction = collection.prepareCreate((tx) => {
+        tx.merchant = transaction.merchant;
+        tx.amount = transaction.amount;
+        tx.date = transaction.date;
+        tx.currencyCode = transaction.currencyCode;
+        tx.note = transaction.note;
+        tx.baseCurrencyCode = transaction.resolvedConversion.baseCurrencyCode;
+        tx.amountInBaseCurrency = transaction.resolvedConversion.amountInBaseCurrency;
+        tx.exchangeRate = transaction.resolvedConversion.exchangeRate;
+        tx.conversionStatus = transaction.resolvedConversion.conversionStatus;
+        tx.recurringTransactionId = transaction.recurringTransactionId || null;
+        tx.tripId = transaction.tripId || null;
+
+        if (transaction.category) {
+          tx.category?.set(transaction.category);
+        }
+      });
+
+      preparedRecords.push(preparedTransaction);
+
+      if (transaction.category) {
+        const previousCount = categoryUsageIncrements.get(transaction.category.id) ?? 0;
+        categoryUsageIncrements.set(transaction.category.id, previousCount + 1);
+      }
+    }
+
+    for (const [categoryId, increment] of categoryUsageIncrements.entries()) {
+      const category = categoryMap.get(categoryId);
+      if (!category) {
+        continue;
+      }
+
+      preparedRecords.push(
+        category.prepareUpdate((record) => {
+          record.usageCount = (record.usageCount || 0) + increment;
+        })
+      );
+    }
+
+    await database.batch(...preparedRecords);
+  });
+
+  return {
+    importedCount: normalizedTransactions.length,
+    failed,
+  };
+};
+
 export const createTransaction = async ({
   merchant,
   amount,
@@ -34,6 +227,7 @@ export const createTransaction = async ({
   baseCurrency,
   recurringTransactionId,
   tripId,
+  allowMissingRate = false,
 }: CreateTransactionPayload) => {
   try {
     return await database.write(async () => {
@@ -50,22 +244,12 @@ export const createTransaction = async ({
         }
       }
 
-      let baseCurrencyCode = baseCurrency;
-      let amountInBaseCurrency = amount;
-      let exchangeRate = 1;
-
-      if (baseCurrency !== currencyCode) {
-        try {
-          const rate = await getCurrencyConversion(baseCurrency, currencyCode);
-          if (rate) {
-            baseCurrencyCode = baseCurrency;
-            amountInBaseCurrency = amount * rate;
-            exchangeRate = rate;
-          }
-        } catch (error) {
-          console.error('Currency conversion failed:', error);
-        }
-      }
+      const resolvedConversion = await resolveConversion({
+        amount,
+        baseCurrency,
+        currencyCode,
+        allowMissingRate,
+      });
 
       const preparedRecords = [];
 
@@ -75,9 +259,10 @@ export const createTransaction = async ({
         tx.date = date;
         tx.currencyCode = currencyCode;
         tx.note = note;
-        tx.baseCurrencyCode = baseCurrencyCode;
-        tx.amountInBaseCurrency = amountInBaseCurrency;
-        tx.exchangeRate = exchangeRate;
+        tx.baseCurrencyCode = resolvedConversion.baseCurrencyCode;
+        tx.amountInBaseCurrency = resolvedConversion.amountInBaseCurrency;
+        tx.exchangeRate = resolvedConversion.exchangeRate;
+        tx.conversionStatus = resolvedConversion.conversionStatus;
         tx.recurringTransactionId = recurringTransactionId || null;
         tx.tripId = tripId || null;
         if (categoryCollection) {
@@ -112,6 +297,7 @@ export const updateTransaction = async ({
   note,
   baseCurrency,
   tripId,
+  allowMissingRate = false,
 }: {
   id: string;
   merchant: string;
@@ -122,6 +308,7 @@ export const updateTransaction = async ({
   note: string;
   baseCurrency: string;
   tripId?: string | null;
+  allowMissingRate?: boolean;
 }) => {
   try {
     return await database.write(async () => {
@@ -148,22 +335,12 @@ export const updateTransaction = async ({
         }
       }
 
-      let baseCurrencyCode = baseCurrency;
-      let amountInBaseCurrency = amount;
-      let exchangeRate = 1;
-
-      if (baseCurrency !== currencyCode) {
-        try {
-          const rate = await getCurrencyConversion(baseCurrency, currencyCode);
-          if (rate) {
-            baseCurrencyCode = baseCurrency;
-            amountInBaseCurrency = amount * rate;
-            exchangeRate = rate;
-          }
-        } catch (error) {
-          console.error('Currency conversion failed:', error);
-        }
-      }
+      const resolvedConversion = await resolveConversion({
+        amount,
+        baseCurrency,
+        currencyCode,
+        allowMissingRate,
+      });
 
       const preparedRecords = [];
 
@@ -173,9 +350,10 @@ export const updateTransaction = async ({
         tx.date = date;
         tx.currencyCode = currencyCode;
         tx.note = note;
-        tx.baseCurrencyCode = baseCurrencyCode;
-        tx.amountInBaseCurrency = amountInBaseCurrency;
-        tx.exchangeRate = exchangeRate;
+        tx.baseCurrencyCode = resolvedConversion.baseCurrencyCode;
+        tx.amountInBaseCurrency = resolvedConversion.amountInBaseCurrency;
+        tx.exchangeRate = resolvedConversion.exchangeRate;
+        tx.conversionStatus = resolvedConversion.conversionStatus;
         tx.tripId = tripId !== undefined ? tripId : tx.tripId;
         if (categoryCollection) {
           tx.category?.set(categoryCollection);
@@ -773,12 +951,44 @@ export const getBudgetStatus = async (
       (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
       0
     );
-    const remaining = budget.amount - spent;
-    const percentage = (spent / budget.amount) * 100;
+    let budgetLimit = budget.amount;
+
+    if (budget.rollover) {
+      const periodDurationMs = periodEnd.getTime() - periodStart.getTime() + 1;
+      const previousPeriodEnd = new Date(periodStart.getTime() - 1);
+      const previousPeriodStart = new Date(
+        previousPeriodEnd.getTime() - periodDurationMs + 1
+      );
+
+      const previousPeriodConditions = [
+        Q.where('date', Q.gte(previousPeriodStart.getTime())),
+        Q.where('date', Q.lte(previousPeriodEnd.getTime())),
+        Q.where('amountInBaseCurrency', Q.lt(0)),
+      ];
+
+      if (categoryIds.length > 0) {
+        previousPeriodConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+      }
+
+      const previousTransactions = await database
+        .get<TransactionModel>('transactions')
+        .query(...previousPeriodConditions)
+        .fetch();
+
+      const previousSpent = previousTransactions.reduce(
+        (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
+        0
+      );
+      budgetLimit += Math.max(0, budget.amount - previousSpent);
+    }
+
+    const remaining = budgetLimit - spent;
+    const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
 
     return {
       budget,
       spent,
+      budgetLimit,
       remaining,
       percentage,
       status:
