@@ -2,25 +2,54 @@ import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
-import { useCallback, useMemo } from 'react';
+import { ActivityIndicator } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import { type DateFilters, DateFormats } from '../lib/date';
+import { buildTransactionsBaseQuery } from '../lib/transactionQuery';
 import { Button } from './button/Button';
 import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
 import { TransactionItem } from './TransactionItem';
 
-type TransactionsListProps = {
-  transactions: TransactionModel[];
-  appliedNumberOfFilters?: number;
-  onClearFilters?: () => void;
-  scrollRef?: React.RefObject<FlashList<ListItem>>;
-};
+const INITIAL_VISIBLE_COUNT = 300;
+const PAGE_INCREMENT = 200;
+
+const OBSERVED_TRANSACTION_COLUMNS = [
+  'merchant',
+  'amount',
+  'currencyCode',
+  'date',
+  'recurringTransactionId',
+  'categoryId',
+] as const;
 
 type ListItem = string | TransactionModel;
+
+type TransactionsListContentProps = {
+  transactions: TransactionModel[];
+  totalCount: number;
+  visibleCount: number;
+  appliedNumberOfFilters?: number;
+  onClearFilters?: () => void;
+  scrollRef?: RefObject<FlashList<ListItem>>;
+  onLoadMore: (totalCount: number) => void;
+  onTotalCountChange: (totalCount: number) => void;
+  isLoadingMore: boolean;
+};
+
+type TransactionsListProps = {
+  database: Database;
+  dateFilter?: DateFilters | null;
+  customRange?: [Date, Date];
+  categories: CategoryModel[];
+  appliedNumberOfFilters?: number;
+  onClearFilters?: () => void;
+  scrollRef?: RefObject<FlashList<ListItem>>;
+};
 
 const getDateKey = (date: Date) => {
   const dayjsDate = dayjs(date);
@@ -39,14 +68,24 @@ const getDateKey = (date: Date) => {
 
 const TransactionsList = ({
   transactions,
+  totalCount,
+  visibleCount,
   appliedNumberOfFilters,
   onClearFilters,
   scrollRef,
-}: TransactionsListProps) => {
+  onLoadMore,
+  onTotalCountChange,
+  isLoadingMore,
+}: TransactionsListContentProps) => {
   const { bottom } = useSafeAreaInsets();
+  const hasMore = visibleCount < totalCount;
+
+  useEffect(() => {
+    onTotalCountChange(totalCount);
+  }, [onTotalCountChange, totalCount]);
 
   const data = useMemo(() => {
-    const result: (string | TransactionModel)[] = [];
+    const result: ListItem[] = [];
 
     let currentKey: string | null = null;
 
@@ -64,6 +103,13 @@ const TransactionsList = ({
     return result;
   }, [transactions]);
 
+  const onEndReached = useCallback(() => {
+    if (!hasMore) {
+      return;
+    }
+    onLoadMore(totalCount);
+  }, [hasMore, onLoadMore, totalCount]);
+
   const renderItem = useCallback(({ item }: { item: ListItem }) => {
     if (typeof item === 'string') {
       return (
@@ -76,13 +122,25 @@ const TransactionsList = ({
     }
   }, []);
 
+  const listFooter = useMemo(() => {
+    if (!hasMore) {
+      return null;
+    }
+
+    return (
+      <View alignItems="center" justifyContent="center" paddingVertical="$3">
+        {isLoadingMore && <ActivityIndicator size="small" color="#9CA3AF" />}
+      </View>
+    );
+  }, [hasMore, isLoadingMore]);
+
   const contentInset = useMemo(() => {
     return {
       bottom: 64 + bottom,
     };
   }, [bottom]);
 
-  if (transactions.length === 0) {
+  if (totalCount === 0) {
     if ((appliedNumberOfFilters ?? 0) > 0) {
       return (
         <View flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$3">
@@ -115,6 +173,9 @@ const TransactionsList = ({
       renderItem={renderItem}
       getItemType={getItemType}
       estimatedItemSize={52}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={listFooter}
     />
   );
 };
@@ -123,47 +184,114 @@ const getItemType = (item: ListItem) => {
   return typeof item === 'string' ? 'sectionHeader' : 'row';
 };
 
-const keyExtractor = (item: ListItem) => {
-  return typeof item === 'string' ? item : item.id;
+const keyExtractor = (item: ListItem, index: number) => {
+  return typeof item === 'string' ? `section-${item}-${index}` : item.id;
 };
+
 const withData = withObservables<
   {
     database: Database;
     dateFilter?: DateFilters | null;
     customRange?: [Date, Date];
     categories: CategoryModel[];
+    visibleCount: number;
+    onLoadMore: (totalCount: number) => void;
+    onTotalCountChange: (totalCount: number) => void;
+    isLoadingMore: boolean;
   },
-  { transactions: Observable<TransactionModel[]> }
+  {
+    transactions: Observable<TransactionModel[]>;
+    totalCount: Observable<number>;
+  }
 >(
-  ['dateFilter', 'customRange', 'categories'],
-  ({ database, dateFilter, customRange, categories }) => {
-    const dayjsInstance = dayjs();
-    let query = database.collections
-      .get<TransactionModel>('transactions')
-      .query(Q.sortBy('date', 'desc'));
+  ['dateFilter', 'customRange', 'categories', 'visibleCount'],
+  ({ database, dateFilter, customRange, categories, visibleCount }) => {
+    const baseQuery = buildTransactionsBaseQuery(database, {
+      dateFilter,
+      customRange,
+      categories,
+    });
+    const visibleQuery = baseQuery.extend(Q.take(Math.max(1, visibleCount)));
 
-    if (dateFilter === 'This Year') {
-      const startOfYear = dayjsInstance.startOf('year').toDate();
-      const endOfYear = dayjsInstance.endOf('year').toDate();
-      query = query.extend(Q.where('date', Q.gte(startOfYear.getTime())));
-      query = query.extend(Q.where('date', Q.lte(endOfYear.getTime())));
-    } else if (dateFilter === 'This Month') {
-      const startOfMonth = dayjsInstance.startOf('month').toDate();
-      const endOfMonth = dayjsInstance.endOf('month').toDate();
-      query = query.extend(Q.where('date', Q.gte(startOfMonth.getTime())));
-      query = query.extend(Q.where('date', Q.lte(endOfMonth.getTime())));
-    } else if (customRange) {
-      const [start, end] = customRange;
-      query = query.extend(Q.where('date', Q.gte(start.getTime())));
-      query = query.extend(Q.where('date', Q.lte(end.getTime())));
-    }
-    if (categories.length > 0) {
-      query = query.extend(Q.where('categoryId', Q.oneOf(categories.map((c) => c.id))));
-    }
     return {
-      transactions: query.observe(),
+      transactions: visibleQuery.observeWithColumns([...OBSERVED_TRANSACTION_COLUMNS]),
+      totalCount: baseQuery.observeCount(false),
     };
   }
 );
 
-export default withData(TransactionsList);
+const TransactionsListWithData = withData(TransactionsList);
+
+const TransactionsListContainer = (props: TransactionsListProps) => {
+  const { dateFilter, customRange, categories, scrollRef } = props;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const isLoadingMoreRef = useRef(false);
+
+  const categoriesKey = useMemo(
+    () => categories.map((category) => category.id).sort().join('|'),
+    [categories]
+  );
+  const customRangeStart = customRange?.[0]?.getTime() ?? null;
+  const customRangeEnd = customRange?.[1]?.getTime() ?? null;
+  const filterResetKey = useMemo(
+    () =>
+      `${dateFilter ?? 'all'}:${customRangeStart ?? 'none'}:${customRangeEnd ?? 'none'}:${categoriesKey}`,
+    [categoriesKey, customRangeEnd, customRangeStart, dateFilter]
+  );
+
+  useEffect(() => {
+    void filterResetKey;
+
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+    setIsLoadingMore(false);
+    isLoadingMoreRef.current = false;
+    scrollRef?.current?.scrollToOffset({
+      offset: 0,
+      animated: false,
+    });
+  }, [filterResetKey, scrollRef]);
+
+  const onLoadMore = useCallback(
+    (totalCount: number) => {
+      if (isLoadingMoreRef.current || visibleCount >= totalCount) {
+        return;
+      }
+
+      isLoadingMoreRef.current = true;
+      setIsLoadingMore(true);
+      setVisibleCount((previous) => Math.min(previous + PAGE_INCREMENT, totalCount));
+    },
+    [visibleCount]
+  );
+
+  const onTotalCountChange = useCallback((totalCount: number) => {
+    setVisibleCount((previous) => {
+      if (totalCount > 0 && previous > totalCount) {
+        return totalCount;
+      }
+      return previous;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isLoadingMoreRef.current && !isLoadingMore) {
+      return;
+    }
+
+    isLoadingMoreRef.current = false;
+    setIsLoadingMore(false);
+  }, [isLoadingMore]);
+
+  return (
+    <TransactionsListWithData
+      {...props}
+      visibleCount={visibleCount}
+      onLoadMore={onLoadMore}
+      onTotalCountChange={onTotalCountChange}
+      isLoadingMore={isLoadingMore}
+    />
+  );
+};
+
+export default TransactionsListContainer;

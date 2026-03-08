@@ -1132,45 +1132,45 @@ export const toggleTripArchive = async (tripId: string) => {
 export const getTripSpending = async (tripId: string) => {
   try {
     const trip = await database.get<TripModel>('trips').find(tripId);
-    const transactions = await database
+    const useTripCurrency = Boolean(trip.currencyCode);
+
+    const aggregateSql = useTripCurrency
+      ? `select 
+            count(*) as transactionCount,
+            coalesce(sum(case when amount < 0 and currencyCode = ? then abs(amount) else 0 end), 0) as totalSpent,
+            coalesce(sum(case when amount > 0 and currencyCode = ? then amount else 0 end), 0) as totalIncome
+         from transactions
+         where tripId = ? and _status != 'deleted'`
+      : `select 
+            count(*) as transactionCount,
+            coalesce(sum(case when amountInBaseCurrency < 0 then abs(amountInBaseCurrency) else 0 end), 0) as totalSpent,
+            coalesce(sum(case when amountInBaseCurrency > 0 then amountInBaseCurrency else 0 end), 0) as totalIncome
+         from transactions
+         where tripId = ? and _status != 'deleted'`;
+
+    const params = useTripCurrency
+      ? [trip.currencyCode, trip.currencyCode, tripId]
+      : [tripId];
+
+    const [rawTotals] = (await database
       .get<TransactionModel>('transactions')
-      .query(Q.where('tripId', tripId))
-      .fetch();
+      .query(Q.unsafeSqlQuery(aggregateSql, params))
+      .unsafeFetchRaw()) as Array<{
+      transactionCount: number | string | null;
+      totalSpent: number | string | null;
+      totalIncome: number | string | null;
+    }>;
 
-    // If trip has a preferred currency, sum transactions in that currency
-    // Otherwise, use the base currency amounts
-    const useTripCurrency = !!trip.currencyCode;
-
-    let totalSpent = 0;
-    let totalIncome = 0;
-
-    if (useTripCurrency) {
-      // Sum transactions that match the trip's currency in their original amount
-      const tripCurrencyTransactions = transactions.filter(
-        (tx) => tx.currencyCode === trip.currencyCode
-      );
-      totalSpent = tripCurrencyTransactions
-        .filter((tx) => tx.amount < 0)
-        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-      totalIncome = tripCurrencyTransactions
-        .filter((tx) => tx.amount > 0)
-        .reduce((sum, tx) => sum + tx.amount, 0);
-    } else {
-      // Use base currency amounts for all transactions
-      totalSpent = transactions
-        .filter((tx) => tx.amountInBaseCurrency < 0)
-        .reduce((sum, tx) => sum + Math.abs(tx.amountInBaseCurrency), 0);
-      totalIncome = transactions
-        .filter((tx) => tx.amountInBaseCurrency > 0)
-        .reduce((sum, tx) => sum + tx.amountInBaseCurrency, 0);
-    }
+    const totalSpent = Number(rawTotals?.totalSpent ?? 0);
+    const totalIncome = Number(rawTotals?.totalIncome ?? 0);
+    const transactionCount = Number(rawTotals?.transactionCount ?? 0);
 
     return {
       trip,
       totalSpent,
       totalIncome,
       netAmount: totalIncome - totalSpent,
-      transactionCount: transactions.length,
+      transactionCount,
       currencyCode: trip.currencyCode, // Return the currency used for display
     };
   } catch (error) {
@@ -1188,5 +1188,27 @@ export const getActiveTrips = async () => {
   } catch (error) {
     console.error('Failed to get active trips:', error);
     throw error instanceof Error ? error : new Error('Failed to get active trips');
+  }
+};
+
+export const getMostRecentActiveTrip = async (): Promise<TripModel | null> => {
+  try {
+    const now = Date.now() + 60000;
+    const [trip] = await database
+      .get<TripModel>('trips')
+      .query(
+        Q.where('isArchived', false),
+        Q.or(Q.where('endDate', Q.eq(null)), Q.where('endDate', Q.gt(now))),
+        Q.sortBy('startDate', Q.desc),
+        Q.take(1)
+      )
+      .fetch();
+
+    return trip ?? null;
+  } catch (error) {
+    console.error('Failed to get most recent active trip:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to get most recent active trip');
   }
 };

@@ -29,10 +29,20 @@ export const SpendingTrends = withObservables<
     chartData: Observable<SpendingTrendsChartData>;
   }
 >(['trendType'], ({ database, trendType }) => {
+  const startDate =
+    trendType === 'daily'
+      ? dayjs().startOf('month').toDate().getTime()
+      : trendType === 'last30days'
+        ? dayjs().subtract(29, 'day').startOf('day').toDate().getTime()
+        : dayjs().subtract(7, 'week').startOf('week').toDate().getTime();
+
   return {
     chartData: database.collections
       .get<TransactionModel>('transactions')
-      .query(Q.where('amountInBaseCurrency', Q.lt(0)))
+      .query(
+        Q.where('amountInBaseCurrency', Q.lt(0)),
+        Q.where('date', Q.gte(startDate))
+      )
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {
