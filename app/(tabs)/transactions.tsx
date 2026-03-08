@@ -3,7 +3,7 @@ import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useScrollToTop } from '@react-navigation/native';
 import { Filter } from '@tamagui/lucide-icons';
 import * as React from 'react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 import { Button } from '../../components/button/Button';
@@ -26,6 +26,12 @@ export default function TransactionsScreen() {
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
   const scrollRef = useRef(null);
+  const customRange = useMemo<[Date, Date] | undefined>(() => {
+    if (dateFilter !== 'Custom') {
+      return undefined;
+    }
+    return [fromDate, toDate];
+  }, [dateFilter, fromDate, toDate]);
 
   useScrollToTop(scrollRef);
 
@@ -56,7 +62,7 @@ export default function TransactionsScreen() {
         <TransactionsList
           database={database}
           dateFilter={dateFilter}
-          customRange={dateFilter === 'Custom' ? [fromDate, toDate] : undefined}
+          customRange={customRange}
           categories={selectedCategories}
           appliedNumberOfFilters={appliedNumberOfFilters}
           onClearFilters={() => {

@@ -30,22 +30,37 @@ const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
   const activeTrip = activeTrips[0]; // Show the first/most recent active trip
 
   useEffect(() => {
-    if (activeTrip) {
-      const loadSpending = async () => {
-        try {
-          const result = await getTripSpending(activeTrip.id);
-          setSpending({
-            totalSpent: result.totalSpent,
-            transactionCount: result.transactionCount,
-            currencyCode: result.currencyCode,
-          });
-        } catch (error) {
-          console.error('Failed to load trip spending:', error);
-        }
+    let isMounted = true;
+
+    if (!activeTrip?.id) {
+      setSpending(null);
+      return () => {
+        isMounted = false;
       };
-      loadSpending();
     }
-  }, [activeTrip]);
+
+    const loadSpending = async () => {
+      try {
+        const result = await getTripSpending(activeTrip.id);
+        if (!isMounted) {
+          return;
+        }
+        setSpending({
+          totalSpent: result.totalSpent,
+          transactionCount: result.transactionCount,
+          currencyCode: result.currencyCode,
+        });
+      } catch (error) {
+        console.error('Failed to load trip spending:', error);
+      }
+    };
+
+    loadSpending();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTrip?.id]);
 
   if (!tripsEnabled || !activeTrip) {
     return null;
@@ -136,7 +151,8 @@ const enhance = withObservables<
       .query(
         Q.where('isArchived', false),
         Q.or(Q.where('endDate', Q.eq(null)), Q.where('endDate', Q.gt(now))),
-        Q.sortBy('startDate', Q.desc)
+        Q.sortBy('startDate', Q.desc),
+        Q.take(1)
       )
       .observe(),
   };

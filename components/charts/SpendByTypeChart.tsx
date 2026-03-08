@@ -23,10 +23,17 @@ export const SpendByType = withObservables<
     chartData: Observable<SpendByMonthChartData>;
   }
 >(['type'], ({ database, type }) => {
+  const startDate = dayjs().subtract(5, 'month').startOf('month').toDate().getTime();
+  const endDate = dayjs().endOf('month').toDate().getTime();
+
   return {
     chartData: database.collections
       .get<TransactionModel>('transactions')
-      .query(Q.where('amountInBaseCurrency', type === 'income' ? Q.gte(0) : Q.lt(0)))
+      .query(
+        Q.where('amountInBaseCurrency', type === 'income' ? Q.gte(0) : Q.lt(0)),
+        Q.where('date', Q.gte(startDate)),
+        Q.where('date', Q.lte(endDate))
+      )
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {

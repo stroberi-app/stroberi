@@ -21,7 +21,14 @@ export const HomeTransactionsSection = withObservables<
     transactions: database.collections
       .get<TransactionModel>('transactions')
       .query(Q.sortBy('date', 'desc'), Q.take(20))
-      .observe(),
+      .observeWithColumns([
+        'merchant',
+        'amount',
+        'currencyCode',
+        'date',
+        'recurringTransactionId',
+        'categoryId',
+      ]),
   };
 })(({ transactions, header, scrollRef }: RecentTransactionsSectionProps) => {
   const { bottom } = useSafeAreaInsets();
