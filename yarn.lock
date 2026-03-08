@@ -8408,6 +8408,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eas@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "eas@npm:0.1.0"
+  checksum: 83ba695210315d4b310b888764c4848d01e1631a5469c3e3345e9f4d86325952a66bc22a8676cf22dc05fafe67fb2455c430a2ba0b9fc733e8c9be82994c310b
+  languageName: node
+  linkType: hard
+
 "eastasianwidth@npm:^0.2.0":
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"
@@ -14627,6 +14634,7 @@ __metadata:
     babel-preset-expo: "npm:~12.0.0"
     burnt: "npm:^0.12.2"
     dayjs: "npm:^1.11.13"
+    eas: "npm:^0.1.0"
     expo: "npm:~52.0.49"
     expo-blur: "npm:~14.0.3"
     expo-build-properties: "npm:~0.13.3"

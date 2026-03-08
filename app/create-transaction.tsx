@@ -13,7 +13,14 @@ import {
   User,
 } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   InteractionManager,
   Keyboard,
@@ -35,7 +42,7 @@ import type { CategoryModel } from '../database/category-model';
 import { database } from '../database/index';
 import {
   createTransaction,
-  getActiveTrips,
+  getMostRecentActiveTrip,
   updateTransaction,
 } from '../database/helpers';
 import type { TransactionModel } from '../database/transaction-model';
@@ -52,6 +59,7 @@ const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
 );
 
 const modalContainerComponent = Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
+type SheetType = 'currency' | 'categories' | 'trip';
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -95,13 +103,83 @@ function CreateTransaction() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [amountValidationError, setAmountValidationError] = useState<string | null>(null);
+  const [isCurrencySheetMounted, setIsCurrencySheetMounted] = useState(false);
+  const [isCategoriesSheetMounted, setIsCategoriesSheetMounted] = useState(false);
+  const [isTripSheetMounted, setIsTripSheetMounted] = useState(false);
+  const [pendingSheetToOpen, setPendingSheetToOpen] = useState<SheetType | null>(null);
 
-  const presentSheet = (sheetRef: RefObject<BottomSheetModal | null>) => {
+  const presentSheet = useCallback((sheetRef: RefObject<BottomSheetModal | null>) => {
     Keyboard.dismiss();
     InteractionManager.runAfterInteractions(() => {
       sheetRef.current?.present();
     });
-  };
+  }, []);
+
+  const requestSheetOpen = useCallback(
+    (sheet: SheetType) => {
+      if (sheet === 'currency') {
+        if (!isCurrencySheetMounted) {
+          setIsCurrencySheetMounted(true);
+          setPendingSheetToOpen('currency');
+          return;
+        }
+        presentSheet(bottomSheetRef);
+        return;
+      }
+
+      if (sheet === 'categories') {
+        if (!isCategoriesSheetMounted) {
+          setIsCategoriesSheetMounted(true);
+          setPendingSheetToOpen('categories');
+          return;
+        }
+        presentSheet(manageCategoriesSheetRef);
+        return;
+      }
+
+      if (!isTripSheetMounted) {
+        setIsTripSheetMounted(true);
+        setPendingSheetToOpen('trip');
+        return;
+      }
+      presentSheet(tripSelectSheetRef);
+    },
+    [isCategoriesSheetMounted, isCurrencySheetMounted, isTripSheetMounted, presentSheet]
+  );
+
+  useEffect(() => {
+    if (!pendingSheetToOpen) {
+      return;
+    }
+
+    const mounted =
+      (pendingSheetToOpen === 'currency' && isCurrencySheetMounted) ||
+      (pendingSheetToOpen === 'categories' && isCategoriesSheetMounted) ||
+      (pendingSheetToOpen === 'trip' && isTripSheetMounted);
+
+    if (!mounted) {
+      return;
+    }
+
+    const openSheet = () => {
+      if (pendingSheetToOpen === 'currency') {
+        presentSheet(bottomSheetRef);
+      } else if (pendingSheetToOpen === 'categories') {
+        presentSheet(manageCategoriesSheetRef);
+      } else {
+        presentSheet(tripSelectSheetRef);
+      }
+      setPendingSheetToOpen(null);
+    };
+
+    requestAnimationFrame(openSheet);
+  }, [
+    isCategoriesSheetMounted,
+    isCurrencySheetMounted,
+    isTripSheetMounted,
+    pendingSheetToOpen,
+    presentSheet,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -115,10 +193,12 @@ function CreateTransaction() {
         const transactionRecord = await database
           .get<TransactionModel>('transactions')
           .find(transactionId);
-        const categoryRecord = await transactionRecord.category?.fetch();
-        const tripRecord = transactionRecord.tripId
-          ? await database.get<TripModel>('trips').find(transactionRecord.tripId)
-          : null;
+        const [categoryRecord, tripRecord] = await Promise.all([
+          transactionRecord.category?.fetch() ?? Promise.resolve(null),
+          transactionRecord.tripId
+            ? database.get<TripModel>('trips').find(transactionRecord.tripId)
+            : Promise.resolve(null),
+        ]);
 
         if (!isMounted) {
           return;
@@ -268,12 +348,7 @@ function CreateTransaction() {
       // Only for new transactions (not editing) and if trips are enabled
       if (!transaction && !transactionId && tripsEnabled) {
         try {
-          const activeTrips = await getActiveTrips();
-          // Find most recent active trip (not archived, end date null or in future)
-          const now = Date.now();
-          const currentTrip = activeTrips.find(
-            (t) => !t.isArchived && (!t.endDate || t.endDate.getTime() >= now)
-          );
+          const currentTrip = await getMostRecentActiveTrip();
           if (currentTrip) {
             setSelectedTrip(currentTrip);
             if (currentTrip.currencyCode) {
@@ -294,9 +369,9 @@ function CreateTransaction() {
 
   useEffect(() => {
     if (isDefaultCurrencyLoaded && !defaultCurrency) {
-      bottomSheetRef.current?.present();
+      requestSheetOpen('currency');
     }
-  }, [defaultCurrency, isDefaultCurrencyLoaded]);
+  }, [defaultCurrency, isDefaultCurrencyLoaded, requestSheetOpen]);
 
   return (
     <BottomSheetModalProvider>
@@ -340,7 +415,7 @@ function CreateTransaction() {
         <View mt="$8">
           <CurrencyInput
             onCurrencySelect={() => {
-              presentSheet(bottomSheetRef);
+              requestSheetOpen('currency');
             }}
             selectedCurrency={selectedCurrency}
             value={amount}
@@ -370,7 +445,7 @@ function CreateTransaction() {
             <LinkButton
               color="white"
               onPress={() => {
-                presentSheet(manageCategoriesSheetRef);
+                requestSheetOpen('categories');
               }}
             >
               {selectedCategory ? (
@@ -392,7 +467,7 @@ function CreateTransaction() {
               <LinkButton
                 color="white"
                 onPress={() => {
-                  presentSheet(tripSelectSheetRef);
+                  requestSheetOpen('trip');
                 }}
               >
                 {selectedTrip ? (
@@ -420,27 +495,33 @@ function CreateTransaction() {
           />
         </View>
       </StyledScrollView>
-      <CurrencySelect
-        sheetRef={bottomSheetRef}
-        containerComponent={modalContainerComponent}
-        onSelect={(currency) => {
-          setSelectedCurrency(currency.code);
-          bottomSheetRef.current?.close();
-        }}
-        selectedCurrency={selectedCurrency}
-      />
-      <ManageCategoriesSheet
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        sheetRef={manageCategoriesSheetRef}
-        containerComponent={modalContainerComponent}
-      />
-      <TripSelect
-        sheetRef={tripSelectSheetRef}
-        selectedTrip={selectedTrip}
-        onSelect={handleTripSelect}
-        containerComponent={modalContainerComponent}
-      />
+      {isCurrencySheetMounted && (
+        <CurrencySelect
+          sheetRef={bottomSheetRef}
+          containerComponent={modalContainerComponent}
+          onSelect={(currency) => {
+            setSelectedCurrency(currency.code);
+            bottomSheetRef.current?.close();
+          }}
+          selectedCurrency={selectedCurrency}
+        />
+      )}
+      {isCategoriesSheetMounted && (
+        <ManageCategoriesSheet
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          sheetRef={manageCategoriesSheetRef}
+          containerComponent={modalContainerComponent}
+        />
+      )}
+      {tripsEnabled && isTripSheetMounted && (
+        <TripSelect
+          sheetRef={tripSelectSheetRef}
+          selectedTrip={selectedTrip}
+          onSelect={handleTripSelect}
+          containerComponent={modalContainerComponent}
+        />
+      )}
     </BottomSheetModalProvider>
   );
 }
