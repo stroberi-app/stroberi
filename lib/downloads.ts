@@ -6,8 +6,7 @@ const { StorageAccessFramework, writeAsStringAsync, documentDirectory, EncodingT
   FileSystem;
 
 const androidExport = async (fileName: string, fileContent: string, mimeType: string) => {
-  const permissions =
-    await StorageAccessFramework.requestDirectoryPermissionsAsync();
+  const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
   if (!permissions.granted) {
     throw Error('Permissions not granted');
   }
@@ -22,8 +21,7 @@ const androidExport = async (fileName: string, fileContent: string, mimeType: st
     await writeAsStringAsync(uri, fileContent, {
       encoding: EncodingType.UTF8,
     });
-  } catch (err) {
-    console.log(err);
+  } catch {
     throw Error('An error occurred while exporting file');
   }
 };
@@ -46,18 +44,20 @@ const shareExport = async (fileName: string, fileContent: string, mimeType: stri
       UTI: 'public.item',
       mimeType,
     });
-  } catch (err) {
-    console.log(err);
+  } catch {
     throw Error('An error occurred while exporting file');
   }
 };
 
-export const doExport = async (fileName: string, fileContent: string, mimeType: string) => {
+export const doExport = async (
+  fileName: string,
+  fileContent: string,
+  mimeType: string
+) => {
   if (Platform.OS === 'android') {
     try {
       await androidExport(fileName, fileContent, mimeType);
-    } catch (e) {
-      console.log('SAF export failed, falling back to share:', e);
+    } catch {
       return shareExport(fileName, fileContent, mimeType);
     }
   } else {

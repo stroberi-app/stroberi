@@ -60,7 +60,7 @@ export function Carousel({ renderItem, data }: CarouselProps) {
     <>
       <CarouselComp
         vertical={false}
-        loop
+        loop={false}
         ref={ref}
         width={width - 16}
         height={CAROUSEL_ITEM_WRAPPER_HEIGHT}

@@ -12,7 +12,7 @@ import {
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Text, View, YGroup } from 'tamagui';
@@ -20,7 +20,7 @@ import type { CategoryModel } from '../../database/category-model';
 import {
   createRecurringTransaction,
   updateRecurringTransaction,
-} from '../../database/helpers';
+} from '../../database/actions/recurring-transactions';
 import type {
   RecurringFrequency,
   RecurringTransactionModel,
@@ -35,6 +35,13 @@ import { CurrencySelect } from '../CurrencySelect';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { DatePicker } from '../DatePicker';
+import {
+  buildRecurringTransactionFormState,
+  buildRecurringTransactionPayload,
+  getDefaultRecurringTransactionFormState,
+  getNextRecurringOccurrences,
+  validateRecurringTransactionForm,
+} from './recurringTransactionFormUtils';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 import { ManageCategoriesSheet } from './ManageCategoriesSheet';
 
@@ -76,54 +83,60 @@ export const RecurringTransactionFormSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
 
+  const applyFormState = useCallback(
+    (state: Awaited<ReturnType<typeof buildRecurringTransactionFormState>>) => {
+      setMerchantName(state.merchantName);
+      setAmount(state.amount);
+      setTransactionType(state.transactionType);
+      setSelectedCurrency(state.selectedCurrency);
+      setFrequency(state.frequency);
+      setStartDate(state.startDate);
+      setHasEndDate(state.hasEndDate);
+      setEndDate(state.endDate);
+      setSelectedCategory(state.selectedCategory);
+    },
+    []
+  );
+
   useEffect(() => {
-    if (recurring) {
-      setMerchantName(recurring.merchant);
-      setAmount(Math.abs(recurring.amount).toString());
-      setTransactionType(recurring.amount < 0 ? 'expense' : 'income');
-      setSelectedCurrency(recurring.currencyCode);
-      setFrequency(recurring.frequency);
-      setStartDate(recurring.startDate);
-      setHasEndDate(!!recurring.endDate);
-      recurring.category?.fetch().then((cat) => {
-        setSelectedCategory(cat ?? null);
-      });
-      if (recurring.endDate) {
-        setEndDate(recurring.endDate);
-      }
-    } else {
-      setMerchantName('');
-      setAmount('');
-      setTransactionType('expense');
-      setSelectedCurrency(defaultCurrency ?? 'USD');
-      setFrequency('monthly');
-      setStartDate(new Date());
-      setHasEndDate(false);
-      setEndDate(dayjs().add(1, 'year').toDate());
-      setSelectedCategory(null);
-    }
-  }, [recurring, defaultCurrency]);
+    const loadState = async () => {
+      const nextState = await buildRecurringTransactionFormState(
+        recurring,
+        defaultCurrency
+      );
+      applyFormState(nextState);
+    };
+
+    loadState();
+  }, [applyFormState, defaultCurrency, recurring]);
 
   const resetForm = useCallback(() => {
-    setMerchantName('');
-    setAmount('');
-    setTransactionType('expense');
-    setSelectedCurrency(defaultCurrency ?? 'USD');
-    setFrequency('monthly');
-    setStartDate(new Date());
-    setHasEndDate(false);
-    setEndDate(dayjs().add(1, 'year').toDate());
-    setSelectedCategory(null);
-  }, [defaultCurrency]);
+    applyFormState(getDefaultRecurringTransactionFormState(defaultCurrency));
+  }, [applyFormState, defaultCurrency]);
 
   const handleSubmit = async () => {
     if (isSaving) return;
 
-    const amountValue = Number(amount);
-    if (!amount || !Number.isFinite(amountValue) || amountValue === 0) {
+    const validationMessage = validateRecurringTransactionForm({
+      amount,
+      hasEndDate,
+      endDate,
+      startDate,
+    });
+    if (validationMessage === 'Please enter a valid amount') {
       toast.show({
         title: 'Invalid Amount',
-        message: 'Please enter a valid amount',
+        message: validationMessage,
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
+    if (validationMessage) {
+      toast.show({
+        title: 'Invalid Date Range',
+        message: validationMessage,
         preset: 'error',
         haptic: 'error',
       });
@@ -133,18 +146,17 @@ export const RecurringTransactionFormSheet = ({
     setIsSaving(true);
 
     try {
-      const finalAmount =
-        transactionType === 'expense' ? -Math.abs(amountValue) : Math.abs(amountValue);
-      const payload = {
-        merchant: merchantName,
-        amount: finalAmount,
-        categoryId: selectedCategory?.id ?? null,
+      const payload = buildRecurringTransactionPayload({
+        amount,
+        category: selectedCategory,
         currencyCode: selectedCurrency,
-        note: '',
+        endDate,
         frequency,
+        hasEndDate,
+        merchantName,
         startDate,
-        endDate: hasEndDate ? endDate : undefined,
-      };
+        transactionType,
+      });
 
       if (recurring) {
         await updateRecurringTransaction({
@@ -182,56 +194,16 @@ export const RecurringTransactionFormSheet = ({
 
   const frequencyLabel =
     FREQUENCY_OPTIONS.find((opt) => opt.value === frequency)?.label ?? 'Monthly';
-
-  const calculateNextOccurrences = () => {
-    const occurrences: Date[] = [];
-    let current = dayjs(startDate);
-    const today = dayjs().startOf('day');
-
-    while (current.isBefore(today)) {
-      switch (frequency) {
-        case 'daily':
-          current = current.add(1, 'day');
-          break;
-        case 'weekly':
-          current = current.add(1, 'week');
-          break;
-        case 'monthly':
-          current = current.add(1, 'month');
-          break;
-        case 'yearly':
-          current = current.add(1, 'year');
-          break;
-      }
-      if (hasEndDate && current.isAfter(dayjs(endDate))) {
-        return occurrences;
-      }
-    }
-
-    for (let i = 0; i < 5; i++) {
-      if (hasEndDate && current.isAfter(dayjs(endDate))) break;
-      occurrences.push(current.toDate());
-
-      switch (frequency) {
-        case 'daily':
-          current = current.add(1, 'day');
-          break;
-        case 'weekly':
-          current = current.add(1, 'week');
-          break;
-        case 'monthly':
-          current = current.add(1, 'month');
-          break;
-        case 'yearly':
-          current = current.add(1, 'year');
-          break;
-      }
-    }
-
-    return occurrences;
-  };
-
-  const nextOccurrences = calculateNextOccurrences();
+  const nextOccurrences = useMemo(
+    () =>
+      getNextRecurringOccurrences({
+        endDate,
+        frequency,
+        hasEndDate,
+        startDate,
+      }),
+    [endDate, frequency, hasEndDate, startDate]
+  );
 
   return (
     <>

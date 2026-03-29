@@ -37,6 +37,7 @@ export default function RootLayout() {
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
   });
+  const { defaultCurrency } = useDefaultCurrency();
 
   useEffect(() => {
     if (interLoaded || interError) {
@@ -44,9 +45,8 @@ export default function RootLayout() {
     }
   }, [interLoaded, interError]);
 
-  useDefaultCurrency();
   useSeedCategories();
-  useRecurringTransactions();
+  useRecurringTransactions(defaultCurrency);
 
   if (!interLoaded && !interError) {
     return null;

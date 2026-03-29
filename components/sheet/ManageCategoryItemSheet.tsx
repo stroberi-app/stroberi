@@ -1,4 +1,5 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { PlusCircle } from '@tamagui/lucide-icons';
 import React, { useEffect, useState } from 'react';
 import { Keyboard } from 'react-native';
@@ -8,7 +9,8 @@ import type { OnEmojiSelected } from 'rn-emoji-keyboard/lib/typescript/contexts/
 import { Text, useTheme, View } from 'tamagui';
 import { spendingCategories } from '../../data/emojis';
 import type { CategoryModel } from '../../database/category-model';
-import { createCategory, updateCategory } from '../../database/helpers';
+import { createCategory, updateCategory } from '../../database/actions/categories';
+import useToast from '../../hooks/useToast';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { BottomSheetTextInput } from './BottomSheetTextInput';
@@ -18,15 +20,19 @@ type CreateCategorySheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
   category?: CategoryModel | null;
   onClose: () => void;
+  containerComponent?: React.ComponentType<React.PropsWithChildren>;
 };
 
 export const ManageCategoryItemSheet = ({
   sheetRef,
   category,
   onClose,
+  containerComponent,
 }: CreateCategorySheetProps) => {
   const { stroberi } = useTheme();
   const stroberiColor = stroberi?.get() ?? 'black';
+  const toast = useToast();
+  const database = useDatabase();
   const [name, setName] = useState(category?.name || '');
   const [selectedIcon, setSelectedIcon] = useState(category?.icon || getRandomIcon());
   const { bottom } = useSafeAreaInsets();
@@ -47,17 +53,56 @@ export const ManageCategoryItemSheet = ({
     setIsOpen(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     Keyboard.dismiss();
-    if (category?.id) {
-      updateCategory({ id: category.id, name, icon: selectedIcon }).then(() => {
-        sheetRef.current?.dismiss();
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.show({
+        title: 'Missing Name',
+        message: 'Category name cannot be empty',
+        preset: 'error',
+        haptic: 'error',
       });
-    } else {
-      createCategory({ name, icon: selectedIcon }).then(() => {
+      return;
+    }
+
+    const existingCategories = await database
+      .get<CategoryModel>('categories')
+      .query()
+      .fetch();
+
+    const existingDuplicate = existingCategories.find(
+      (item) =>
+        item.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
+        item.id !== category?.id
+    );
+
+    if (existingDuplicate) {
+      toast.show({
+        title: 'Duplicate Category',
+        message: 'A category with this name already exists',
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
+    try {
+      if (category?.id) {
+        await updateCategory({ id: category.id, name: trimmedName, icon: selectedIcon });
+        sheetRef.current?.dismiss();
+      } else {
+        await createCategory({ name: trimmedName, icon: selectedIcon });
         sheetRef.current?.dismiss();
         setName('');
         setSelectedIcon(getRandomIcon());
+      }
+    } catch (error) {
+      toast.show({
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Failed to save category',
+        preset: 'error',
+        haptic: 'error',
       });
     }
   };
@@ -65,6 +110,7 @@ export const ManageCategoryItemSheet = ({
   return (
     <BottomSheetModal
       ref={sheetRef}
+      containerComponent={containerComponent}
       enableContentPanningGesture={false}
       stackBehavior="push"
       enableDynamicSizing={true}

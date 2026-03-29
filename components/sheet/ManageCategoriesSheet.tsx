@@ -18,6 +18,7 @@ type ManageCategoriesSheetProps = {
   setSelectedCategory?: (category: CategoryModel) => void;
   interactive?: boolean;
   sheetRef: React.RefObject<BottomSheetModal>;
+  containerComponent?: React.ComponentType<React.PropsWithChildren>;
   preventClose?: boolean;
   noSearch?: boolean;
   swipeable?: boolean;
@@ -27,6 +28,7 @@ export const ManageCategoriesSheet = ({
   selectedCategory,
   setSelectedCategory,
   sheetRef,
+  containerComponent,
   preventClose = false,
   selectedCategories,
   noSearch,
@@ -45,6 +47,7 @@ export const ManageCategoriesSheet = ({
     <>
       <BottomSheetModal
         ref={sheetRef}
+        containerComponent={containerComponent}
         $modal={false}
         stackBehavior="push"
         enableContentPanningGesture={false}
@@ -102,6 +105,7 @@ export const ManageCategoriesSheet = ({
       <ManageCategoryItemSheet
         sheetRef={categorySheet}
         category={categoryToEdit}
+        containerComponent={containerComponent}
         onClose={() => {
           setCategoryToEdit(null);
         }}

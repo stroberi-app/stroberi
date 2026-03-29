@@ -29,13 +29,30 @@ export const SpendingTrends = withObservables<
     chartData: Observable<SpendingTrendsChartData>;
   }
 >(['trendType'], ({ database, trendType }) => {
+  const startDate =
+    trendType === 'daily'
+      ? dayjs().startOf('month').toDate().getTime()
+      : trendType === 'last30days'
+        ? dayjs().subtract(29, 'day').startOf('day').toDate().getTime()
+        : dayjs().subtract(7, 'week').startOf('week').toDate().getTime();
+
   return {
     chartData: database.collections
       .get<TransactionModel>('transactions')
-      .query(Q.where('amountInBaseCurrency', Q.lt(0)))
+      .query(Q.where('amountInBaseCurrency', Q.lt(0)), Q.where('date', Q.gte(startDate)))
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {
+          const dailyTotals = new Map<string, number>();
+          for (const transaction of transactions) {
+            const dayKey = dayjs(transaction.date).format('YYYY-MM-DD');
+            const currentTotal = dailyTotals.get(dayKey) ?? 0;
+            dailyTotals.set(
+              dayKey,
+              currentTotal + Math.abs(transaction.amountInBaseCurrency)
+            );
+          }
+
           if (trendType === 'daily') {
             const currentMonth = dayjs().startOf('month');
             const today = dayjs();
@@ -47,16 +64,7 @@ export const SpendingTrends = withObservables<
               const date = currentMonth.add(i, 'day');
               const dayName = date.format('DD');
               const sortKey = date.valueOf();
-
-              const total = transactions
-                .filter((transaction) => {
-                  const transactionDate = dayjs(transaction.date);
-                  return transactionDate.isSame(date, 'day');
-                })
-                .reduce(
-                  (acc, transaction) => acc + Math.abs(transaction.amountInBaseCurrency),
-                  0
-                );
+              const total = dailyTotals.get(date.format('YYYY-MM-DD')) ?? 0;
 
               return {
                 period: dayName,
@@ -73,17 +81,7 @@ export const SpendingTrends = withObservables<
               .map((date) => {
                 const dayLabel = date.format('DD');
                 const sortKey = date.valueOf();
-
-                const total = transactions
-                  .filter((transaction) => {
-                    const transactionDate = dayjs(transaction.date);
-                    return transactionDate.isSame(date, 'day');
-                  })
-                  .reduce(
-                    (acc, transaction) =>
-                      acc + Math.abs(transaction.amountInBaseCurrency),
-                    0
-                  );
+                const total = dailyTotals.get(date.format('YYYY-MM-DD')) ?? 0;
 
                 return {
                   period: dayLabel,
@@ -93,29 +91,27 @@ export const SpendingTrends = withObservables<
               })
               .sort((a, b) => a.sortKey - b.sortKey);
           } else {
+            const weeklyTotals = new Map<string, number>();
+            for (const transaction of transactions) {
+              const weekKey = dayjs(transaction.date)
+                .startOf('week')
+                .format('YYYY-MM-DD');
+              const currentTotal = weeklyTotals.get(weekKey) ?? 0;
+              weeklyTotals.set(
+                weekKey,
+                currentTotal + Math.abs(transaction.amountInBaseCurrency)
+              );
+            }
+
             const last8Weeks = Array.from({ length: 8 }, (_, i) => {
               return dayjs().subtract(i, 'week').startOf('week');
             }).reverse();
 
             return last8Weeks
               .map((weekStart, index) => {
-                const weekEnd = weekStart.endOf('week');
                 const weekLabel = weekStart.format('MMM DD');
                 const sortKey = weekStart.valueOf();
-
-                const total = transactions
-                  .filter((transaction) => {
-                    const transactionDate = dayjs(transaction.date);
-                    return (
-                      transactionDate.isAfter(weekStart.subtract(1, 'day')) &&
-                      transactionDate.isBefore(weekEnd.add(1, 'day'))
-                    );
-                  })
-                  .reduce(
-                    (acc, transaction) =>
-                      acc + Math.abs(transaction.amountInBaseCurrency),
-                    0
-                  );
+                const total = weeklyTotals.get(weekStart.format('YYYY-MM-DD')) ?? 0;
 
                 return {
                   period: weekLabel,
