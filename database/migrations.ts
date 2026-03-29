@@ -2,6 +2,7 @@ import {
   addColumns,
   createTable,
   schemaMigrations,
+  unsafeExecuteSql,
 } from '@nozbe/watermelondb/Schema/migrations';
 
 export const migrations = schemaMigrations({
@@ -108,6 +109,63 @@ export const migrations = schemaMigrations({
             { name: 'category_id', type: 'string', isIndexed: true },
           ],
         }),
+      ],
+    },
+    {
+      toVersion: 14,
+      steps: [
+        createTable({
+          name: 'trips',
+          columns: [
+            { name: 'name', type: 'string' },
+            { name: 'icon', type: 'string' },
+            { name: 'startDate', type: 'number' },
+            { name: 'endDate', type: 'number', isOptional: true },
+            { name: 'isArchived', type: 'boolean' },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
+        addColumns({
+          table: 'transactions',
+          columns: [
+            {
+              name: 'tripId',
+              type: 'string',
+              isOptional: true,
+              isIndexed: true,
+            },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 15,
+      steps: [
+        addColumns({
+          table: 'trips',
+          columns: [{ name: 'currencyCode', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
+    {
+      toVersion: 16,
+      steps: [
+        addColumns({
+          table: 'transactions',
+          columns: [{ name: 'conversionStatus', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
+    {
+      toVersion: 17,
+      steps: [
+        unsafeExecuteSql(
+          'create index if not exists transactions_date_idx on transactions(date);'
+        ),
+        unsafeExecuteSql(
+          'create index if not exists transactions_category_id_idx on transactions(categoryId);'
+        ),
       ],
     },
   ],

@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { ScrollView, Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
-import { deleteRecurringTransaction } from '../../database/helpers';
+import { deleteRecurringTransaction } from '../../database/actions/recurring-transactions';
 import type { RecurringTransactionModel } from '../../database/recurring-transaction-model';
 import useToast from '../../hooks/useToast';
 import { DateFormats } from '../../lib/date';

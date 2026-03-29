@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
+import { deleteTransaction } from '../database/actions/transactions';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import { DateFormats } from '../lib/date';
@@ -42,8 +43,7 @@ export const TransactionItem = withObservables<
     router.push({
       pathname: '/create-transaction',
       params: {
-        transaction: JSON.stringify(transaction._raw),
-        category: JSON.stringify(category?._raw),
+        transactionId: transaction.id,
       },
     });
   };
@@ -58,7 +58,7 @@ export const TransactionItem = withObservables<
       },
       async (buttonIndex) => {
         if (buttonIndex === 0) {
-          await transaction.deleteTx();
+          await deleteTransaction(transaction.id);
         }
       }
     );
@@ -104,7 +104,7 @@ export const TransactionItem = withObservables<
               drag.value = withTiming(0, { duration: 200 });
             }}
           >
-            <Trash2 height={8} width={8} />
+            <Trash2 height={20} width={20} />
           </Pressable>
         </View>
       </Animated.View>

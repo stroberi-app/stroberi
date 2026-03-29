@@ -1,10 +1,19 @@
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
-import { CircleDollarSign, Home, Settings, Wallet } from '@tamagui/lucide-icons';
+import {
+  CircleDollarSign,
+  Home,
+  Plane,
+  Settings,
+  TrendingUp,
+  Wallet,
+} from '@tamagui/lucide-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
 import type React from 'react';
 import { useTheme } from 'tamagui';
+import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
+import { useTripsEnabled } from '../../hooks/useTripsEnabled';
 import { Platform } from 'react-native';
 
 const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
@@ -28,6 +37,8 @@ const CustomTabBar: React.ComponentProps<typeof Tabs>['tabBar'] = (props) => {
 export default function TabLayout() {
   const { brandPrimary, seashell } = useTheme();
   const { budgetingEnabled } = useBudgetingEnabled();
+  const { tripsEnabled } = useTripsEnabled();
+  const { advancedAnalyticsEnabled } = useAdvancedAnalyticsEnabled();
 
   return (
     <Tabs
@@ -55,6 +66,22 @@ export default function TabLayout() {
         options={{
           title: 'Transactions',
           tabBarIcon: ({ color }) => <CircleDollarSign color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color }) => <TrendingUp color={color} />,
+          href: advancedAnalyticsEnabled ? '/(tabs)/analytics' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="trips"
+        options={{
+          title: 'Trips',
+          tabBarIcon: ({ color }) => <Plane color={color} />,
+          href: tripsEnabled ? ('/(tabs)/trips' as const) : null,
         }}
       />
       <Tabs.Screen

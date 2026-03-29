@@ -20,6 +20,7 @@ type BudgetAlertData = {
   budget: BudgetModel;
   spent: number;
   percentage: number;
+  budgetLimit: number;
 };
 
 type BudgetAlertCardProps = {
@@ -144,7 +145,7 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
                 </View>
                 <Text fontSize="$2" color="$gray11">
                   {formatCurrency(alert.spent, defaultCurrency || 'USD')} /{' '}
-                  {formatCurrency(alert.budget.amount, defaultCurrency || 'USD')}
+                  {formatCurrency(alert.budgetLimit, defaultCurrency || 'USD')}
                 </Text>
               </View>
               <LinkButton
@@ -209,10 +210,38 @@ const enhance = withObservables<
                 (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
                 0
               );
-              const percentage = (spent / budget.amount) * 100;
+              let budgetLimit = budget.amount;
+              if (budget.rollover) {
+                const previousPeriod = calculateBudgetPeriodDates(budget, -1);
+                const previousPeriodConditions = [
+                  Q.where('date', Q.gte(previousPeriod.start.getTime())),
+                  Q.where('date', Q.lte(previousPeriod.end.getTime())),
+                  Q.where('amountInBaseCurrency', Q.lt(0)),
+                ];
+
+                if (categoryIds.length > 0) {
+                  previousPeriodConditions.push(
+                    Q.where('categoryId', Q.oneOf(categoryIds))
+                  );
+                }
+
+                const previousPeriodTransactions = await database
+                  .get<TransactionModel>('transactions')
+                  .query(...previousPeriodConditions)
+                  .fetch();
+
+                const previousSpent = previousPeriodTransactions.reduce(
+                  (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
+                  0
+                );
+                const rollover = Math.max(0, budget.amount - previousSpent);
+                budgetLimit += rollover;
+              }
+
+              const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
 
               if (percentage >= budget.alertThreshold) {
-                alerts.push({ budget, spent, percentage });
+                alerts.push({ budget, spent, percentage, budgetLimit });
               }
             }
 

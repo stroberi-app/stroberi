@@ -13,6 +13,7 @@ Stroberi is a **privacy-first personal expense tracker** for iOS and Android. It
 - 🌍 **Multi-Currency Native** - Built for people who spend in multiple currencies
 - 📊 **Visual Insights** - Understand spending patterns through intuitive charts
 - ⚡ **Friction-Free** - Add transactions in seconds, not minutes
+- 💎 **Stroberi Pro** - Advanced analytics and trip tracking for power users
 
 ---
 
@@ -79,16 +80,17 @@ Filter by Category → Review Individual Transactions
 3. Trend analysis (spending over time)
 4. Transaction drill-down (specific purchases)
 
-### Journey 4: Setting Up a Budget
+### Journey 4: Setting Up a Budget (Pro Feature)
 ```
-Settings → Enable Budgeting → Go to Budgets Tab → 
-Create Budget → Set Amount & Period → 
+Settings → Stroberi Pro → Upgrade → Enable Budgeting → 
+Go to Budgets Tab → Create Budget → Set Amount & Period → 
 Link Categories (optional) → Set Alert Threshold → 
 Monitor Progress on Home Screen
 ```
 
 **Budget Workflow:**
-- Budgeting is opt-in (off by default)
+- Requires Stroberi Pro subscription
+- Budgeting is opt-in (off by default, even with Pro)
 - Can budget all spending or specific categories
 - Alerts appear on home screen when approaching limit
 - Visual progress bar shows current status
@@ -105,6 +107,50 @@ Review Progress → See Imported Transactions
 - Validation catches errors before import
 - New categories auto-created from data
 - Progress indicator for large imports
+
+### Journey 6: Upgrading to Stroberi Pro
+```
+Settings → Stroberi Pro → View Paywall → 
+Select Subscription Plan → Complete Purchase → 
+Enable Advanced Features → Access Analytics & Trips
+```
+
+**Upgrade Experience:**
+- Paywall presented when accessing Pro features
+- Clear feature benefits displayed
+- One-tap subscription management
+- Restore purchases for existing subscribers
+- Customer center for subscription management
+
+### Journey 7: Using Advanced Analytics
+```
+Settings → Enable Advanced Analytics → 
+Analytics Tab → View Financial Health Score → 
+Explore Savings Rate → Check Spending Velocity → 
+Review Smart Insights → Adjust Spending Habits
+```
+
+**Analytics Workflow:**
+- Date filter selection (This Month, Last Month, 3 Months, This Year)
+- Financial health score as entry point
+- Drill down into specific metrics
+- Smart insights provide actionable recommendations
+- Forecast helps plan remaining month spending
+
+### Journey 8: Tracking Trip Expenses
+```
+Settings → Enable Trips → Trips Tab → 
+Create New Trip → Set Dates & Currency → 
+Add Transactions → Link to Trip → 
+Monitor Spending on Home Screen
+```
+
+**Trip Workflow:**
+- Create trip before or during travel
+- Link transactions during creation or later
+- Active trip card shows on home screen
+- View trip-specific spending totals
+- Archive when trip completes
 
 ---
 
@@ -127,7 +173,7 @@ Review Progress → See Imported Transactions
 - Category selection shows recent/most-used first
 - Swipe gestures for quick edit/delete
 
-### 📊 Analytics Dashboard
+### 📊 Analytics Dashboard (Home Screen)
 
 **Five Insight Views (swipeable carousel):**
 
@@ -157,6 +203,58 @@ Review Progress → See Imported Transactions
    - Last 30 days view
    - Weekly aggregate view
    - Line chart showing patterns
+
+### 📈 Advanced Analytics (Pro Feature)
+
+**Enable via:** Settings → Features → Enable Advanced Analytics (requires Stroberi Pro)
+
+**Dedicated Analytics Tab with:**
+
+1. **Financial Health Score**
+   - Overall score (0-100) with letter grade (A-F)
+   - Factors: Savings rate, budget adherence, spending stability, income consistency
+   - Personalized recommendations
+
+2. **Savings Rate Analysis**
+   - Percentage of income saved
+   - Monthly trend tracking
+   - Consecutive positive months streak
+   - Trend direction (up/down/stable)
+
+3. **Income vs Expense Ratio**
+   - Ratio calculation (>1 = saving, <1 = overspending)
+   - Monthly comparison charts
+   - Status indicator (saving/balanced/overspending)
+
+4. **Spending Velocity**
+   - Daily and weekly burn rates
+   - Transaction frequency analysis
+   - Velocity trend (accelerating/decelerating/stable)
+   - Weekly comparison breakdown
+   - Projected end-of-month spending forecast
+
+5. **Category Trends**
+   - Category-by-category growth/shrinkage analysis
+   - Percentage change between periods
+   - Unusual spending detection (spikes above average)
+
+6. **Smart Insights Feed**
+   - Spending forecasts for current month
+   - Recurring transaction predictions
+   - Anomaly detection (unusual spending patterns)
+   - Actionable tips and recommendations
+   - Priority-based ordering
+
+**Date Filters:**
+- This Month
+- Last Month
+- 3 Months
+- This Year
+
+**Forecasting:**
+- Projected end-of-month spending based on current velocity
+- Confidence levels (high/medium/low) based on data availability
+- Status indicators (on-track/warning/critical)
 
 ### 🏷️ Categories
 
@@ -222,9 +320,9 @@ USD, EUR, GBP, JPY, CNY, RUB, INR, BRL, MXN, AUD, CAD, CHF, ZAR, SEK, NOK, KRW, 
 - Shows recurring indicator icon on transactions
 - Original template editable anytime
 
-### 💰 Budgets (Optional Feature)
+### 💰 Budgets (Pro Feature)
 
-**Enable via:** Settings → Features → Enable Budgeting
+**Enable via:** Settings → Stroberi Pro → Enable Budgeting (requires Stroberi Pro subscription)
 
 **Budget Types:**
 - **Weekly Budget** - Resets every 7 days
@@ -282,6 +380,63 @@ USD, EUR, GBP, JPY, CNY, RUB, INR, BRL, MXN, AUD, CAD, CHF, ZAR, SEK, NOK, KRW, 
 - `category` - Category name
 - `categoryIcon` - Emoji for new categories
 
+### ✈️ Trips (Pro Feature)
+
+**Enable via:** Settings → Features → Enable Trips (requires Stroberi Pro)
+
+**Use Cases:**
+- Track travel expenses separately from daily spending
+- Monitor trip budgets
+- Organize expenses by travel destination
+- Analyze spending patterns during trips
+
+**Trip Management:**
+- Create trips with name, icon, and optional currency
+- Set start and end dates
+- Archive completed trips
+- Edit trip details anytime
+- Delete trips (with transaction handling)
+
+**Transaction Linking:**
+- Link transactions to trips during creation or editing
+- View trip-specific spending totals
+- Filter transactions by trip
+- Active trip card on home screen showing:
+  - Total spending for the trip
+  - Transaction count
+  - Days remaining (if end date set)
+
+**Active Trip Display:**
+- Home screen card for current/upcoming trips
+- Shows spending summary and days remaining
+- Quick navigation to trips tab
+
+### 💎 Stroberi Pro (In-App Purchase)
+
+**Subscription Model:**
+- RevenueCat-powered subscription management
+- Unlocks premium features:
+  - Budgets feature
+  - Advanced Analytics tab
+  - Trips feature
+- Manage subscription through Settings
+- Cancel subscription via platform (App Store/Google Play)
+
+**Settings Integration:**
+- View subscription status (Active/Locked)
+- Upgrade/View Plans option
+- Manage Subscription (opens customer center)
+- Restore Purchases
+- Purchase status messages and error handling
+
+**Feature Gating:**
+- Budgets, Advanced Analytics, and Trips tabs only visible when:
+  1. Feature is enabled in Settings
+  2. User has active Stroberi Pro subscription
+- Toggles in Settings show locked state for non-Pro users
+- Paywall presentation for upgrade flow
+- Subscription management via Customer Center (redirects to platform)
+
 ---
 
 ## Navigation Structure
@@ -290,23 +445,35 @@ USD, EUR, GBP, JPY, CNY, RUB, INR, BRL, MXN, AUD, CAD, CHF, ZAR, SEK, NOK, KRW, 
 ┌─────────────────────────────────────────────┐
 │                   App                        │
 ├─────────────────────────────────────────────┤
-│  [Home]  [Transactions]  [Budgets*]  [Settings]
-│    │           │             │           │
-│    │           │             │           ├─ Default Currency
-│    │           │             │           ├─ Manage Categories
-│    │           │             │           ├─ Recurring Transactions
-│    │           │             │           ├─ Enable Budgeting Toggle
-│    │           │             │           ├─ CSV Export
-│    │           │             │           ├─ CSV Import
-│    │           │             │           ├─ Privacy Policy
-│    │           │             │           └─ Terms & Conditions
+│  [Home]  [Transactions]  [Analytics**]  [Trips**]  [Budgets**]  [Settings]
+│    │           │             │            │          │           │
+│    │           │             │            │          │           ├─ Default Currency
+│    │           │             │            │          │           ├─ Manage Categories
+│    │           │             │            │          │           ├─ Recurring Transactions
+│    │           │             │            │          │           ├─ Stroberi Pro**
+│    │           │             │            │          │           ├─ CSV Export
+│    │           │             │            │          │           ├─ CSV Import
+│    │           │             │            │          │           ├─ Privacy Policy
+│    │           │             │            │          │           └─ Terms & Conditions
+│    │           │             │            │          │
+│    │           │             │            │          └─ Budget List** (Pro + enabled)
+│    │           │             │            │              └─ Budget Form (create/edit)
+│    │           │             │            │
+│    │           │             │            └─ Trip List**
+│    │           │             │                 └─ Trip Form (create/edit)
 │    │           │             │
-│    │           │             └─ Budget List
-│    │           │                 └─ Budget Form (create/edit)
+│    │           │             └─ Analytics Dashboard**
+│    │           │                 ├─ Financial Health Score
+│    │           │                 ├─ Savings Rate
+│    │           │                 ├─ Income vs Expense
+│    │           │                 ├─ Spending Velocity
+│    │           │                 ├─ Category Trends
+│    │           │                 └─ Smart Insights Feed
 │    │           │
 │    │           └─ Transaction List
 │    │               ├─ Date Filter
 │    │               ├─ Category Filter
+│    │               ├─ Trip Filter**
 │    │               └─ Transaction Details (swipe)
 │    │
 │    └─ Overview Carousel
@@ -314,7 +481,8 @@ USD, EUR, GBP, JPY, CNY, RUB, INR, BRL, MXN, AUD, CAD, CHF, ZAR, SEK, NOK, KRW, 
 │        ├─ Expense Breakdown
 │        ├─ Income Breakdown
 │        ├─ Category Spending
-│        └─ Spending Trends
+│        ├─ Spending Trends
+│        └─ Active Trip Card** (if trips enabled)
 │
 │  [+ Add Expense]  [+ Add Income]  ← Floating buttons
 │        │
@@ -323,10 +491,11 @@ USD, EUR, GBP, JPY, CNY, RUB, INR, BRL, MXN, AUD, CAD, CHF, ZAR, SEK, NOK, KRW, 
 │            ├─ Date + Time
 │            ├─ Merchant
 │            ├─ Category
+│            ├─ Trip** (optional, if trips enabled)
 │            └─ Notes
 └─────────────────────────────────────────────┘
 
-* Budgets tab only visible when budgeting enabled
+** Pro features - require Stroberi Pro subscription and feature toggle enabled
 ```
 
 ---
@@ -391,6 +560,16 @@ Used for: Transactions, categories, currencies
 **Message:** "Your CSV file doesn't contain any transaction data"
 **Action:** [Download Template] [Try Again]
 
+### No Trips Yet
+**Message:** "Start tracking your travel expenses"
+**Subtext:** "Create a trip to organize expenses by destination"
+**Action:** [Create Your First Trip]
+
+### No Analytics Data
+**Message:** "No Data Yet"
+**Subtext:** "Add some transactions to see your financial insights"
+**Guidance:** Encourages adding transactions to unlock insights
+
 ---
 
 ## Error Handling
@@ -416,6 +595,17 @@ Used for: Transactions, categories, currencies
 - Won't show again for that budget/period
 - Resets on new period
 
+### Purchase Failed
+- Error message displayed
+- Purchase can be retried
+- Cancelled purchases don't show errors
+- Subscription status updates automatically on success
+
+### RevenueCat Configuration Failed
+- Graceful degradation
+- Features remain locked if configuration fails
+- Error logged for debugging
+
 ---
 
 ## Product Decisions & Rationale
@@ -431,10 +621,11 @@ Used for: Transactions, categories, currencies
 - Single-currency apps frustrating for travelers
 - Automatic conversion removes mental math
 
-### Why Optional Budgeting?
-- Not everyone budgets
-- Keeps UI clean for casual trackers
-- Power feature for those who want it
+### Why Pro Features?
+- Advanced features require ongoing development and maintenance
+- Subscription model enables sustainable feature development
+- Core tracking remains free - Pro unlocks power features
+- Budgeting, Trips, and Advanced Analytics are premium features
 
 ### Why Emoji Icons?
 - Universal, cross-platform
@@ -453,6 +644,18 @@ Used for: Transactions, categories, currencies
 - Familiar iOS/Android pattern
 - Edit and delete are rare actions
 - Space for transaction info maximized
+
+### Why Subscription Model?
+- Sustainable development and feature expansion
+- Advanced features require ongoing maintenance
+- RevenueCat provides reliable subscription infrastructure
+- Users can try core features free, upgrade for power features
+
+### Why Feature Toggles?
+- Users control which features appear in navigation
+- Keeps UI clean for users who don't need advanced features
+- Pro features require both subscription and explicit enable
+- Allows gradual feature adoption
 
 ---
 
@@ -473,6 +676,9 @@ Used for: Transactions, categories, currencies
 - Recurring transactions set up
 - CSV exports performed
 - Budgets that trigger alerts (catching overspend)
+- Advanced analytics engagement
+- Trips created and tracked
+- Stroberi Pro subscriptions active
 
 ---
 
@@ -493,7 +699,7 @@ Used for: Transactions, categories, currencies
 - ❌ Bank connections / Plaid
 - ❌ Social features
 - ❌ Advertising
-- ❌ Premium tiers
+- ❌ Free tier limitations on core features (transaction tracking, basic home screen analytics remain free)
 
 ---
 

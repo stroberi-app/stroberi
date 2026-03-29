@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { View } from 'tamagui';
 import type { CategoryModel } from '../database/category-model';
+import { deleteCategory } from '../database/actions/categories';
+import useToast from '../hooks/useToast';
 import { ListItem } from './ListItem';
 
 type RightActionViewProps = {
@@ -55,6 +57,7 @@ const Component = ({
 }: CategoriesListProps) => {
   const { bottom } = useSafeAreaInsets();
   const { close } = useBottomSheet();
+  const toast = useToast();
 
   const { showActionSheetWithOptions } = useActionSheet();
 
@@ -67,14 +70,27 @@ const Component = ({
           destructiveButtonIndex: 0,
           cancelButtonIndex: 1,
         },
-        (buttonIndex) => {
+        async (buttonIndex) => {
           if (buttonIndex === 0) {
-            category.deleteCategory();
+            try {
+              await deleteCategory(category.id);
+              toast.show({
+                title: 'Category deleted',
+                preset: 'done',
+              });
+            } catch (error) {
+              toast.show({
+                title: 'Unable to delete category',
+                message:
+                  error instanceof Error ? error.message : 'Failed to delete category.',
+                preset: 'error',
+              });
+            }
           }
         }
       );
     },
-    [showActionSheetWithOptions]
+    [showActionSheetWithOptions, toast]
   );
 
   const renderRightAction = useCallback(
@@ -114,7 +130,7 @@ const Component = ({
                 drag.value = withTiming(0, { duration: 200 });
               }}
             >
-              <Trash2 height={8} width={8} />
+              <Trash2 height={20} width={20} />
             </Pressable>
           </View>
         </RightActionView>
