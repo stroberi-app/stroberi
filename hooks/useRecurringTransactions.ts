@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import { checkAndCreateDueTransactions } from '../database/helpers';
+import { checkAndCreateDueTransactions } from '../database/actions/recurring-transactions';
 
 export const useRecurringTransactions = (defaultCurrency: string | null) => {
   const hasRunInitialCheck = useRef(false);
@@ -9,10 +9,7 @@ export const useRecurringTransactions = (defaultCurrency: string | null) => {
     if (!defaultCurrency) return;
 
     try {
-      const created = await checkAndCreateDueTransactions(defaultCurrency);
-      if (created.length > 0) {
-        console.log(`Created ${created.length} recurring transactions`);
-      }
+      await checkAndCreateDueTransactions(defaultCurrency);
     } catch (error) {
       console.error('Failed to check recurring transactions:', error);
     }

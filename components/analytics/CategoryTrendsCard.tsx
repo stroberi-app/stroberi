@@ -169,11 +169,6 @@ export const CategoryTrendsCard = ({ analysis, currency }: CategoryTrendsCardPro
             borderTopWidth={index > 0 ? 1 : 0}
             borderTopColor="$gray5"
             alignItems="center"
-            pressStyle={{ backgroundColor: '$gray6' }}
-            onPress={() => {
-              // TODO: Implement drill down
-              console.log('Drill down into', trend.categoryName);
-            }}
           >
             <View flex={2} flexDirection="row" alignItems="center" gap="$2">
               <Text fontSize="$3" color="white" numberOfLines={1}>

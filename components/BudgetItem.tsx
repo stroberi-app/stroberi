@@ -1,13 +1,13 @@
 import { Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Trash2 } from '@tamagui/lucide-icons';
+import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import { Alert } from 'react-native';
 import { combineLatest, map, type Observable, of, switchMap } from 'rxjs';
 import { ScrollView, Text, View, XStack } from 'tamagui';
 import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { BudgetModel } from '../database/budget-model';
 import type { CategoryModel } from '../database/category-model';
-import { deleteBudget } from '../database/helpers';
+import { deleteBudget } from '../database/actions/budgets';
 import { database } from '../database/index';
 import type { TransactionModel } from '../database/transaction-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
@@ -36,7 +36,12 @@ type BudgetItemProps = {
   categories: CategoryModel[];
 };
 
-const BudgetItemContent = ({ budget, budgetStatus, categories }: BudgetItemProps) => {
+const BudgetItemContent = ({
+  budget,
+  budgetStatus,
+  categories,
+  onEdit,
+}: BudgetItemProps) => {
   const { defaultCurrency } = useDefaultCurrency();
 
   const handleDelete = () => {
@@ -91,6 +96,13 @@ const BudgetItemContent = ({ budget, budgetStatus, categories }: BudgetItemProps
           </Text>
         </View>
         <View flexDirection="row" gap="$2" alignItems="center">
+          <LinkButton
+            backgroundColor="transparent"
+            padding="$2"
+            onPress={() => onEdit(budget)}
+          >
+            <Pen size={20} color="$gray11" />
+          </LinkButton>
           <LinkButton backgroundColor="transparent" padding="$2" onPress={handleDelete}>
             <Trash2 size={20} color="$stroberi" />
           </LinkButton>
@@ -236,7 +248,10 @@ export const BudgetItem = withObservables<
         .query(...previousPeriodConditions)
         .observeWithColumns(['amountInBaseCurrency']);
 
-      return combineLatest([currentTransactionsObservable, previousTransactionsObservable]).pipe(
+      return combineLatest([
+        currentTransactionsObservable,
+        previousTransactionsObservable,
+      ]).pipe(
         map(([transactions, previousTransactions]) => {
           const spent = transactions.reduce(
             (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),

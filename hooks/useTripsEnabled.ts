@@ -6,10 +6,11 @@ export const notifyTripsEnabledChanged = (enabled: boolean) => {
 };
 
 export const useTripsEnabled = () => {
-  const { value: tripsEnabled, isLoading, setValue: setTripsEnabled } = useFeatureFlag(
-    STORAGE_KEYS.TRIPS_ENABLED,
-    false
-  );
+  const {
+    value: tripsEnabled,
+    isLoading,
+    setValue: setTripsEnabled,
+  } = useFeatureFlag(STORAGE_KEYS.TRIPS_ENABLED, false);
 
   return { tripsEnabled, isLoading, setTripsEnabled };
 };

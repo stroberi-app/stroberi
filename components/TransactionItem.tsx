@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
+import { deleteTransaction } from '../database/actions/transactions';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import { DateFormats } from '../lib/date';
@@ -57,7 +58,7 @@ export const TransactionItem = withObservables<
       },
       async (buttonIndex) => {
         if (buttonIndex === 0) {
-          await transaction.deleteTx();
+          await deleteTransaction(transaction.id);
         }
       }
     );

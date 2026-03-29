@@ -1,7 +1,4 @@
-import {
-  BottomSheetModalProvider,
-  type BottomSheetModal,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetModalProvider, type BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import {
   ArrowLeft,
@@ -39,14 +36,19 @@ import { StyledScrollView } from '../components/StyledScrollView';
 import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
 import { TripSelect } from '../components/TripSelect';
 import type { CategoryModel } from '../database/category-model';
+import { createTransaction, updateTransaction } from '../database/actions/transactions';
+import { getMostRecentActiveTrip } from '../database/actions/trips';
 import { database } from '../database/index';
-import {
-  createTransaction,
-  getMostRecentActiveTrip,
-  updateTransaction,
-} from '../database/helpers';
 import type { TransactionModel } from '../database/transaction-model';
 import type { TripModel } from '../database/trip-model';
+import {
+  buildTransactionPayload,
+  getAmountValidationMessage,
+  getDefaultSelectedCurrency,
+  getInitialTransactionAmount,
+  parseTransactionRouteParams,
+  shouldAutoPopulateActiveTrip,
+} from '../features/transactions/form';
 import { MissingCurrencyRateError } from '../lib/currencyConversion';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../hooks/useTripsEnabled';
@@ -58,7 +60,8 @@ const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
   </FullWindowOverlay>
 );
 
-const modalContainerComponent = Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
+const modalContainerComponent =
+  Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
 type SheetType = 'currency' | 'categories' | 'trip';
 
 function CreateTransaction() {
@@ -69,16 +72,8 @@ function CreateTransaction() {
   const router = useRouter();
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
-
-  const transactionType = params.transactionType as 'expense' | 'income' | undefined;
-  const transactionId =
-    typeof params.transactionId === 'string' ? params.transactionId : null;
-  const legacyTransaction = params.transaction
-    ? (JSON.parse(params.transaction as string) as TransactionModel)
-    : null;
-  const legacyCategory = params.category
-    ? (JSON.parse(params.category as string) as CategoryModel)
-    : null;
+  const { legacyCategory, legacyTransaction, transactionId, transactionType } =
+    parseTransactionRouteParams(params);
 
   const { defaultCurrency, isDefaultCurrencyLoaded } = useDefaultCurrency();
   const { tripsEnabled } = useTripsEnabled();
@@ -91,10 +86,10 @@ function CreateTransaction() {
   );
   const [selectedTrip, setSelectedTrip] = useState<TripModel | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState(
-    transaction?.currencyCode ?? 'USD'
+    getDefaultSelectedCurrency(legacyTransaction)
   );
   const [amount, setAmount] = useState(
-    `${transactionType ? (transactionType === 'expense' ? '-' : '') : ''}${transaction?.amount ?? ''}`
+    getInitialTransactionAmount(transactionType, legacyTransaction)
   );
   const [note, setNote] = useState(transaction?.note ?? '');
   const [merchantName, setMerchantName] = useState(transaction?.merchant ?? '');
@@ -194,9 +189,12 @@ function CreateTransaction() {
           .get<TransactionModel>('transactions')
           .find(transactionId);
         const [categoryRecord, tripRecord] = await Promise.all([
-          transactionRecord.category?.fetch() ?? Promise.resolve(null),
+          transactionRecord.category?.fetch().catch(() => null) ?? Promise.resolve(null),
           transactionRecord.tripId
-            ? database.get<TripModel>('trips').find(transactionRecord.tripId)
+            ? database
+                .get<TripModel>('trips')
+                .find(transactionRecord.tripId)
+                .catch(() => null)
             : Promise.resolve(null),
         ]);
 
@@ -246,41 +244,32 @@ function CreateTransaction() {
       return;
     }
 
+    const amountMessage = getAmountValidationMessage(amount, amountValidationError);
+    if (amountMessage) {
+      toast.show({
+        title: 'Invalid Amount',
+        message: amountMessage,
+        preset: 'error',
+        haptic: 'error',
+      });
+      return;
+    }
+
     const amountValue = Number(amount);
-    if (amountValidationError) {
-      toast.show({
-        title: 'Invalid Amount',
-        message: amountValidationError,
-        preset: 'error',
-        haptic: 'error',
-      });
-      return;
-    }
-
-    if (!amount || !Number.isFinite(amountValue) || amountValue === 0) {
-      toast.show({
-        title: 'Invalid Amount',
-        message: 'Please enter a valid amount',
-        preset: 'error',
-        haptic: 'error',
-      });
-      return;
-    }
-
     setIsSaving(true);
 
     try {
-      const payload = {
+      const payload = buildTransactionPayload({
         merchant: merchantName,
         amount: amountValue,
-        categoryId: selectedCategory?.id ?? null,
+        selectedCategory,
         date,
         currencyCode: selectedCurrency,
         note,
         baseCurrency: defaultCurrency,
-        tripId: selectedTrip?.id ?? null,
+        selectedTrip,
         allowMissingRate,
-      };
+      });
 
       const savedTransaction = transaction
         ? await updateTransaction({
@@ -345,21 +334,29 @@ function CreateTransaction() {
   // Auto-populate with active trip when creating a new transaction
   useEffect(() => {
     const loadActiveTrip = async () => {
-      // Only for new transactions (not editing) and if trips are enabled
-      if (!transaction && !transactionId && tripsEnabled) {
-        try {
-          const currentTrip = await getMostRecentActiveTrip();
-          if (currentTrip) {
-            setSelectedTrip(currentTrip);
-            if (currentTrip.currencyCode) {
-              setSelectedCurrency(currentTrip.currencyCode);
-            }
+      if (
+        !shouldAutoPopulateActiveTrip({
+          transaction,
+          transactionId,
+          tripsEnabled,
+        })
+      ) {
+        return;
+      }
+
+      try {
+        const currentTrip = await getMostRecentActiveTrip();
+        if (currentTrip) {
+          setSelectedTrip(currentTrip);
+          if (currentTrip.currencyCode) {
+            setSelectedCurrency(currentTrip.currencyCode);
           }
-        } catch (error) {
-          console.error('Failed to load active trip:', error);
         }
+      } catch (error) {
+        console.error('Failed to load active trip:', error);
       }
     };
+
     loadActiveTrip();
   }, [transaction, transactionId, tripsEnabled]);
 

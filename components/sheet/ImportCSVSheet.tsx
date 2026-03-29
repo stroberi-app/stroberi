@@ -17,17 +17,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Progress, Separator, Spinner, Text, View, XStack, YStack } from 'tamagui';
 import { currencies } from '../../data/currencies';
 import type { CategoryModel } from '../../database/category-model';
+import { createCategoriesBatch } from '../../database/actions/categories';
+import { createTransactionsBatch } from '../../database/actions/transactions';
 import {
-  type CreateTransactionPayload,
-  createTransactionsBatch,
-  createCategory,
-} from '../../database/helpers';
+  buildImportTransactionPayloads,
+  prepareImportRows,
+  type PreparedImportTransaction,
+} from '../../features/import/preparation';
 import type { ImportResult } from '../../features/import/types';
-import {
-  type CSVRow,
-  normalizeCurrencyCode,
-  validateCSVRow,
-} from '../../features/import/validation';
+import type { CSVRow } from '../../features/import/validation';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import { doExport } from '../../lib/downloads';
@@ -48,7 +46,7 @@ interface ImportProgress {
 }
 
 const snapPoints = ['65%'];
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 100;
 const supportedCurrencyCodes = currencies.map((currency) => currency.code);
 
 export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
@@ -63,8 +61,6 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
 
   const { defaultCurrency } = useDefaultCurrency();
   const database = useDatabase();
-
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const showError = (error: ErrorInfo) => {
     setErrorInfo(error);
@@ -93,7 +89,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
   };
 
   const processTransactionsInBatches = async (
-    transactions: CreateTransactionPayload[],
+    transactions: ReturnType<typeof buildImportTransactionPayloads>,
     updateProgress: (current: number) => void
   ) => {
     const totalBatches = Math.ceil(transactions.length / BATCH_SIZE);
@@ -101,19 +97,18 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       importedCount: 0,
       failed: [],
     };
+    const conversionCache = new Map();
 
     for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
       const start = batchIndex * BATCH_SIZE;
       const end = Math.min(start + BATCH_SIZE, transactions.length);
       const batch = transactions.slice(start, end);
 
-      const batchResult = await createTransactionsBatch(batch);
+      const batchResult = await createTransactionsBatch(batch, conversionCache);
       importResult.importedCount += batchResult.importedCount;
       importResult.failed.push(...batchResult.failed);
 
       updateProgress(importResult.importedCount);
-
-      await sleep(50);
     }
 
     return importResult;
@@ -142,6 +137,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       });
       if (!res.assets?.[0].uri) {
         setImporting(false);
+        setProgress(null);
         return;
       }
 
@@ -160,354 +156,289 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       }
 
       setProgress((prev) => (prev ? { ...prev, message: 'Reading your file...' } : null));
-      await sleep(100);
 
       const content = await FileSystem.readAsStringAsync(res.assets[0].uri);
 
       setProgress((prev) =>
         prev ? { ...prev, message: 'Processing CSV data...' } : null
       );
-      await sleep(100);
 
-      Papa.parse<CSVRow>(content, {
+      const results = Papa.parse<CSVRow>(content, {
         header: true,
         skipEmptyLines: true,
-        complete: async (results) => {
-          try {
-            if (results.data.length === 0) {
-              setImporting(false);
-              setProgress(null);
-              showError({
-                title: 'Empty File',
-                message:
-                  "Your CSV file doesn't contain any transaction data. Please check the file and try again.",
-                type: 'file',
-                showTemplateButton: true,
-                showRetryButton: true,
-              });
-              return;
-            }
+      });
 
-            const requiredColumns = ['merchant', 'amount', 'date', 'currencyCode'];
-            const missingColumns = requiredColumns.filter(
-              (col) => !results.meta.fields?.includes(col)
-            );
+      if (results.errors.length > 0) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: "Can't Read Your File",
+          message:
+            "There seems to be an issue with your CSV file format. Make sure it's a valid CSV file and try again.",
+          type: 'parse',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+        return;
+      }
 
-            if (missingColumns.length > 0) {
-              setImporting(false);
-              setProgress(null);
-              showError({
-                title: 'Wrong Format',
-                message: `Your CSV file is missing required columns. Please make sure your file includes all the necessary columns and matches our template format.`,
-                errors: [`Missing columns: ${missingColumns.join(', ')}`],
-                type: 'format',
-                showTemplateButton: true,
-                showRetryButton: true,
-              });
-              return;
-            }
+      if (results.data.length === 0) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: 'Empty File',
+          message:
+            "Your CSV file doesn't contain any transaction data. Please check the file and try again.",
+          type: 'file',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+        return;
+      }
 
-            setProgress({
-              phase: 'validating',
-              current: 0,
-              total: results.data.length,
-              message: 'Checking for new categories...',
-            });
-            await sleep(100);
+      const requiredColumns = ['merchant', 'amount', 'date', 'currencyCode'];
+      const missingColumns = requiredColumns.filter(
+        (col) => !results.meta.fields?.includes(col)
+      );
 
-            const existingCategories = await database
-              .get<CategoryModel>('categories')
-              .query()
-              .fetch();
-            const existingCategoryMap = new Map(
-              existingCategories.map((c) => [c.name.trim().toLowerCase(), c])
-            );
+      if (missingColumns.length > 0) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: 'Wrong Format',
+          message:
+            'Your CSV file is missing required columns. Please make sure your file includes all the necessary columns and matches our template format.',
+          errors: [`Missing columns: ${missingColumns.join(', ')}`],
+          type: 'format',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+        return;
+      }
 
-            const newCategoriesToCreate = new Map<
-              string,
-              { name: string; icon: string }
-            >();
-            for (const row of results.data) {
-              const { category, categoryIcon } = row;
-              const normalizedCategoryName = category?.trim();
-              if (
-                normalizedCategoryName &&
-                categoryIcon &&
-                !existingCategoryMap.has(normalizedCategoryName.toLowerCase()) &&
-                !newCategoriesToCreate.has(normalizedCategoryName.toLowerCase())
-              ) {
-                newCategoriesToCreate.set(normalizedCategoryName.toLowerCase(), {
-                  name: normalizedCategoryName,
-                  icon: categoryIcon,
-                });
-              }
-            }
+      setProgress({
+        phase: 'validating',
+        current: 0,
+        total: results.data.length,
+        message: 'Checking your transactions...',
+      });
 
-            if (newCategoriesToCreate.size > 0) {
-              setProgress((prev) =>
-                prev
-                  ? {
-                    ...prev,
-                    message: `Creating ${newCategoriesToCreate.size} new categor${newCategoriesToCreate.size > 1 ? 'ies' : 'y'}...`,
-                  }
-                  : null
-              );
-              await sleep(100);
+      const existingCategories = await database
+        .get<CategoryModel>('categories')
+        .query()
+        .fetch();
+      const categoryNameMap = new Map(
+        existingCategories.map((category) => [
+          category.name.trim().toLowerCase(),
+          category.id,
+        ])
+      );
+      const existingCategoryNames = new Set(categoryNameMap.keys());
 
-              const newCategoryPromises = Array.from(newCategoriesToCreate.values()).map(
-                (cat) => createCategory({ name: cat.name, icon: cat.icon })
-              );
+      const allErrors: string[] = [];
+      const preparedTransactions: PreparedImportTransaction[] = [];
+      const categoriesToCreate = new Map<string, { name: string; icon: string }>();
 
-              try {
-                await Promise.all(newCategoryPromises);
-              } catch (_error) {
-                setImporting(false);
-                setProgress(null);
-                showError({
-                  title: 'Category Creation Failed',
-                  message:
-                    "We couldn't create some of the new categories found in your file. Please check for duplicates or invalid data.",
-                  type: 'import',
-                  showRetryButton: true,
-                });
-                return;
-              }
-            }
+      for (let index = 0; index < results.data.length; index += BATCH_SIZE) {
+        const chunk = results.data.slice(
+          index,
+          Math.min(index + BATCH_SIZE, results.data.length)
+        );
+        const preparedChunk = prepareImportRows({
+          rows: chunk,
+          supportedCurrencyCodes,
+          existingCategoryNames,
+          baseCurrency: importBaseCurrency,
+          startIndex: index,
+        });
 
-            setProgress((prev) =>
-              prev
-                ? {
-                  ...prev,
-                  message: 'Checking your transactions...',
-                }
-                : null
-            );
-            await sleep(100);
+        preparedTransactions.push(...preparedChunk.preparedTransactions);
+        allErrors.push(...preparedChunk.errors);
 
-            const allCategories = await database
-              .get<CategoryModel>('categories')
-              .query()
-              .fetch();
-            const categoryMap = new Map(
-              allCategories.map((c) => [c.name.trim().toLowerCase(), c.id])
-            );
-            const validTransactions: CreateTransactionPayload[] = [];
-            const allErrors: string[] = [];
-
-            for (let i = 0; i < results.data.length; i += BATCH_SIZE) {
-              const chunk = results.data.slice(
-                i,
-                Math.min(i + BATCH_SIZE, results.data.length)
-              );
-
-              for (let j = 0; j < chunk.length; j++) {
-                const rowIndex = i + j;
-                const row = chunk[j];
-
-                if (!row || typeof row !== 'object') {
-                  allErrors.push(`Row ${rowIndex + 1}: Invalid data format`);
-                  continue;
-                }
-
-                const validationErrors = validateCSVRow(
-                  row,
-                  rowIndex,
-                  supportedCurrencyCodes
-                );
-                if (validationErrors.length > 0) {
-                  allErrors.push(...validationErrors);
-                  continue;
-                }
-
-                const { merchant, amount, date, note, currencyCode, category } = row;
-                const normalizedCurrencyCode = normalizeCurrencyCode(currencyCode);
-                const normalizedMerchant = merchant.trim();
-                const normalizedCategory = category?.trim().toLowerCase();
-
-                const categoryId = normalizedCategory
-                  ? (categoryMap.get(normalizedCategory) ?? null)
-                  : null;
-
-                validTransactions.push({
-                  merchant: normalizedMerchant,
-                  amount: Number(amount),
-                  date: new Date(date),
-                  note: note?.trim() || '',
-                  currencyCode: normalizedCurrencyCode,
-                  categoryId,
-                  baseCurrency: importBaseCurrency,
-                  sourceRowNumber: rowIndex + 1,
-                });
-              }
-
-              setProgress((prev) =>
-                prev
-                  ? {
-                    ...prev,
-                    current: Math.min(i + BATCH_SIZE, results.data.length),
-                    message: `Validated ${Math.min(i + BATCH_SIZE, results.data.length)} out of ${results.data.length} transactions`,
-                  }
-                  : null
-              );
-
-              await sleep(50);
-            }
-
-            if (allErrors.length > 0) {
-              setImporting(false);
-              setProgress(null);
-              showError({
-                title: 'Data Validation Issues',
-                message: `We found ${allErrors.length} issue${allErrors.length > 1 ? 's' : ''} in your CSV file. Please fix these issues and try importing again.`,
-                errors: allErrors.slice(0, 10), // Show first 10 errors
-                type: 'validation',
-                showTemplateButton: true,
-                showRetryButton: true,
-              });
-              return;
-            }
-
-            if (validTransactions.length === 0) {
-              setImporting(false);
-              setProgress(null);
-              showError({
-                title: 'No Valid Transactions',
-                message:
-                  "We couldn't find any valid transactions in your CSV file. Please check the format and try again.",
-                type: 'validation',
-                showTemplateButton: true,
-                showRetryButton: true,
-              });
-              return;
-            }
-
-            setProgress({
-              phase: 'importing',
-              current: 0,
-              total: validTransactions.length,
-              message: 'Adding transactions to your account...',
-            });
-
-            const importResult = await processTransactionsInBatches(
-              validTransactions,
-              (current) => {
-                setProgress((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        current,
-                        message: `Added ${current} out of ${validTransactions.length} transactions`,
-                      }
-                    : null
-                );
-              }
-            );
-
-            if (importResult.failed.length > 0) {
-              setProgress((prev) =>
-                prev
-                  ? {
-                    ...prev,
-                    current: importResult.importedCount,
-                    message: `Imported ${importResult.importedCount} of ${validTransactions.length}; ${importResult.failed.length} skipped`,
-                  }
-                  : null
-              );
-            }
-
-            setProgress({
-              phase: 'complete',
-              current: importResult.importedCount,
-              total: validTransactions.length,
-              message: 'All done! Your transactions are ready.',
-            });
-
-            if (importResult.importedCount > 0 && importResult.failed.length === 0) {
-              toast.show({
-                title: '🎉 Import successful!',
-                message: `Successfully imported ${importResult.importedCount} ${importResult.importedCount === 1 ? 'transaction' : 'transactions'} to your account.`,
-                preset: 'custom',
-                duration: 4,
-              });
-            } else if (importResult.importedCount > 0) {
-              toast.show({
-                title: 'Import completed with issues',
-                message: `Imported ${importResult.importedCount} transactions and skipped ${importResult.failed.length} rows.`,
-                preset: 'custom',
-                duration: 5,
-              });
-
-              showError({
-                title: 'Some Rows Were Skipped',
-                message:
-                  'A few rows could not be imported. Review the details below and retry those rows if needed.',
-                errors: importResult.failed
-                  .slice(0, 10)
-                  .map((failure) => `Row ${failure.row}: ${failure.reason}`),
-                type: 'validation',
-                showTemplateButton: false,
-                showRetryButton: false,
-              });
-            } else {
-              showError({
-                title: 'No Transactions Imported',
-                message:
-                  'No rows could be imported. Review the issues below and try again.',
-                errors: importResult.failed
-                  .slice(0, 10)
-                  .map((failure) => `Row ${failure.row}: ${failure.reason}`),
-                type: 'validation',
-                showTemplateButton: true,
-                showRetryButton: true,
-              });
-            }
-
-            if (importResult.importedCount > 0) {
-              await sleep(1500);
-              sheetRef.current?.dismiss();
-
-              // Reset states after dismissing the sheet
-              setTimeout(() => {
-                setImporting(false);
-                setProgress(null);
-              }, 500);
-            } else {
-              setImporting(false);
-              setProgress(null);
-            }
-          } catch (_error) {
-            setImporting(false);
-            setProgress(null);
-            showError({
-              title: 'Import Failed',
-              message:
-                "We couldn't complete the import. Please try again or contact support if the issue persists.",
-              type: 'import',
-              showRetryButton: true,
-            });
+        for (const [
+          categoryName,
+          categoryData,
+        ] of preparedChunk.categoriesToCreate.entries()) {
+          if (!categoriesToCreate.has(categoryName)) {
+            categoriesToCreate.set(categoryName, categoryData);
           }
-        },
-        error: (_error: unknown) => {
+        }
+
+        setProgress((prev) =>
+          prev
+            ? {
+                ...prev,
+                current: Math.min(index + BATCH_SIZE, results.data.length),
+                message: `Validated ${Math.min(index + BATCH_SIZE, results.data.length)} out of ${results.data.length} transactions`,
+              }
+            : null
+        );
+      }
+
+      if (allErrors.length > 0) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: 'Data Validation Issues',
+          message: `We found ${allErrors.length} issue${allErrors.length > 1 ? 's' : ''} in your CSV file. Please fix these issues and try importing again.`,
+          errors: allErrors.slice(0, 10),
+          type: 'validation',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+        return;
+      }
+
+      if (preparedTransactions.length === 0) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: 'No Valid Transactions',
+          message:
+            "We couldn't find any valid transactions in your CSV file. Please check the format and try again.",
+          type: 'validation',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+        return;
+      }
+
+      if (categoriesToCreate.size > 0) {
+        setProgress((prev) =>
+          prev
+            ? {
+                ...prev,
+                message: `Creating ${categoriesToCreate.size} new categor${categoriesToCreate.size > 1 ? 'ies' : 'y'}...`,
+              }
+            : null
+        );
+
+        try {
+          const createdCategories = await createCategoriesBatch(
+            Array.from(categoriesToCreate.values())
+          );
+
+          for (const category of createdCategories) {
+            categoryNameMap.set(category.name.trim().toLowerCase(), category.id);
+          }
+        } catch (_error) {
           setImporting(false);
           setProgress(null);
           showError({
-            title: "Can't Read Your File",
+            title: 'Category Creation Failed',
             message:
-              "There seems to be an issue with your CSV file format. Make sure it's a valid CSV file and try again.",
-            type: 'parse',
-            showTemplateButton: true,
+              "We couldn't create some of the new categories found in your file. Please check for duplicates or invalid data.",
+            type: 'import',
             showRetryButton: true,
           });
-        },
+          return;
+        }
+      }
+
+      const validTransactions = buildImportTransactionPayloads({
+        preparedTransactions,
+        categoryIdsByName: categoryNameMap,
       });
+
+      setProgress({
+        phase: 'importing',
+        current: 0,
+        total: validTransactions.length,
+        message: 'Adding transactions to your account...',
+      });
+
+      const importResult = await processTransactionsInBatches(
+        validTransactions,
+        (current) => {
+          setProgress((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  current,
+                  message: `Added ${current} out of ${validTransactions.length} transactions`,
+                }
+              : null
+          );
+        }
+      );
+
+      if (importResult.failed.length > 0) {
+        setProgress((prev) =>
+          prev
+            ? {
+                ...prev,
+                current: importResult.importedCount,
+                message: `Imported ${importResult.importedCount} of ${validTransactions.length}; ${importResult.failed.length} skipped`,
+              }
+            : null
+        );
+      }
+
+      setProgress({
+        phase: 'complete',
+        current: importResult.importedCount,
+        total: validTransactions.length,
+        message: 'All done! Your transactions are ready.',
+      });
+
+      if (importResult.importedCount > 0 && importResult.failed.length === 0) {
+        toast.show({
+          title: '🎉 Import successful!',
+          message: `Successfully imported ${importResult.importedCount} ${importResult.importedCount === 1 ? 'transaction' : 'transactions'} to your account.`,
+          preset: 'custom',
+          duration: 4,
+        });
+      } else if (importResult.importedCount > 0) {
+        toast.show({
+          title: 'Import completed with issues',
+          message: `Imported ${importResult.importedCount} transactions and skipped ${importResult.failed.length} rows.`,
+          preset: 'custom',
+          duration: 5,
+        });
+
+        showError({
+          title: 'Some Rows Were Skipped',
+          message:
+            'A few rows could not be imported. Review the details below and retry those rows if needed.',
+          errors: importResult.failed
+            .slice(0, 10)
+            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          type: 'validation',
+          showTemplateButton: false,
+          showRetryButton: false,
+        });
+      } else {
+        showError({
+          title: 'No Transactions Imported',
+          message: 'No rows could be imported. Review the issues below and try again.',
+          errors: importResult.failed
+            .slice(0, 10)
+            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          type: 'validation',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+      }
+
+      if (importResult.importedCount > 0) {
+        sheetRef.current?.dismiss();
+
+        setTimeout(() => {
+          setImporting(false);
+          setProgress(null);
+        }, 500);
+      } else {
+        setImporting(false);
+        setProgress(null);
+      }
     } catch (_error) {
       setImporting(false);
       setProgress(null);
       showError({
-        title: 'File Error',
+        title: 'Import Failed',
         message:
-          "We couldn't read the selected file. Please try selecting a different file.",
-        type: 'file',
+          "We couldn't complete the import. Please try again or contact support if the issue persists.",
+        type: 'import',
         showRetryButton: true,
       });
     }

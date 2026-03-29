@@ -1,8 +1,4 @@
-import {
-  normalizeCurrencyCode,
-  validateCSVRow,
-  type CSVRow,
-} from './validation';
+import { normalizeCurrencyCode, validateCSVRow, type CSVRow } from './validation';
 
 const supportedCurrencyCodes = ['USD', 'EUR', 'GBP'];
 

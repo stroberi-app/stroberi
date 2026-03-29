@@ -12,10 +12,10 @@ import { Input, Text, View, YGroup } from 'tamagui';
 import type { TripModel } from '../../database/trip-model';
 import {
   createTrip,
-  updateTrip,
   deleteTrip,
   toggleTripArchive,
-} from '../../database/helpers';
+  updateTrip,
+} from '../../database/actions/trips';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import { LinkButton } from '../button/LinkButton';
@@ -24,35 +24,16 @@ import { CurrencySelect } from '../CurrencySelect';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { DatePicker } from '../DatePicker';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
+import {
+  buildTripFormState,
+  buildTripPayload,
+  canMarkTripAsFinished,
+  getDefaultTripFormState,
+  TRIP_ICONS,
+  validateTripForm,
+} from './tripFormUtils';
 
 const SNAP_POINTS = ['80%'];
-
-const TRIP_ICONS = [
-  '✈️',
-  '🏖️',
-  '🏔️',
-  '🌴',
-  '🗼',
-  '🏯',
-  '🎡',
-  '🚗',
-  '🚢',
-  '🏕️',
-  '🎿',
-  '🏝️',
-  '🌍',
-  '🗽',
-  '🎭',
-  '🎪',
-  '🏨',
-  '🛫',
-  '🚂',
-  '⛺',
-  '🎒',
-  '🧳',
-  '🗺️',
-  '🌅',
-];
 
 type TripFormSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -76,44 +57,49 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
   const [isSaving, setIsSaving] = useState(false);
 
   const resetForm = useCallback(() => {
-    setName('');
-    setIcon('✈️');
-    setCurrencyCode(null);
-    setStartDate(new Date());
-    setEndDate(null);
-    setHasEndDate(false);
+    const nextState = getDefaultTripFormState();
+    setName(nextState.name);
+    setIcon(nextState.icon);
+    setCurrencyCode(nextState.currencyCode);
+    setStartDate(nextState.startDate);
+    setEndDate(nextState.endDate);
+    setHasEndDate(nextState.hasEndDate);
   }, []);
 
   useEffect(() => {
-    if (trip) {
-      setName(trip.name);
-      setIcon(trip.icon);
-      setCurrencyCode(trip.currencyCode);
-      setStartDate(trip.startDate);
-      setEndDate(trip.endDate);
-      setHasEndDate(!!trip.endDate);
-    } else {
-      resetForm();
-    }
-  }, [trip, resetForm]);
+    const nextState = buildTripFormState(trip);
+    setName(nextState.name);
+    setIcon(nextState.icon);
+    setCurrencyCode(nextState.currencyCode);
+    setStartDate(nextState.startDate);
+    setEndDate(nextState.endDate);
+    setHasEndDate(nextState.hasEndDate);
+  }, [trip]);
 
   const handleSubmit = async () => {
     if (isSaving) return;
 
-    if (!name.trim()) {
+    const validationMessage = validateTripForm({
+      endDate,
+      hasEndDate,
+      name,
+      startDate,
+    });
+
+    if (validationMessage === 'Please enter a trip name') {
       toast.show({
         title: 'Missing Name',
-        message: 'Please enter a trip name',
+        message: validationMessage,
         preset: 'error',
         haptic: 'error',
       });
       return;
     }
 
-    if (hasEndDate && endDate && dayjs(endDate).isBefore(dayjs(startDate), 'day')) {
+    if (validationMessage) {
       toast.show({
         title: 'Invalid Date Range',
-        message: 'End date must be on or after the start date',
+        message: validationMessage,
         preset: 'error',
         haptic: 'error',
       });
@@ -123,13 +109,14 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
     setIsSaving(true);
 
     try {
-      const payload = {
-        name: name.trim(),
+      const payload = buildTripPayload({
+        name,
         icon,
         currencyCode,
         startDate,
-        endDate: hasEndDate ? endDate : null,
-      };
+        endDate,
+        hasEndDate,
+      });
 
       if (trip) {
         await updateTrip({
@@ -347,50 +334,49 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
               {trip && (
                 <View marginTop="$6" gap="$3">
                   {/* Show Mark as Finished only for active trips */}
-                  {!trip.isArchived &&
-                    (!trip.endDate || dayjs(trip.endDate).isAfter(dayjs())) && (
-                      <LinkButton
-                        backgroundColor="$green"
-                        width="100%"
-                        justifyContent="center"
-                        onPress={async () => {
-                          if (isSaving) return;
-                          setIsSaving(true);
-                          try {
-                            await updateTrip({
-                              id: trip.id,
-                              name: trip.name,
-                              icon: trip.icon,
-                              startDate: trip.startDate,
-                              endDate: new Date(),
-                            });
-                            toast.show({
-                              title: 'Trip Finished',
-                              message: 'Trip marked as finished',
-                              preset: 'done',
-                              haptic: 'success',
-                            });
-                            setIsSaving(false);
-                            sheetRef.current?.close();
-                            onSuccess();
-                          } catch (error) {
-                            setIsSaving(false);
-                            toast.show({
-                              title: 'Error',
-                              message:
-                                error instanceof Error
-                                  ? error.message
-                                  : 'Failed to finish trip',
-                              preset: 'error',
-                              haptic: 'error',
-                            });
-                          }
-                        }}
-                        disabled={isSaving}
-                      >
-                        <Text color="white">✓ Mark as Finished</Text>
-                      </LinkButton>
-                    )}
+                  {canMarkTripAsFinished(trip) && (
+                    <LinkButton
+                      backgroundColor="$green"
+                      width="100%"
+                      justifyContent="center"
+                      onPress={async () => {
+                        if (isSaving) return;
+                        setIsSaving(true);
+                        try {
+                          await updateTrip({
+                            id: trip.id,
+                            name: trip.name,
+                            icon: trip.icon,
+                            startDate: trip.startDate,
+                            endDate: new Date(),
+                          });
+                          toast.show({
+                            title: 'Trip Finished',
+                            message: 'Trip marked as finished',
+                            preset: 'done',
+                            haptic: 'success',
+                          });
+                          setIsSaving(false);
+                          sheetRef.current?.close();
+                          onSuccess();
+                        } catch (error) {
+                          setIsSaving(false);
+                          toast.show({
+                            title: 'Error',
+                            message:
+                              error instanceof Error
+                                ? error.message
+                                : 'Failed to finish trip',
+                            preset: 'error',
+                            haptic: 'error',
+                          });
+                        }
+                      }}
+                      disabled={isSaving}
+                    >
+                      <Text color="white">✓ Mark as Finished</Text>
+                    </LinkButton>
+                  )}
 
                   <LinkButton
                     backgroundColor="$gray4"

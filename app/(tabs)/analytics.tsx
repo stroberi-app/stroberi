@@ -10,7 +10,7 @@ import {
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import * as React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Button, ScrollView, Separator, Text, View, styled } from 'tamagui';
@@ -18,402 +18,15 @@ import type { BudgetModel } from '../../database/budget-model';
 import type { CategoryModel } from '../../database/category-model';
 import { database } from '../../database/index';
 import type { TransactionModel } from '../../database/transaction-model';
+import { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import type { DateFilter } from '../../lib/analyticsOverview';
 import {
-  calculateFinancialHealthScore,
-  calculateSavingsRate,
-  type FinancialHealthScore,
-  type SavingsRateAnalysis,
-} from '../../lib/advancedAnalytics';
+  DATE_FILTER_OPTIONS,
+  formatSignedCurrency,
+  getPriorityStyles,
+} from '../../lib/analyticsOverview';
 import { formatCurrency } from '../../lib/format';
-import {
-  calculateProjectedSpending,
-  detectRecurringTransactions,
-  type SpendingForecast,
-} from '../../lib/forecasting';
-
-type DateFilter =
-  | 'thisMonth'
-  | 'lastMonth'
-  | 'last3Months'
-  | 'last6Months'
-  | 'thisYear';
-
-type DateRange = {
-  fromDate: Date;
-  toDate: Date;
-  label: string;
-};
-
-type ActionPriority = 'high' | 'medium' | 'low';
-
-type ActionPlanItem = {
-  id: string;
-  title: string;
-  description: string;
-  impact: string;
-  priority: ActionPriority;
-};
-
-type CategoryHotspot = {
-  categoryId: string;
-  categoryName: string;
-  categoryIcon: string;
-  currentSpend: number;
-  previousSpend: number;
-  changePercent: number;
-  share: number;
-  potentialSavings: number;
-};
-
-const DATE_FILTER_OPTIONS: Array<{ value: DateFilter; label: string }> = [
-  { value: 'thisMonth', label: 'This Month' },
-  { value: 'lastMonth', label: 'Last Month' },
-  { value: 'last3Months', label: '3 Months' },
-  { value: 'last6Months', label: '6 Months' },
-  { value: 'thisYear', label: 'This Year' },
-];
-
-const getDateRange = (filter: DateFilter): DateRange => {
-  const today = dayjs();
-
-  switch (filter) {
-    case 'thisMonth':
-      return {
-        fromDate: today.startOf('month').toDate(),
-        toDate: today.endOf('month').toDate(),
-        label: 'This month',
-      };
-    case 'lastMonth':
-      return {
-        fromDate: today.subtract(1, 'month').startOf('month').toDate(),
-        toDate: today.subtract(1, 'month').endOf('month').toDate(),
-        label: 'Last month',
-      };
-    case 'last3Months':
-      return {
-        fromDate: today.subtract(3, 'month').startOf('month').toDate(),
-        toDate: today.endOf('month').toDate(),
-        label: 'Last 3 months',
-      };
-    case 'last6Months':
-      return {
-        fromDate: today.subtract(6, 'month').startOf('month').toDate(),
-        toDate: today.endOf('month').toDate(),
-        label: 'Last 6 months',
-      };
-    case 'thisYear':
-      return {
-        fromDate: today.startOf('year').toDate(),
-        toDate: today.endOf('year').toDate(),
-        label: 'This year',
-      };
-  }
-};
-
-const getPreviousRange = (fromDate: Date, comparisonToDate: Date) => {
-  const daysInRange = Math.max(
-    1,
-    dayjs(comparisonToDate).diff(dayjs(fromDate), 'day') + 1
-  );
-  return {
-    previousFromDate: dayjs(fromDate).subtract(daysInRange, 'day').toDate(),
-    previousToDate: dayjs(fromDate).subtract(1, 'day').toDate(),
-    daysInRange,
-  };
-};
-
-const calculatePercentChange = (current: number, previous: number) => {
-  if (previous === 0) {
-    return current > 0 ? 100 : 0;
-  }
-  return ((current - previous) / previous) * 100;
-};
-
-const formatSignedCurrency = (value: number, currency: string) => {
-  const formatted = formatCurrency(Math.abs(value), currency);
-  if (value === 0) {
-    return formatCurrency(0, currency);
-  }
-  return value > 0 ? `+${formatted}` : `-${formatted}`;
-};
-
-const getPriorityStyles = (priority: ActionPriority) => {
-  switch (priority) {
-    case 'high':
-      return {
-        backgroundColor: 'rgba(229, 75, 75, 0.18)',
-        borderColor: '$stroberi',
-        textColor: '$stroberi',
-        label: 'High impact',
-      };
-    case 'medium':
-      return {
-        backgroundColor: 'rgba(234, 179, 8, 0.18)',
-        borderColor: '$yellow',
-        textColor: '$yellow',
-        label: 'Worth doing',
-      };
-    default:
-      return {
-        backgroundColor: 'rgba(34, 197, 94, 0.16)',
-        borderColor: '$green',
-        textColor: '$green',
-        label: 'Keep it up',
-      };
-  }
-};
-
-const getForecastState = (forecast: SpendingForecast, budgetLimit?: number) => {
-  if (!budgetLimit || budgetLimit <= 0) {
-    return {
-      label: 'No budget baseline set',
-      color: '$gray11',
-    };
-  }
-
-  if (forecast.status === 'critical') {
-    return {
-      label: 'Projected to exceed budget',
-      color: '$stroberi',
-    };
-  }
-
-  if (forecast.status === 'warning') {
-    return {
-      label: 'Close to monthly limit',
-      color: '$yellow',
-    };
-  }
-
-  return {
-    label: 'On pace with budget',
-    color: '$green',
-  };
-};
-
-const createCategoryHotspots = (
-  periodTransactions: TransactionModel[],
-  previousPeriodTransactions: TransactionModel[],
-  categories: CategoryModel[]
-): CategoryHotspot[] => {
-  const currentTotals: Record<string, number> = {};
-  const previousTotals: Record<string, number> = {};
-  const categoryMeta = new Map(
-    categories.map((category) => [
-      category.id,
-      { name: category.name, icon: category.icon || '•' },
-    ])
-  );
-
-  const expenseTransactions = periodTransactions.filter(
-    (tx) => tx.amountInBaseCurrency < 0
-  );
-  const previousExpenseTransactions = previousPeriodTransactions.filter(
-    (tx) => tx.amountInBaseCurrency < 0
-  );
-
-  for (const tx of expenseTransactions) {
-    const categoryId = tx.category?.id || 'uncategorized';
-    currentTotals[categoryId] =
-      (currentTotals[categoryId] || 0) + Math.abs(tx.amountInBaseCurrency);
-  }
-
-  for (const tx of previousExpenseTransactions) {
-    const categoryId = tx.category?.id || 'uncategorized';
-    previousTotals[categoryId] =
-      (previousTotals[categoryId] || 0) + Math.abs(tx.amountInBaseCurrency);
-  }
-
-  const totalCurrentSpend = Object.values(currentTotals).reduce(
-    (sum, value) => sum + value,
-    0
-  );
-  const allCategoryIds = new Set([
-    ...Object.keys(currentTotals),
-    ...Object.keys(previousTotals),
-  ]);
-
-  return Array.from(allCategoryIds)
-    .map((categoryId) => {
-      const currentSpend = currentTotals[categoryId] || 0;
-      const previousSpend = previousTotals[categoryId] || 0;
-      const changePercent = calculatePercentChange(currentSpend, previousSpend);
-      const share = totalCurrentSpend > 0 ? (currentSpend / totalCurrentSpend) * 100 : 0;
-      const potentialSavings =
-        previousSpend > 0
-          ? Math.max(0, (currentSpend - previousSpend) * 0.75)
-          : currentSpend * 0.12;
-      const category = categoryMeta.get(categoryId);
-
-      return {
-        categoryId,
-        categoryName: category?.name || 'Uncategorized',
-        categoryIcon: category?.icon || '•',
-        currentSpend,
-        previousSpend,
-        changePercent,
-        share,
-        potentialSavings,
-      };
-    })
-    .filter((item) => item.currentSpend > 0)
-    .sort((a, b) => b.currentSpend - a.currentSpend);
-};
-
-const calculateNoSpendStats = (
-  periodTransactions: TransactionModel[],
-  fromDate: Date,
-  toDate: Date
-) => {
-  const expenseDaySet = new Set<string>();
-
-  for (const transaction of periodTransactions) {
-    if (transaction.amountInBaseCurrency < 0) {
-      expenseDaySet.add(dayjs(transaction.date).format('YYYY-MM-DD'));
-    }
-  }
-
-  const totalDays = Math.max(1, dayjs(toDate).diff(dayjs(fromDate), 'day') + 1);
-  let noSpendDays = 0;
-  let bestNoSpendStreak = 0;
-  let currentStreak = 0;
-
-  for (let i = 0; i < totalDays; i++) {
-    const dayKey = dayjs(fromDate).add(i, 'day').format('YYYY-MM-DD');
-    const spent = expenseDaySet.has(dayKey);
-    if (spent) {
-      currentStreak = 0;
-      continue;
-    }
-
-    noSpendDays += 1;
-    currentStreak += 1;
-    if (currentStreak > bestNoSpendStreak) {
-      bestNoSpendStreak = currentStreak;
-    }
-  }
-
-  return { noSpendDays, bestNoSpendStreak, totalDays };
-};
-
-const buildActionPlan = ({
-  currency,
-  periodNet,
-  daysInPeriod,
-  daysRemainingInPeriod,
-  isCurrentPeriod,
-  forecast,
-  budgetLimit,
-  categoryHotspots,
-  noSpendDays,
-  savingsRate,
-  upcomingBillsCount,
-}: {
-  currency: string;
-  periodNet: number;
-  daysInPeriod: number;
-  daysRemainingInPeriod: number;
-  isCurrentPeriod: boolean;
-  forecast: SpendingForecast;
-  budgetLimit?: number;
-  categoryHotspots: CategoryHotspot[];
-  noSpendDays: number;
-  savingsRate: number;
-  upcomingBillsCount: number;
-}): ActionPlanItem[] => {
-  const actions: ActionPlanItem[] = [];
-
-  if (
-    isCurrentPeriod &&
-    budgetLimit &&
-    budgetLimit > 0 &&
-    (forecast.status === 'warning' || forecast.status === 'critical')
-  ) {
-    const overrun = Math.max(0, forecast.projectedSpend - budgetLimit);
-    actions.push({
-      id: 'budget-runway',
-      title: 'Protect this month budget',
-      description:
-        forecast.status === 'critical'
-          ? `At current pace you may overshoot by ${formatCurrency(overrun, currency)}.`
-          : 'You are nearing the monthly budget ceiling.',
-      impact:
-        forecast.daysRemaining > 0
-          ? `Cap daily spend near ${formatCurrency(
-              Math.max(0, (budgetLimit - forecast.currentSpend) / forecast.daysRemaining),
-              currency
-            )}`
-          : 'Review month-end spend',
-      priority: forecast.status === 'critical' ? 'high' : 'medium',
-    });
-  }
-
-  if (isCurrentPeriod && periodNet < 0 && daysRemainingInPeriod > 0) {
-    const neededDailyShift = Math.abs(periodNet) / daysRemainingInPeriod;
-    actions.push({
-      id: 'cashflow-shift',
-      title: 'Restore positive cashflow',
-      description: `You are negative ${formatCurrency(Math.abs(periodNet), currency)} in this period.`,
-      impact: `Reduce daily spend by ${formatCurrency(neededDailyShift, currency)}`,
-      priority: 'high',
-    });
-  }
-
-  const topOpportunity = categoryHotspots.find(
-    (item) => item.potentialSavings > 0 && item.currentSpend > 0
-  );
-  if (topOpportunity) {
-    actions.push({
-      id: 'category-focus',
-      title: `Trim ${topOpportunity.categoryName}`,
-      description: `${topOpportunity.categoryName} rose ${Math.round(
-        topOpportunity.changePercent
-      )}% vs previous period.`,
-      impact: `Potential savings: ${formatCurrency(topOpportunity.potentialSavings, currency)}`,
-      priority: topOpportunity.changePercent > 25 ? 'high' : 'medium',
-    });
-  }
-
-  const targetNoSpendDays = Math.max(2, Math.round(daysInPeriod * 0.25));
-  if (noSpendDays < targetNoSpendDays) {
-    actions.push({
-      id: 'no-spend-days',
-      title: 'Add no-spend days',
-      description: `You logged ${noSpendDays} no-spend days out of ${daysInPeriod}.`,
-      impact: `Aim for ${targetNoSpendDays} no-spend days this period`,
-      priority: 'medium',
-    });
-  }
-
-  if (upcomingBillsCount > 0) {
-    actions.push({
-      id: 'upcoming-bills',
-      title: 'Prepare for recurring bills',
-      description: `${upcomingBillsCount} expected recurring charge(s) in the next 30 days.`,
-      impact: 'Set aside cash before due dates',
-      priority: 'medium',
-    });
-  }
-
-  if (actions.length === 0) {
-    actions.push({
-      id: 'steady',
-      title: 'Maintain your momentum',
-      description:
-        savingsRate >= 15
-          ? 'Savings rate is strong. Keep your current habits consistent.'
-          : 'Spending and income are balanced right now.',
-      impact:
-        savingsRate >= 15
-          ? 'Keep saving at the current pace'
-          : 'Try to lift savings rate by 2-3%',
-      priority: 'low',
-    });
-  }
-
-  return actions.slice(0, 4);
-};
 
 type AnalyticsContentProps = {
   transactions: TransactionModel[];
@@ -447,244 +60,33 @@ const AnalyticsContent = withObservables<
   const { top } = useSafeAreaInsets();
   const { defaultCurrency } = useDefaultCurrency();
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
-
-  const { fromDate, toDate, label } = useMemo(() => getDateRange(dateFilter), [dateFilter]);
-  const comparisonToDate = useMemo(() => {
-    const now = dayjs().endOf('day');
-    return dayjs(toDate).isAfter(now) ? now.toDate() : toDate;
-  }, [toDate]);
-
-  const previousRange = useMemo(
-    () => getPreviousRange(fromDate, comparisonToDate),
-    [fromDate, comparisonToDate]
-  );
-
-  const periodTransactions = useMemo(
-    () =>
-      transactions.filter((tx) => {
-        const txDate = new Date(tx.date).getTime();
-        return txDate >= fromDate.getTime() && txDate <= comparisonToDate.getTime();
-      }),
-    [transactions, fromDate, comparisonToDate]
-  );
-
-  const previousPeriodTransactions = useMemo(
-    () =>
-      transactions.filter((tx) => {
-        const txDate = new Date(tx.date).getTime();
-        return (
-          txDate >= previousRange.previousFromDate.getTime() &&
-          txDate <= previousRange.previousToDate.getTime()
-        );
-      }),
-    [transactions, previousRange]
-  );
-
-  const periodTotals = useMemo(() => {
-    let income = 0;
-    let expenses = 0;
-
-    for (const transaction of periodTransactions) {
-      const amount = transaction.amountInBaseCurrency;
-      if (amount >= 0) {
-        income += amount;
-      } else {
-        expenses += Math.abs(amount);
-      }
-    }
-
-    return {
-      income,
-      expenses,
-      net: income - expenses,
-    };
-  }, [periodTransactions]);
-
-  const previousPeriodTotals = useMemo(() => {
-    let income = 0;
-    let expenses = 0;
-
-    for (const transaction of previousPeriodTransactions) {
-      const amount = transaction.amountInBaseCurrency;
-      if (amount >= 0) {
-        income += amount;
-      } else {
-        expenses += Math.abs(amount);
-      }
-    }
-
-    return {
-      income,
-      expenses,
-      net: income - expenses,
-    };
-  }, [previousPeriodTransactions]);
-
-  const expenseChangePercent = useMemo(
-    () => calculatePercentChange(periodTotals.expenses, previousPeriodTotals.expenses),
-    [periodTotals.expenses, previousPeriodTotals.expenses]
-  );
-
-  const monthBudgetLimit = useMemo(() => {
-    if (budgets.length === 0) {
-      return undefined;
-    }
-    const total = budgets.reduce((sum, budget) => sum + budget.amount, 0);
-    return total > 0 ? total : undefined;
-  }, [budgets]);
-
-  const periodBudgetLimit = useMemo(() => {
-    if (!monthBudgetLimit) {
-      return undefined;
-    }
-    const monthsCovered = Math.max(
-      1,
-      dayjs(comparisonToDate).diff(dayjs(fromDate), 'month') + 1
-    );
-    return monthBudgetLimit * monthsCovered;
-  }, [monthBudgetLimit, fromDate, comparisonToDate]);
-
-  const budgetAdherence = useMemo(() => {
-    if (!periodBudgetLimit || periodBudgetLimit <= 0) {
-      return undefined;
-    }
-    const usagePercent = (periodTotals.expenses / periodBudgetLimit) * 100;
-    if (usagePercent <= 100) {
-      return Math.round(80 + (100 - usagePercent) * 0.2);
-    }
-    return Math.round(Math.max(0, 80 - (usagePercent - 100) * 0.8));
-  }, [periodTotals.expenses, periodBudgetLimit]);
-
-  const savingsAnalysis: SavingsRateAnalysis = useMemo(
-    () => calculateSavingsRate(transactions, fromDate, toDate),
-    [transactions, fromDate, toDate]
-  );
-
-  const healthScore: FinancialHealthScore = useMemo(
-    () => calculateFinancialHealthScore(transactions, fromDate, toDate, budgetAdherence),
-    [transactions, fromDate, toDate, budgetAdherence]
-  );
-
-  const forecast: SpendingForecast = useMemo(
-    () => calculateProjectedSpending(transactions, monthBudgetLimit),
-    [transactions, monthBudgetLimit]
-  );
-
-  const categoryHotspots = useMemo(
-    () => createCategoryHotspots(periodTransactions, previousPeriodTransactions, categories),
-    [periodTransactions, previousPeriodTransactions, categories]
-  );
-
-  const noSpendStats = useMemo(
-    () => calculateNoSpendStats(periodTransactions, fromDate, comparisonToDate),
-    [periodTransactions, fromDate, comparisonToDate]
-  );
-
-  const upcomingRecurring = useMemo(
-    () =>
-      detectRecurringTransactions(transactions)
-        .filter((item) => {
-          const dueDate = dayjs(item.predictedDate);
-          const daysUntil = dueDate.diff(dayjs(), 'day');
-          return daysUntil >= 0 && daysUntil <= 30;
-        })
-        .sort((a, b) => a.predictedDate.getTime() - b.predictedDate.getTime())
-        .slice(0, 4),
-    [transactions]
-  );
-
-  const isCurrentPeriod = useMemo(() => {
-    const today = dayjs();
-    return (
-      today.isAfter(dayjs(fromDate).subtract(1, 'day')) &&
-      today.isBefore(dayjs(toDate).add(1, 'day'))
-    );
-  }, [fromDate, toDate]);
-
-  const daysRemainingInPeriod = useMemo(() => {
-    if (!isCurrentPeriod) {
-      return 0;
-    }
-    return Math.max(1, dayjs(toDate).diff(dayjs().startOf('day'), 'day') + 1);
-  }, [isCurrentPeriod, toDate]);
-
-  const actionPlan = useMemo(
-    () =>
-      buildActionPlan({
-        currency: defaultCurrency || 'USD',
-        periodNet: periodTotals.net,
-        daysInPeriod: previousRange.daysInRange,
-        daysRemainingInPeriod,
-        isCurrentPeriod,
-        forecast,
-        budgetLimit: monthBudgetLimit,
-        categoryHotspots,
-        noSpendDays: noSpendStats.noSpendDays,
-        savingsRate: savingsAnalysis.savingsRate,
-        upcomingBillsCount: upcomingRecurring.length,
-      }),
-    [
-      defaultCurrency,
-      periodTotals.net,
-      previousRange.daysInRange,
-      daysRemainingInPeriod,
-      isCurrentPeriod,
-      forecast,
-      monthBudgetLimit,
-      categoryHotspots,
-      noSpendStats.noSpendDays,
-      savingsAnalysis.savingsRate,
-      upcomingRecurring.length,
-    ]
-  );
-
-  const pulseState = useMemo(() => {
-    if (
-      healthScore.overallScore >= 80 &&
-      savingsAnalysis.savingsRate >= 10 &&
-      periodTotals.net >= 0
-    ) {
-      return {
-        label: 'Strong',
-        description: 'Your money habits are working in your favor.',
-        color: '$green',
-        bg: 'rgba(34, 197, 94, 0.16)',
-      };
-    }
-
-    if (periodTotals.net >= 0 && healthScore.overallScore >= 65) {
-      return {
-        label: 'Stable',
-        description: 'You are on track, but there is room to optimize.',
-        color: '$yellow',
-        bg: 'rgba(234, 179, 8, 0.16)',
-      };
-    }
-
-    return {
-      label: 'Needs Attention',
-      description: 'Spending pressure is increasing in this period.',
-      color: '$stroberi',
-      bg: 'rgba(229, 75, 75, 0.16)',
-    };
-  }, [healthScore.overallScore, savingsAnalysis.savingsRate, periodTotals.net]);
-
-  const potentialMonthlySavings = useMemo(
-    () =>
-      categoryHotspots
-        .slice(0, 3)
-        .reduce((sum, hotspot) => sum + hotspot.potentialSavings, 0),
-    [categoryHotspots]
-  );
-
-  const forecastState = useMemo(
-    () => getForecastState(forecast, monthBudgetLimit),
-    [forecast, monthBudgetLimit]
-  );
-
-  const currency = defaultCurrency || 'USD';
-  const hasAnyData = transactions.length > 0;
-  const hasPeriodData = periodTransactions.length > 0;
+  const {
+    actionPlan,
+    categoryHotspots,
+    currency,
+    expenseChangePercent,
+    forecast,
+    forecastState,
+    fromDate,
+    hasAnyData,
+    hasPeriodData,
+    healthScore,
+    label,
+    monthBudgetLimit,
+    periodTotals,
+    potentialMonthlySavings,
+    previousPeriodTotals,
+    previousRange,
+    pulseState,
+    toDate,
+    upcomingRecurring,
+  } = useAnalyticsOverview({
+    transactions,
+    categories,
+    budgets,
+    defaultCurrency,
+    dateFilter,
+  });
 
   return (
     <ScrollView
@@ -761,12 +163,7 @@ const AnalyticsContent = withObservables<
               gap="$3"
             >
               <View flex={1}>
-                <View
-                  flexDirection="row"
-                  alignItems="center"
-                  gap="$2"
-                  marginBottom="$2"
-                >
+                <View flexDirection="row" alignItems="center" gap="$2" marginBottom="$2">
                   <Flame size={18} color={pulseState.color} />
                   <Text fontSize="$5" fontWeight="bold" color="white">
                     Money Pulse
@@ -811,7 +208,11 @@ const AnalyticsContent = withObservables<
                   {formatSignedCurrency(periodTotals.net, currency)}
                 </Text>
                 <Text fontSize="$2" color="$gray10" marginTop="$1">
-                  vs prev: {formatSignedCurrency(periodTotals.net - previousPeriodTotals.net, currency)}
+                  vs prev:{' '}
+                  {formatSignedCurrency(
+                    periodTotals.net - previousPeriodTotals.net,
+                    currency
+                  )}
                 </Text>
               </MetricTile>
 
@@ -820,7 +221,10 @@ const AnalyticsContent = withObservables<
                   Avg daily spend
                 </Text>
                 <Text fontSize="$5" fontWeight="bold" color="white" marginTop="$1">
-                  {formatCurrency(periodTotals.expenses / previousRange.daysInRange, currency)}
+                  {formatCurrency(
+                    periodTotals.expenses / previousRange.daysInRange,
+                    currency
+                  )}
                 </Text>
                 <Text
                   fontSize="$2"
@@ -847,15 +251,26 @@ const AnalyticsContent = withObservables<
                   {forecastState.label}
                 </Text>
               </View>
-              <View height={8} backgroundColor="$gray5" borderRadius={4} overflow="hidden">
+              <View
+                height={8}
+                backgroundColor="$gray5"
+                borderRadius={4}
+                overflow="hidden"
+              >
                 <View
                   height="100%"
                   width={`${
                     monthBudgetLimit
                       ? Math.min(100, (forecast.projectedSpend / monthBudgetLimit) * 100)
-                      : Math.min(100, (forecast.currentSpend / Math.max(forecast.projectedSpend, 1)) * 100)
+                      : Math.min(
+                          100,
+                          (forecast.currentSpend / Math.max(forecast.projectedSpend, 1)) *
+                            100
+                        )
                   }%`}
-                  backgroundColor={forecast.status === 'critical' ? '$stroberi' : '$green'}
+                  backgroundColor={
+                    forecast.status === 'critical' ? '$stroberi' : '$green'
+                  }
                 />
               </View>
             </View>
@@ -902,7 +317,12 @@ const AnalyticsContent = withObservables<
                     <Text fontSize="$2" color="$gray11">
                       {item.description}
                     </Text>
-                    <Text fontSize="$2" color={style.textColor} marginTop="$1.5" fontWeight="700">
+                    <Text
+                      fontSize="$2"
+                      color={style.textColor}
+                      marginTop="$1.5"
+                      fontWeight="700"
+                    >
                       {item.impact}
                     </Text>
                   </View>
@@ -938,14 +358,25 @@ const AnalyticsContent = withObservables<
                   justifyContent="space-between"
                   marginBottom="$1.5"
                 >
-                  <Text fontSize="$3" color="white" fontWeight="600" flex={1} numberOfLines={1}>
+                  <Text
+                    fontSize="$3"
+                    color="white"
+                    fontWeight="600"
+                    flex={1}
+                    numberOfLines={1}
+                  >
                     {item.categoryIcon} {item.categoryName}
                   </Text>
                   <Text fontSize="$3" color="white" fontWeight="700">
                     {formatCurrency(item.currentSpend, currency)}
                   </Text>
                 </View>
-                <View height={7} backgroundColor="$gray5" borderRadius={4} overflow="hidden">
+                <View
+                  height={7}
+                  backgroundColor="$gray5"
+                  borderRadius={4}
+                  overflow="hidden"
+                >
                   <View
                     height="100%"
                     width={`${Math.max(8, Math.min(100, item.share))}%`}
@@ -1002,7 +433,8 @@ const AnalyticsContent = withObservables<
                 borderColor="$gray5"
               >
                 <Text fontSize="$3" color="$gray11">
-                  No recurring expenses detected yet. Add merchant names to improve bill predictions.
+                  No recurring expenses detected yet. Add merchant names to improve bill
+                  predictions.
                 </Text>
               </View>
             ) : (
@@ -1010,7 +442,9 @@ const AnalyticsContent = withObservables<
                 const daysUntil = dayjs(item.predictedDate).diff(dayjs(), 'day');
                 return (
                   <View key={`${item.merchant}-${item.predictedDate.toISOString()}`}>
-                    {index > 0 && <Separator marginVertical="$2.5" borderColor="$gray5" />}
+                    {index > 0 && (
+                      <Separator marginVertical="$2.5" borderColor="$gray5" />
+                    )}
                     <View
                       flexDirection="row"
                       alignItems="center"
@@ -1040,7 +474,6 @@ const AnalyticsContent = withObservables<
               })
             )}
           </SectionCard>
-
         </>
       )}
 

@@ -31,9 +31,20 @@ export const SpendingVelocityCard = ({
       {/* Forecast Section */}
       {forecast && (
         <View marginBottom="$4">
-          <View flexDirection="row" justifyContent="space-between" alignItems="flex-end" marginBottom="$2">
-            <Text fontSize="$3" color="$gray11">Month End Projection</Text>
-            <Text fontSize="$5" fontWeight="bold" color={forecast.status === 'critical' ? '$stroberi' : '$gray12'}>
+          <View
+            flexDirection="row"
+            justifyContent="space-between"
+            alignItems="flex-end"
+            marginBottom="$2"
+          >
+            <Text fontSize="$3" color="$gray11">
+              Month End Projection
+            </Text>
+            <Text
+              fontSize="$5"
+              fontWeight="bold"
+              color={forecast.status === 'critical' ? '$stroberi' : '$gray12'}
+            >
               {formatCurrency(forecast.projectedSpend, currency)}
             </Text>
           </View>
@@ -48,16 +59,15 @@ export const SpendingVelocityCard = ({
               position="absolute"
             />
             {/* Projected Add-on */}
-            <View
-              height="100%"
-              backgroundColor="$stroberi"
-              opacity={0.3}
-              width="100%"
-            />
+            <View height="100%" backgroundColor="$stroberi" opacity={0.3} width="100%" />
           </View>
           <View flexDirection="row" justifyContent="space-between" marginTop="$1">
-            <Text fontSize={10} color="$gray10">Current: {formatCurrency(forecast.currentSpend, currency)}</Text>
-            <Text fontSize={10} color="$gray10">{forecast.daysRemaining} days left</Text>
+            <Text fontSize={10} color="$gray10">
+              Current: {formatCurrency(forecast.currentSpend, currency)}
+            </Text>
+            <Text fontSize={10} color="$gray10">
+              {forecast.daysRemaining} days left
+            </Text>
           </View>
         </View>
       )}

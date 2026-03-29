@@ -2,7 +2,7 @@ import { getLocales } from 'expo-localization';
 import { useEffect, useState } from 'react';
 import { database } from '../database';
 import type { TransactionModel } from '../database/transaction-model';
-import { getCurrencyConversion } from '../hooks/useCurrencyApi';
+import { getCurrencyConversion } from '../lib/currencyConversionService';
 import type { ConversionResult } from '../lib/currencyConversion';
 import { STORAGE_KEYS } from '../lib/storageKeys';
 
@@ -64,7 +64,10 @@ export const useDefaultCurrency = () => {
     const rateEntries = await Promise.all(
       uniqueCurrencies.map(async (currencyCode) => {
         if (currencyCode === newBaseCurrency) {
-          return [currencyCode, { rate: 1, status: 'ok' } satisfies ConversionResult] as const;
+          return [
+            currencyCode,
+            { rate: 1, status: 'ok' } satisfies ConversionResult,
+          ] as const;
         }
 
         const conversion = await getCurrencyConversion(newBaseCurrency, currencyCode);
@@ -73,9 +76,7 @@ export const useDefaultCurrency = () => {
       })
     );
 
-    return new Map(
-      rateEntries.filter(Boolean) as [string, ConversionResult][]
-    );
+    return new Map(rateEntries.filter(Boolean) as [string, ConversionResult][]);
   };
 
   const updateTransactionsCurrency = async (newBaseCurrency: string) => {

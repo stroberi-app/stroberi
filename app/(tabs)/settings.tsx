@@ -27,9 +27,7 @@ import {
 } from '../../components/sheet/TransactionPreviewSheet';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';
-import {
-  useAdvancedAnalyticsEnabled,
-} from '../../hooks/useAdvancedAnalyticsEnabled';
+import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
 

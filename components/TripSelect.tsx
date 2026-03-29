@@ -42,8 +42,7 @@ const TripSelectView = ({
   const [search, setSearch] = useState('');
 
   const filteredTrips = useMemo(
-    () =>
-      trips.filter((trip) => trip.name.toLowerCase().includes(search.toLowerCase())),
+    () => trips.filter((trip) => trip.name.toLowerCase().includes(search.toLowerCase())),
     [trips, search]
   );
 

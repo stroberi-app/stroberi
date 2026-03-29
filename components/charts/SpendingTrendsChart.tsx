@@ -39,10 +39,7 @@ export const SpendingTrends = withObservables<
   return {
     chartData: database.collections
       .get<TransactionModel>('transactions')
-      .query(
-        Q.where('amountInBaseCurrency', Q.lt(0)),
-        Q.where('date', Q.gte(startDate))
-      )
+      .query(Q.where('amountInBaseCurrency', Q.lt(0)), Q.where('date', Q.gte(startDate)))
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {
@@ -50,7 +47,10 @@ export const SpendingTrends = withObservables<
           for (const transaction of transactions) {
             const dayKey = dayjs(transaction.date).format('YYYY-MM-DD');
             const currentTotal = dailyTotals.get(dayKey) ?? 0;
-            dailyTotals.set(dayKey, currentTotal + Math.abs(transaction.amountInBaseCurrency));
+            dailyTotals.set(
+              dayKey,
+              currentTotal + Math.abs(transaction.amountInBaseCurrency)
+            );
           }
 
           if (trendType === 'daily') {
@@ -93,7 +93,9 @@ export const SpendingTrends = withObservables<
           } else {
             const weeklyTotals = new Map<string, number>();
             for (const transaction of transactions) {
-              const weekKey = dayjs(transaction.date).startOf('week').format('YYYY-MM-DD');
+              const weekKey = dayjs(transaction.date)
+                .startOf('week')
+                .format('YYYY-MM-DD');
               const currentTotal = weeklyTotals.get(weekKey) ?? 0;
               weeklyTotals.set(
                 weekKey,

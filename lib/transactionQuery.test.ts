@@ -29,7 +29,10 @@ describe('buildTransactionFilterClauses', () => {
 
     const clauses = buildTransactionFilterClauses({
       dateFilter: 'Custom',
-      customRange: [new Date('2026-01-01T00:00:00.000Z'), new Date('2026-01-31T23:59:59.999Z')],
+      customRange: [
+        new Date('2026-01-01T00:00:00.000Z'),
+        new Date('2026-01-31T23:59:59.999Z'),
+      ],
       categories,
     });
 
@@ -53,5 +56,35 @@ describe('buildTransactionFilterClauses', () => {
     expect(secondClause.comparison.operator).toBe('lte');
     expect(thirdClause.left).toBe('categoryId');
     expect(thirdClause.comparison.operator).toBe('oneOf');
+  });
+
+  it('builds an expense transaction type filter', () => {
+    const clauses = buildTransactionFilterClauses({
+      transactionType: 'expense',
+    });
+
+    const firstClause = clauses[0] as {
+      left: string;
+      comparison: { operator: string };
+    };
+
+    expect(clauses.length).toBe(1);
+    expect(firstClause.left).toBe('amountInBaseCurrency');
+    expect(firstClause.comparison.operator).toBe('lt');
+  });
+
+  it('builds an income transaction type filter', () => {
+    const clauses = buildTransactionFilterClauses({
+      transactionType: 'income',
+    });
+
+    const firstClause = clauses[0] as {
+      left: string;
+      comparison: { operator: string };
+    };
+
+    expect(clauses.length).toBe(1);
+    expect(firstClause.left).toBe('amountInBaseCurrency');
+    expect(firstClause.comparison.operator).toBe('gte');
   });
 });

@@ -3,16 +3,20 @@ import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import type { DateFilters } from './date';
 
+export type TransactionTypeFilter = 'all' | 'expense' | 'income';
+
 export type TransactionQueryFilters = {
   dateFilter?: DateFilters | null;
   customRange?: [Date, Date];
   categories?: CategoryModel[];
+  transactionType?: TransactionTypeFilter;
 };
 
 export const buildTransactionFilterClauses = ({
   dateFilter,
   customRange,
   categories = [],
+  transactionType = 'all',
 }: TransactionQueryFilters) => {
   const now = new Date();
   const clauses: ReturnType<typeof Q.where>[] = [];
@@ -41,7 +45,15 @@ export const buildTransactionFilterClauses = ({
   }
 
   if (categories.length > 0) {
-    clauses.push(Q.where('categoryId', Q.oneOf(categories.map((category) => category.id))));
+    clauses.push(
+      Q.where('categoryId', Q.oneOf(categories.map((category) => category.id)))
+    );
+  }
+
+  if (transactionType === 'expense') {
+    clauses.push(Q.where('amountInBaseCurrency', Q.lt(0)));
+  } else if (transactionType === 'income') {
+    clauses.push(Q.where('amountInBaseCurrency', Q.gte(0)));
   }
 
   return clauses;

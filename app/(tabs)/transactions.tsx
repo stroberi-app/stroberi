@@ -12,14 +12,17 @@ import { DatePicker } from '../../components/DatePicker';
 import BottomSheetDynamicSize from '../../components/filtering/BottomSheetDynamicSize';
 import CategoryFilterSection from '../../components/filtering/CategoryFilterSection';
 import DateFilterSection from '../../components/filtering/DateFilterSection';
+import TransactionTypeFilterSection from '../../components/filtering/TransactionTypeFilterSection';
 import TransactionsList from '../../components/TransactionsList';
 import type { CategoryModel } from '../../database/category-model';
 import type { DateFilters } from '../../lib/date';
+import type { TransactionTypeFilter } from '../../lib/transactionQuery';
 
 export default function TransactionsScreen() {
   const { top } = useSafeAreaInsets();
   const [dateFilter, setDateFilter] = useState<DateFilters | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<CategoryModel[]>([]);
+  const [transactionType, setTransactionType] = useState<TransactionTypeFilter>('all');
   const sheetRef = React.useRef<BottomSheetModal>(null);
   const dateSheetRef = React.useRef<BottomSheetModal>(null);
   const database = useDatabase();
@@ -35,9 +38,11 @@ export default function TransactionsScreen() {
 
   useScrollToTop(scrollRef);
 
-  const appliedNumberOfFilters = [dateFilter, selectedCategories.length].filter(
-    Boolean
-  ).length;
+  const appliedNumberOfFilters = [
+    dateFilter,
+    selectedCategories.length > 0 ? 'categories' : null,
+    transactionType !== 'all' ? transactionType : null,
+  ].filter(Boolean).length;
   return (
     <>
       <View
@@ -64,10 +69,12 @@ export default function TransactionsScreen() {
           dateFilter={dateFilter}
           customRange={customRange}
           categories={selectedCategories}
+          transactionType={transactionType}
           appliedNumberOfFilters={appliedNumberOfFilters}
           onClearFilters={() => {
             setDateFilter(null);
             setSelectedCategories([]);
+            setTransactionType('all');
             setFromDate(new Date());
             setToDate(new Date());
           }}
@@ -81,6 +88,10 @@ export default function TransactionsScreen() {
           fromDate={fromDate}
           toDate={toDate}
           dateSheetRef={dateSheetRef}
+        />
+        <TransactionTypeFilterSection
+          transactionType={transactionType}
+          setTransactionType={setTransactionType}
         />
         <CategoryFilterSection
           selectedCategories={selectedCategories}

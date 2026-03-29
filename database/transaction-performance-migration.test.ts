@@ -20,16 +20,14 @@ describe('transaction performance schema and migration', () => {
 
     expect(Boolean(migration17)).toBe(true);
 
-    const sqlSteps = ((migration17?.steps ?? []).filter(
+    const sqlSteps = (migration17?.steps ?? []).filter(
       (step) => step.type === 'sql'
-    ) as Array<{ type: 'sql'; sql: string }>);
+    ) as Array<{ type: 'sql'; sql: string }>;
     const sqlStatements = sqlSteps.map((step) => step.sql.toLowerCase());
 
     expect(sqlStatements.length).toBe(2);
     expect(
-      sqlStatements.some(
-        (sql) => sql.includes('transactions') && sql.includes('(date)')
-      )
+      sqlStatements.some((sql) => sql.includes('transactions') && sql.includes('(date)'))
     ).toBe(true);
     expect(
       sqlStatements.some(

@@ -2,6 +2,9 @@ import dayjs from 'dayjs';
 import type { BudgetModel, BudgetPeriod } from '../database/budget-model';
 import './date';
 
+type BudgetPeriodConfig = Pick<BudgetModel, 'period' | 'startDate'>;
+type BudgetRolloverConfig = Pick<BudgetModel, 'amount' | 'rollover'>;
+
 const shiftPeriod = (date: dayjs.Dayjs, period: BudgetPeriod, periods: number) => {
   if (periods === 0) {
     return date;
@@ -19,7 +22,10 @@ const shiftPeriod = (date: dayjs.Dayjs, period: BudgetPeriod, periods: number) =
   }
 };
 
-export const calculateBudgetPeriodDates = (budget: BudgetModel, periodOffset = 0) => {
+export const calculateBudgetPeriodDates = (
+  budget: BudgetPeriodConfig,
+  periodOffset = 0
+) => {
   const now = dayjs();
   const startDate = dayjs(budget.startDate);
 
@@ -80,7 +86,10 @@ export const getNextPeriodDate = (period: BudgetPeriod, currentDate: Date): Date
   }
 };
 
-export const calculateRollover = (budget: BudgetModel, previousSpent: number): number => {
+export const calculateRollover = (
+  budget: BudgetRolloverConfig,
+  previousSpent: number
+): number => {
   if (!budget.rollover) {
     return 0;
   }

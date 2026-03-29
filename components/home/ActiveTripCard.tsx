@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
-import { getTripSpending } from '../../database/helpers';
+import { getTripSpending } from '../../database/actions/trips';
 import type { TripModel } from '../../database/trip-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';

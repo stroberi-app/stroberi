@@ -9,7 +9,7 @@ import type { OnEmojiSelected } from 'rn-emoji-keyboard/lib/typescript/contexts/
 import { Text, useTheme, View } from 'tamagui';
 import { spendingCategories } from '../../data/emojis';
 import type { CategoryModel } from '../../database/category-model';
-import { createCategory, updateCategory } from '../../database/helpers';
+import { createCategory, updateCategory } from '../../database/actions/categories';
 import useToast from '../../hooks/useToast';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';

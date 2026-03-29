@@ -4,8 +4,8 @@ import dayjs from 'dayjs';
 import Papa from 'papaparse';
 import { useState } from 'react';
 import type { TransactionModel } from '../database/transaction-model';
-import useToast from './useToast';
 import { doExport } from '../lib/downloads';
+import useToast from './useToast';
 
 export type ExportColumn = {
   name: string;
@@ -42,7 +42,11 @@ export type ExportOptions = {
   dateRange: ExportDateRange;
   columns: ExportColumn[];
   destination: ExportDestination;
+  preloadedTransactions?: TransactionExportData[];
 };
+
+export const EXPORT_PREVIEW_FULL_THRESHOLD = 500;
+export const EXPORT_PREVIEW_SAMPLE_SIZE = 200;
 
 // Shared default export columns
 export const DEFAULT_EXPORT_COLUMNS: ExportColumn[] = [
@@ -61,10 +65,19 @@ export const EXTENDED_EXPORT_COLUMNS: ExportColumn[] = [
   { name: 'exchangeRate', checked: true, label: 'exchangeRate' },
 ];
 
+export const isPartialPreviewCount = (count: number) => {
+  return count > EXPORT_PREVIEW_FULL_THRESHOLD;
+};
+
+const getDateRangeBounds = (dateRange: ExportDateRange) => {
+  return {
+    from: dayjs(dateRange.fromDate).startOf('day').toDate().getTime(),
+    to: dayjs(dateRange.toDate).endOf('day').toDate().getTime(),
+  };
+};
+
 const useTransactionExport = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [previewCount, setPreviewCount] = useState<number | null>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   const database = useDatabase();
   const { show } = useToast();
@@ -83,9 +96,14 @@ const useTransactionExport = () => {
     return null;
   };
 
-  const fetchTransactionsForExport = async (
-    dateRange: ExportDateRange
+  const fetchTransactionsRaw = async (
+    dateRange: ExportDateRange,
+    limit?: number
   ): Promise<TransactionExportData[]> => {
+    const { from, to } = getDateRangeBounds(dateRange);
+    const params = limit ? [from, to, limit] : [from, to];
+    const limitClause = limit ? 'LIMIT ?' : '';
+
     try {
       const transactions = await database.collections
         .get<TransactionModel>('transactions')
@@ -112,11 +130,9 @@ const useTransactionExport = () => {
             WHERE transactions.date >= ? AND transactions.date <= ? AND 
                 transactions._status != 'deleted'
             ORDER BY transactions.date DESC
+            ${limitClause}
           `,
-            [
-              dayjs(dateRange.fromDate).startOf('day').toDate().getTime(),
-              dayjs(dateRange.toDate).endOf('day').toDate().getTime(),
-            ]
+            params
           )
         )
         .unsafeFetchRaw();
@@ -127,57 +143,85 @@ const useTransactionExport = () => {
     }
   };
 
-  const getPreviewCount = async (dateRange: ExportDateRange): Promise<number> => {
+  const fetchTransactionsForExport = async (
+    dateRange: ExportDateRange
+  ): Promise<TransactionExportData[]> => {
+    return fetchTransactionsRaw(dateRange);
+  };
+
+  const fetchTransactionsCount = async (dateRange: ExportDateRange): Promise<number> => {
     if (dayjs(dateRange.fromDate).isAfter(dayjs(dateRange.toDate))) {
       return 0;
     }
 
-    setIsLoadingPreview(true);
+    const { from, to } = getDateRangeBounds(dateRange);
+
     try {
-      const count = await database.collections
+      const results = await database.collections
         .get<TransactionModel>('transactions')
         .query(
-          Q.where(
-            'date',
-            Q.gte(dayjs(dateRange.fromDate).startOf('day').toDate().getTime())
-          ),
-          Q.where('date', Q.lte(dayjs(dateRange.toDate).endOf('day').toDate().getTime()))
+          Q.unsafeSqlQuery(
+            `
+            SELECT COUNT(*) as totalCount
+            FROM transactions
+            WHERE transactions.date >= ? AND transactions.date <= ? AND
+              transactions._status != 'deleted'
+          `,
+            [from, to]
+          )
         )
-        .fetchCount();
+        .unsafeFetchRaw();
 
-      setPreviewCount(count);
-      return count;
+      const rawCount =
+        (results[0] as { totalCount?: number | string } | undefined)?.totalCount ?? 0;
+      return Number(rawCount);
     } catch (_error) {
-      setPreviewCount(null);
       return 0;
-    } finally {
-      setIsLoadingPreview(false);
     }
+  };
+
+  const fetchTransactionsSample = async (
+    dateRange: ExportDateRange
+  ): Promise<TransactionExportData[]> => {
+    return fetchTransactionsRaw(dateRange, EXPORT_PREVIEW_SAMPLE_SIZE);
   };
 
   const formatDataForExport = (
     transactions: TransactionExportData[],
     columns: ExportColumn[]
   ): Record<string, unknown>[] => {
+    const selectedColumns = columns.filter((column) => column.checked);
+
     return transactions.map((transaction) => {
       const exportRow: Record<string, unknown> = {};
-      columns.forEach((column) => {
-        if (column.checked) {
-          exportRow[column.label] = transaction[column.name];
-        }
-      });
+
+      for (const column of selectedColumns) {
+        exportRow[column.label] = transaction[column.name];
+      }
+
       return exportRow;
     });
   };
 
-  const showSaveOptions = async (
-    data: Record<string, unknown>[],
-    filename: string,
-    fileType: 'csv' | 'json'
-  ): Promise<void> => {
+  const saveExportData = async ({
+    transactions,
+    dateRange,
+    columns,
+    destination,
+  }: {
+    transactions: TransactionExportData[];
+    dateRange: ExportDateRange;
+    columns: ExportColumn[];
+    destination: ExportDestination;
+  }): Promise<void> => {
+    const formattedData = formatDataForExport(transactions, columns);
+    const filename = generateFilename(dateRange, destination);
     const content =
-      fileType === 'csv' ? Papa.unparse(data) : JSON.stringify(data, null, 2);
-    const mimeType = fileType === 'csv' ? 'text/csv' : 'application/json';
+      destination === 'csv'
+        ? Papa.unparse(formattedData)
+        : JSON.stringify(formattedData, null, 2);
+    const mimeType = destination === 'csv' ? 'text/csv' : 'application/json';
+
     await doExport(filename, content, mimeType);
   };
 
@@ -199,7 +243,10 @@ const useTransactionExport = () => {
 
     setIsLoading(true);
     try {
-      const transactions = await fetchTransactionsForExport(options.dateRange);
+      const transactions =
+        options.preloadedTransactions ??
+        (await fetchTransactionsForExport(options.dateRange));
+
       if (transactions.length === 0) {
         show({
           title: 'No transactions found in the selected date range',
@@ -207,20 +254,13 @@ const useTransactionExport = () => {
         });
         return;
       }
-      const formattedData = formatDataForExport(transactions, options.columns);
 
-      const filename = generateFilename(options.dateRange, options.destination);
-
-      switch (options.destination) {
-        case 'csv':
-          await showSaveOptions(formattedData, filename, 'csv');
-          break;
-        case 'json':
-          await showSaveOptions(formattedData, filename, 'json');
-          break;
-        default:
-          throw new Error(`Unsupported export destination: ${options.destination}`);
-      }
+      await saveExportData({
+        transactions,
+        dateRange: options.dateRange,
+        columns: options.columns,
+        destination: options.destination,
+      });
 
       show({
         title: `Successfully exported ${transactions.length} transactions`,
@@ -239,11 +279,11 @@ const useTransactionExport = () => {
 
   return {
     exportTransactions,
-    getPreviewCount,
+    fetchTransactionsCount,
     fetchTransactionsForExport,
+    fetchTransactionsSample,
     isLoading,
-    previewCount,
-    isLoadingPreview,
+    saveExportData,
     validateExportOptions,
   };
 };
