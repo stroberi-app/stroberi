@@ -1,24 +1,34 @@
-import { type Database, Q } from '@nozbe/watermelondb';
+import type { Database } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
 import { useCallback, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
-import { Text } from 'tamagui';
+import { Text, View } from 'tamagui';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import { type DateFilters, DateFormats } from '../lib/date';
+import {
+  buildTransactionsBaseQuery,
+  type TransactionTypeFilter,
+} from '../lib/transactionQuery';
+import { Button } from './button/Button';
 import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
 import { TransactionItem } from './TransactionItem';
 
 type TransactionsListProps = {
   transactions: TransactionModel[];
   appliedNumberOfFilters?: number;
+  onClearFilters?: () => void;
   scrollRef?: React.RefObject<FlashList<ListItem>>;
 };
 
 type ListItem = string | TransactionModel;
+
+const SECTION_HEADER_ESTIMATED_SIZE = 44;
+const TRANSACTION_ROW_ESTIMATED_SIZE = 76;
+const TRANSACTIONS_DRAW_DISTANCE = 900;
 
 const getDateKey = (date: Date) => {
   const dayjsDate = dayjs(date);
@@ -38,12 +48,13 @@ const getDateKey = (date: Date) => {
 const TransactionsList = ({
   transactions,
   appliedNumberOfFilters,
+  onClearFilters,
   scrollRef,
 }: TransactionsListProps) => {
   const { bottom } = useSafeAreaInsets();
 
   const data = useMemo(() => {
-    const result: (string | TransactionModel)[] = [];
+    const result: ListItem[] = [];
 
     let currentKey: string | null = null;
 
@@ -79,7 +90,27 @@ const TransactionsList = ({
     };
   }, [bottom]);
 
-  if (transactions.length === 0 && appliedNumberOfFilters === 0) {
+  if (transactions.length === 0) {
+    if ((appliedNumberOfFilters ?? 0) > 0) {
+      return (
+        <View flex={1} justifyContent="center" alignItems="center" padding="$4" gap="$3">
+          <Text color="white" fontWeight="bold" fontSize="$7">
+            No matches found
+          </Text>
+          <Text color="$gray10" textAlign="center">
+            No transactions match your current filters.
+          </Text>
+          <Button
+            backgroundColor="$green"
+            onPress={onClearFilters}
+            disabled={!onClearFilters}
+          >
+            Clear filters
+          </Button>
+        </View>
+      );
+    }
+
     return <CreateFirstTransactionSection mt="30%" />;
   }
 
@@ -91,7 +122,9 @@ const TransactionsList = ({
       data={data}
       renderItem={renderItem}
       getItemType={getItemType}
-      estimatedItemSize={52}
+      estimatedItemSize={TRANSACTION_ROW_ESTIMATED_SIZE}
+      overrideItemLayout={overrideItemLayout}
+      drawDistance={TRANSACTIONS_DRAW_DISTANCE}
     />
   );
 };
@@ -103,40 +136,33 @@ const getItemType = (item: ListItem) => {
 const keyExtractor = (item: ListItem) => {
   return typeof item === 'string' ? item : item.id;
 };
+
+const overrideItemLayout = (layout: { size?: number }, item: ListItem) => {
+  layout.size =
+    typeof item === 'string'
+      ? SECTION_HEADER_ESTIMATED_SIZE
+      : TRANSACTION_ROW_ESTIMATED_SIZE;
+};
+
 const withData = withObservables<
   {
     database: Database;
     dateFilter?: DateFilters | null;
     customRange?: [Date, Date];
     categories: CategoryModel[];
+    transactionType?: TransactionTypeFilter;
   },
   { transactions: Observable<TransactionModel[]> }
 >(
-  ['dateFilter', 'customRange', 'categories'],
-  ({ database, dateFilter, customRange, categories }) => {
-    const dayjsInstance = dayjs();
-    let query = database.collections
-      .get<TransactionModel>('transactions')
-      .query(Q.sortBy('date', 'desc'));
+  ['dateFilter', 'customRange', 'categories', 'transactionType'],
+  ({ database, dateFilter, customRange, categories, transactionType }) => {
+    const query = buildTransactionsBaseQuery(database, {
+      dateFilter,
+      customRange,
+      categories,
+      transactionType,
+    });
 
-    if (dateFilter === 'This Year') {
-      const startOfYear = dayjsInstance.startOf('year').toDate();
-      const endOfYear = dayjsInstance.endOf('year').toDate();
-      query = query.extend(Q.where('date', Q.gte(startOfYear.getTime())));
-      query = query.extend(Q.where('date', Q.lte(endOfYear.getTime())));
-    } else if (dateFilter === 'This Month') {
-      const startOfMonth = dayjsInstance.startOf('month').toDate();
-      const endOfMonth = dayjsInstance.endOf('month').toDate();
-      query = query.extend(Q.where('date', Q.gte(startOfMonth.getTime())));
-      query = query.extend(Q.where('date', Q.lte(endOfMonth.getTime())));
-    } else if (customRange) {
-      const [start, end] = customRange;
-      query = query.extend(Q.where('date', Q.gte(start.getTime())));
-      query = query.extend(Q.where('date', Q.lte(end.getTime())));
-    }
-    if (categories.length > 0) {
-      query = query.extend(Q.where('categoryId', Q.oneOf(categories.map((c) => c.id))));
-    }
     return {
       transactions: query.observe(),
     };

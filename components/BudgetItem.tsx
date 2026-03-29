@@ -1,18 +1,19 @@
 import { Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Trash2 } from '@tamagui/lucide-icons';
+import { Pen, Trash2 } from '@tamagui/lucide-icons';
 import { Alert } from 'react-native';
 import { combineLatest, map, type Observable, of, switchMap } from 'rxjs';
 import { ScrollView, Text, View, XStack } from 'tamagui';
 import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { BudgetModel } from '../database/budget-model';
 import type { CategoryModel } from '../database/category-model';
-import { deleteBudget } from '../database/helpers';
+import { deleteBudget } from '../database/actions/budgets';
 import { database } from '../database/index';
 import type { TransactionModel } from '../database/transaction-model';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import {
   calculateBudgetPeriodDates,
+  calculateRollover,
   formatBudgetPeriod,
   getBudgetProgressColor,
   getPeriodLabel,
@@ -24,6 +25,7 @@ type BudgetStatus = {
   spent: number;
   remaining: number;
   percentage: number;
+  budgetLimit: number;
   status: 'ok' | 'warning' | 'exceeded';
 };
 
@@ -34,7 +36,12 @@ type BudgetItemProps = {
   categories: CategoryModel[];
 };
 
-const BudgetItemContent = ({ budget, budgetStatus, categories }: BudgetItemProps) => {
+const BudgetItemContent = ({
+  budget,
+  budgetStatus,
+  categories,
+  onEdit,
+}: BudgetItemProps) => {
   const { defaultCurrency } = useDefaultCurrency();
 
   const handleDelete = () => {
@@ -89,6 +96,13 @@ const BudgetItemContent = ({ budget, budgetStatus, categories }: BudgetItemProps
           </Text>
         </View>
         <View flexDirection="row" gap="$2" alignItems="center">
+          <LinkButton
+            backgroundColor="transparent"
+            padding="$2"
+            onPress={() => onEdit(budget)}
+          >
+            <Pen size={20} color="$gray11" />
+          </LinkButton>
           <LinkButton backgroundColor="transparent" padding="$2" onPress={handleDelete}>
             <Trash2 size={20} color="$stroberi" />
           </LinkButton>
@@ -131,7 +145,7 @@ const BudgetItemContent = ({ budget, budgetStatus, categories }: BudgetItemProps
 
       <BudgetProgress
         spent={budgetStatus.spent}
-        budget={budget.amount}
+        budget={budgetStatus.budgetLimit}
         percentage={budgetStatus.percentage}
         currency={defaultCurrency || 'USD'}
         color={progressColor}
@@ -171,32 +185,36 @@ export const BudgetItem = withObservables<
     })
   );
 
+  const previousPeriodDates = calculateBudgetPeriodDates(budget, -1);
   const budgetStatusObservable = budgetCategoriesObservable.pipe(
     switchMap((budgetCategories: BudgetCategoryModel[]) => {
       const categoryIds = budgetCategories.map((bc) => bc.categoryId);
 
-      const baseConditions = [
+      const currentPeriodConditions = [
         Q.where('date', Q.gte(periodDates.start.getTime())),
         Q.where('date', Q.lte(periodDates.end.getTime())),
         Q.where('amountInBaseCurrency', Q.lt(0)),
       ];
 
       if (categoryIds.length > 0) {
-        baseConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+        currentPeriodConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
       }
 
-      return database
+      const currentTransactionsObservable = database
         .get<TransactionModel>('transactions')
-        .query(...baseConditions)
-        .observeWithColumns(['amountInBaseCurrency'])
-        .pipe(
+        .query(...currentPeriodConditions)
+        .observeWithColumns(['amountInBaseCurrency']);
+
+      if (!budget.rollover) {
+        return currentTransactionsObservable.pipe(
           map((transactions) => {
             const spent = transactions.reduce(
               (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
               0
             );
-            const remaining = budget.amount - spent;
-            const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+            const budgetLimit = budget.amount;
+            const remaining = budgetLimit - spent;
+            const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
 
             const status =
               percentage >= 100
@@ -209,10 +227,61 @@ export const BudgetItem = withObservables<
               spent,
               remaining,
               percentage,
+              budgetLimit,
               status,
             };
           })
         );
+      }
+
+      const previousPeriodConditions = [
+        Q.where('date', Q.gte(previousPeriodDates.start.getTime())),
+        Q.where('date', Q.lte(previousPeriodDates.end.getTime())),
+        Q.where('amountInBaseCurrency', Q.lt(0)),
+      ];
+      if (categoryIds.length > 0) {
+        previousPeriodConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+      }
+
+      const previousTransactionsObservable = database
+        .get<TransactionModel>('transactions')
+        .query(...previousPeriodConditions)
+        .observeWithColumns(['amountInBaseCurrency']);
+
+      return combineLatest([
+        currentTransactionsObservable,
+        previousTransactionsObservable,
+      ]).pipe(
+        map(([transactions, previousTransactions]) => {
+          const spent = transactions.reduce(
+            (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
+            0
+          );
+          const previousSpent = previousTransactions.reduce(
+            (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
+            0
+          );
+          const rolloverAmount = calculateRollover(budget, previousSpent);
+          const budgetLimit = budget.amount + rolloverAmount;
+          const remaining = budgetLimit - spent;
+          const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
+
+          const status =
+            percentage >= 100
+              ? ('exceeded' as const)
+              : percentage >= budget.alertThreshold
+                ? ('warning' as const)
+                : ('ok' as const);
+
+          return {
+            spent,
+            remaining,
+            percentage,
+            budgetLimit,
+            status,
+          };
+        })
+      );
     })
   );
 

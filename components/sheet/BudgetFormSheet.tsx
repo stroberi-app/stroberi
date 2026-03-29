@@ -4,21 +4,29 @@ import {
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Calendar, FolderOpen, TrendingUp, X } from '@tamagui/lucide-icons';
-import dayjs from 'dayjs';
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { combineLatest } from 'rxjs';
 import { Input, ScrollView, Text, View, XStack, YGroup } from 'tamagui';
 import type { BudgetModel, BudgetPeriod } from '../../database/budget-model';
 import type { CategoryModel } from '../../database/category-model';
-import { createBudget, updateBudget } from '../../database/helpers';
+import { createBudget, updateBudget } from '../../database/actions/budgets';
+import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import '../../lib/date';
-import { formatBudgetPeriod } from '../../lib/budgetUtils';
+import {
+  calculateBudgetPeriodDates,
+  formatBudgetPeriod,
+  getBudgetProgressColor,
+} from '../../lib/budgetUtils';
+import { formatCurrency } from '../../lib/format';
+import { BudgetProgress } from '../BudgetProgress';
 import { LinkButton } from '../button/LinkButton';
 import { CategoriesList } from '../CategoriesList';
 import { CreateExpenseItem } from '../CreateExpenseItem';
@@ -26,6 +34,13 @@ import { CurrencyInput } from '../CurrencyInput';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { DatePicker } from '../DatePicker';
+import {
+  buildBudgetFormState,
+  buildBudgetPayload,
+  getDefaultBudgetFormState,
+  getStartOfBudgetPeriod,
+  parseBudgetAmount,
+} from './budgetFormUtils';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 
 const SNAP_POINTS = ['90%'];
@@ -43,18 +58,8 @@ const THRESHOLD_OPTIONS = [
   { value: 95, label: '95%' },
 ];
 
-const getStartOfPeriod = (period: BudgetPeriod): Date => {
-  if (period === 'weekly') {
-    return dayjs().startOf('week').toDate();
-  }
-  if (period === 'monthly') {
-    return dayjs().startOf('month').toDate();
-  }
-  if (period === 'yearly') {
-    return dayjs().startOf('year').toDate();
-  }
-  return dayjs().toDate();
-};
+const sumTransactions = (transactions: TransactionModel[]) =>
+  transactions.reduce((sum, tx) => sum + Math.abs(tx.amountInBaseCurrency), 0);
 
 type BudgetFormSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -84,45 +89,135 @@ export const BudgetFormSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<CategoryModel[]>([]);
   const [categorySearch, setCategorySearch] = useState('');
+  const [currentSpent, setCurrentSpent] = useState(0);
+  const [previousSpent, setPreviousSpent] = useState(0);
+
+  const applyFormState = useCallback(
+    (state: Awaited<ReturnType<typeof buildBudgetFormState>>) => {
+      setName(state.name);
+      setAmount(state.amount);
+      setPeriod(state.period);
+      setStartDate(state.startDate);
+      setRollover(state.rollover);
+      setAlertThreshold(state.alertThreshold);
+      setSelectedCategories(state.selectedCategories);
+    },
+    []
+  );
 
   useEffect(() => {
     const loadBudgetData = async () => {
-      if (budget) {
-        setName(budget.name || '');
-        setAmount(budget.amount.toString());
-        setPeriod(budget.period);
-        setStartDate(budget.startDate);
-        setRollover(budget.rollover);
-        setAlertThreshold(budget.alertThreshold);
-
-        const budgetCategories = await budget.budgetCategories.fetch();
-        const categories = await Promise.all(
-          budgetCategories.map((bc) => bc.category.fetch())
-        );
-        setSelectedCategories(categories.filter(Boolean) as CategoryModel[]);
-      } else {
-        setName('');
-        setAmount('');
-        const defaultPeriod: BudgetPeriod = 'monthly';
-        setPeriod(defaultPeriod);
-        setStartDate(getStartOfPeriod(defaultPeriod));
-        setRollover(false);
-        setAlertThreshold(90);
-        setSelectedCategories([]);
-      }
+      const nextState = await buildBudgetFormState(budget);
+      applyFormState(nextState);
     };
+
     loadBudgetData();
-  }, [budget]);
+  }, [applyFormState, budget]);
+
+  const selectedCategoryIds = useMemo(
+    () => selectedCategories.map((category) => category.id).sort(),
+    [selectedCategories]
+  );
+
+  useEffect(() => {
+    const periodDates = calculateBudgetPeriodDates({ period, startDate });
+    const previousPeriodDates = calculateBudgetPeriodDates({ period, startDate }, -1);
+
+    const buildConditions = (start: Date, end: Date) => {
+      const conditions = [
+        Q.where('date', Q.gte(start.getTime())),
+        Q.where('date', Q.lte(end.getTime())),
+        Q.where('amountInBaseCurrency', Q.lt(0)),
+      ];
+
+      if (selectedCategoryIds.length > 0) {
+        conditions.push(Q.where('categoryId', Q.oneOf(selectedCategoryIds)));
+      }
+
+      return conditions;
+    };
+
+    const currentTransactionsObservable = database
+      .get<TransactionModel>('transactions')
+      .query(...buildConditions(periodDates.start, periodDates.end))
+      .observeWithColumns(['amountInBaseCurrency', 'categoryId', 'date']);
+
+    if (!rollover) {
+      const subscription = currentTransactionsObservable.subscribe((transactions) => {
+        setCurrentSpent(sumTransactions(transactions));
+        setPreviousSpent(0);
+      });
+
+      return () => subscription.unsubscribe();
+    }
+
+    const previousTransactionsObservable = database
+      .get<TransactionModel>('transactions')
+      .query(...buildConditions(previousPeriodDates.start, previousPeriodDates.end))
+      .observeWithColumns(['amountInBaseCurrency', 'categoryId', 'date']);
+
+    const subscription = combineLatest([
+      currentTransactionsObservable,
+      previousTransactionsObservable,
+    ]).subscribe(([transactions, previousTransactions]) => {
+      setCurrentSpent(sumTransactions(transactions));
+      setPreviousSpent(sumTransactions(previousTransactions));
+    });
+
+    return () => subscription.unsubscribe();
+  }, [database, period, rollover, selectedCategoryIds, startDate]);
+
+  const parsedAmount = useMemo(() => parseBudgetAmount(amount), [amount]);
+
+  const budgetPreview = useMemo(() => {
+    if (!parsedAmount) {
+      return null;
+    }
+
+    const rolloverAmount = rollover ? Math.max(0, parsedAmount - previousSpent) : 0;
+    const budgetLimit = parsedAmount + rolloverAmount;
+    const percentage = budgetLimit > 0 ? (currentSpent / budgetLimit) * 100 : 0;
+    const remaining = budgetLimit - currentSpent;
+    const status =
+      percentage >= 100
+        ? ('exceeded' as const)
+        : percentage >= alertThreshold
+          ? ('warning' as const)
+          : ('ok' as const);
+
+    return {
+      spent: currentSpent,
+      remaining,
+      percentage,
+      budgetLimit,
+      rolloverAmount,
+      status,
+    };
+  }, [alertThreshold, currentSpent, parsedAmount, previousSpent, rollover]);
+
+  const previewColor = budgetPreview
+    ? getBudgetProgressColor(budgetPreview.percentage, alertThreshold)
+    : '$gray8';
+
+  const previewTitle = budgetPreview
+    ? budgetPreview.status === 'exceeded'
+      ? 'Budget exceeded'
+      : budgetPreview.status === 'warning'
+        ? 'Approaching limit'
+        : 'On track'
+    : 'Enter an amount';
+
+  const previewMessage = budgetPreview
+    ? budgetPreview.status === 'exceeded'
+      ? `${formatCurrency(budgetPreview.spent - budgetPreview.budgetLimit, defaultCurrency ?? 'USD')} over the current limit.`
+      : budgetPreview.status === 'warning'
+        ? `Current spending is close to the ${alertThreshold}% warning threshold.`
+        : `${formatCurrency(budgetPreview.remaining, defaultCurrency ?? 'USD')} still available in this period.`
+    : 'Add a valid budget amount to see the live status preview.';
 
   const resetForm = () => {
-    setName('');
-    setAmount('');
-    const defaultPeriod: BudgetPeriod = 'monthly';
-    setPeriod(defaultPeriod);
-    setStartDate(getStartOfPeriod(defaultPeriod));
-    setRollover(false);
-    setAlertThreshold(90);
-    setSelectedCategories([]);
+    const nextState = getDefaultBudgetFormState();
+    applyFormState(nextState);
     setCategorySearch('');
   };
 
@@ -157,16 +252,15 @@ export const BudgetFormSheet = ({
     setIsSaving(true);
 
     try {
-      const categoryIds = selectedCategories.map((c) => c.id);
-      const payload = {
-        name: name.trim() || `${formatBudgetPeriod(period)} Budget`,
+      const payload = buildBudgetPayload({
+        name,
         amount: amountValue,
         period,
         startDate,
         rollover,
         alertThreshold,
-        categoryIds,
-      };
+        selectedCategories,
+      });
 
       if (budget) {
         await updateBudget({
@@ -253,6 +347,57 @@ export const BudgetFormSheet = ({
                   focusOnMount={!budget}
                   onCurrencySelect={() => {}}
                 />
+              </View>
+
+              <View
+                marginTop="$4"
+                backgroundColor="$gray3"
+                borderWidth={1}
+                borderColor="$gray5"
+                borderRadius="$4"
+                padding="$3"
+              >
+                <View
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  marginBottom="$2"
+                  gap="$2"
+                >
+                  <Text fontSize="$4" fontWeight="bold">
+                    Live Status
+                  </Text>
+                  <Text color={previewColor} fontSize="$2" fontWeight="600">
+                    {previewTitle}
+                  </Text>
+                </View>
+                <Text fontSize="$2" color="$gray10">
+                  {previewMessage}
+                </Text>
+
+                {budgetPreview && (
+                  <>
+                    <BudgetProgress
+                      marginTop="$3"
+                      spent={budgetPreview.spent}
+                      budget={budgetPreview.budgetLimit}
+                      percentage={budgetPreview.percentage}
+                      currency={defaultCurrency ?? 'USD'}
+                      color={previewColor}
+                    />
+
+                    {rollover && budgetPreview.rolloverAmount > 0 && (
+                      <Text fontSize="$2" color="$gray10" marginTop="$2">
+                        Includes{' '}
+                        {formatCurrency(
+                          budgetPreview.rolloverAmount,
+                          defaultCurrency ?? 'USD'
+                        )}{' '}
+                        carried over from the previous {period.slice(0, -2)}.
+                      </Text>
+                    )}
+                  </>
+                )}
               </View>
 
               <View marginTop="$4">
@@ -412,7 +557,7 @@ export const BudgetFormSheet = ({
                     onPress={() => {
                       setPeriod(option.value);
                       if (!budget) {
-                        setStartDate(getStartOfPeriod(option.value));
+                        setStartDate(getStartOfBudgetPeriod(option.value));
                       }
                       periodPickerRef.current?.close();
                     }}

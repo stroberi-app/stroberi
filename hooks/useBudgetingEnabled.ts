@@ -1,44 +1,16 @@
-import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
-import { database } from '../database/index';
+import { notifyFeatureFlagChanged, useFeatureFlag } from './useFeatureFlag';
 import { STORAGE_KEYS } from '../lib/storageKeys';
 
-let budgetingEnabledListeners: Array<(enabled: boolean) => void> = [];
-
 export const notifyBudgetingEnabledChanged = (enabled: boolean) => {
-  budgetingEnabledListeners.forEach((listener) => listener(enabled));
+  notifyFeatureFlagChanged(STORAGE_KEYS.BUDGETING_ENABLED, enabled);
 };
 
 export const useBudgetingEnabled = () => {
-  const [budgetingEnabled, setBudgetingEnabled] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    value: budgetingEnabled,
+    isLoading,
+    setValue: setBudgetingEnabled,
+  } = useFeatureFlag(STORAGE_KEYS.BUDGETING_ENABLED, false);
 
-  useEffect(() => {
-    const loadBudgetingSetting = async () => {
-      try {
-        const enabled = await database.localStorage.get(STORAGE_KEYS.BUDGETING_ENABLED);
-        setBudgetingEnabled(enabled !== 'false');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadBudgetingSetting();
-
-    budgetingEnabledListeners.push(setBudgetingEnabled);
-
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        loadBudgetingSetting();
-      }
-    });
-
-    return () => {
-      budgetingEnabledListeners = budgetingEnabledListeners.filter(
-        (listener) => listener !== setBudgetingEnabled
-      );
-      subscription.remove();
-    };
-  }, []);
-
-  return { budgetingEnabled, isLoading };
+  return { budgetingEnabled, isLoading, setBudgetingEnabled };
 };

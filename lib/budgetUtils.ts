@@ -2,7 +2,30 @@ import dayjs from 'dayjs';
 import type { BudgetModel, BudgetPeriod } from '../database/budget-model';
 import './date';
 
-export const calculateBudgetPeriodDates = (budget: BudgetModel) => {
+type BudgetPeriodConfig = Pick<BudgetModel, 'period' | 'startDate'>;
+type BudgetRolloverConfig = Pick<BudgetModel, 'amount' | 'rollover'>;
+
+const shiftPeriod = (date: dayjs.Dayjs, period: BudgetPeriod, periods: number) => {
+  if (periods === 0) {
+    return date;
+  }
+
+  switch (period) {
+    case 'weekly':
+      return date.add(periods, 'week');
+    case 'monthly':
+      return date.add(periods, 'month');
+    case 'yearly':
+      return date.add(periods, 'year');
+    default:
+      return date.add(periods, 'month');
+  }
+};
+
+export const calculateBudgetPeriodDates = (
+  budget: BudgetPeriodConfig,
+  periodOffset = 0
+) => {
   const now = dayjs();
   const startDate = dayjs(budget.startDate);
 
@@ -13,6 +36,7 @@ export const calculateBudgetPeriodDates = (budget: BudgetModel) => {
       while (currentPeriodStart.add(1, 'week').isBefore(now)) {
         currentPeriodStart = currentPeriodStart.add(1, 'week');
       }
+      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
       return {
         start: currentPeriodStart.toDate(),
         end: currentPeriodStart.add(1, 'week').subtract(1, 'second').toDate(),
@@ -22,6 +46,7 @@ export const calculateBudgetPeriodDates = (budget: BudgetModel) => {
       while (currentPeriodStart.add(1, 'month').isBefore(now)) {
         currentPeriodStart = currentPeriodStart.add(1, 'month');
       }
+      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
       return {
         start: currentPeriodStart.toDate(),
         end: currentPeriodStart.add(1, 'month').subtract(1, 'second').toDate(),
@@ -31,12 +56,14 @@ export const calculateBudgetPeriodDates = (budget: BudgetModel) => {
       while (currentPeriodStart.add(1, 'year').isBefore(now)) {
         currentPeriodStart = currentPeriodStart.add(1, 'year');
       }
+      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
       return {
         start: currentPeriodStart.toDate(),
         end: currentPeriodStart.add(1, 'year').subtract(1, 'second').toDate(),
       };
     }
     default:
+      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
       return {
         start: currentPeriodStart.toDate(),
         end: currentPeriodStart.add(1, 'month').subtract(1, 'second').toDate(),
@@ -59,7 +86,10 @@ export const getNextPeriodDate = (period: BudgetPeriod, currentDate: Date): Date
   }
 };
 
-export const calculateRollover = (budget: BudgetModel, previousSpent: number): number => {
+export const calculateRollover = (
+  budget: BudgetRolloverConfig,
+  previousSpent: number
+): number => {
   if (!budget.rollover) {
     return 0;
   }
