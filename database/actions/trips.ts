@@ -21,6 +21,35 @@ export type TripSpendingSummary = {
   currencyCode: string | null;
 };
 
+export const ACTIVE_TRIP_GRACE_PERIOD_MS = 60_000;
+
+export const isTripActiveAt = (
+  trip: Pick<TripModel, 'isArchived' | 'startDate' | 'endDate'>,
+  referenceTime = Date.now()
+) => {
+  if (trip.isArchived) {
+    return false;
+  }
+
+  return (
+    trip.startDate.getTime() <= referenceTime &&
+    (trip.endDate === null || trip.endDate.getTime() > referenceTime)
+  );
+};
+
+export const buildActiveTripFilterClauses = (referenceTime = Date.now()) => {
+  const activeTripReferenceTime = referenceTime + ACTIVE_TRIP_GRACE_PERIOD_MS;
+
+  return [
+    Q.where('isArchived', false),
+    Q.where('startDate', Q.lte(activeTripReferenceTime)),
+    Q.or(
+      Q.where('endDate', Q.eq(null)),
+      Q.where('endDate', Q.gt(activeTripReferenceTime))
+    ),
+  ];
+};
+
 export const createTrip = async ({
   name,
   icon,
@@ -117,23 +146,13 @@ export const toggleTripArchive = async (tripId: string): Promise<TripModel> => {
 export const getTripSpending = async (tripId: string): Promise<TripSpendingSummary> => {
   try {
     const trip = await database.get<TripModel>('trips').find(tripId);
-    const useTripCurrency = Boolean(trip.currencyCode);
-    const aggregateSql = useTripCurrency
-      ? `select 
-            count(*) as transactionCount,
-            coalesce(sum(case when amount < 0 and currencyCode = ? then abs(amount) else 0 end), 0) as totalSpent,
-            coalesce(sum(case when amount > 0 and currencyCode = ? then amount else 0 end), 0) as totalIncome
-         from transactions
-         where tripId = ? and _status != 'deleted'`
-      : `select 
-            count(*) as transactionCount,
-            coalesce(sum(case when amountInBaseCurrency < 0 then abs(amountInBaseCurrency) else 0 end), 0) as totalSpent,
-            coalesce(sum(case when amountInBaseCurrency > 0 then amountInBaseCurrency else 0 end), 0) as totalIncome
-         from transactions
-         where tripId = ? and _status != 'deleted'`;
-    const params = useTripCurrency
-      ? [trip.currencyCode, trip.currencyCode, tripId]
-      : [tripId];
+    const aggregateSql = `select
+          count(*) as transactionCount,
+          coalesce(sum(case when amountInBaseCurrency < 0 then abs(amountInBaseCurrency) else 0 end), 0) as totalSpent,
+          coalesce(sum(case when amountInBaseCurrency > 0 then amountInBaseCurrency else 0 end), 0) as totalIncome
+       from transactions
+       where tripId = ? and _status != 'deleted'`;
+    const params = [tripId];
     const [rawTotals] = (await database
       .get<TransactionModel>('transactions')
       .query(Q.unsafeSqlQuery(aggregateSql, params))
@@ -152,7 +171,7 @@ export const getTripSpending = async (tripId: string): Promise<TripSpendingSumma
       totalIncome,
       netAmount: totalIncome - totalSpent,
       transactionCount,
-      currencyCode: trip.currencyCode,
+      currencyCode: null,
     };
   } catch (error) {
     return logAndRethrow(
@@ -167,7 +186,7 @@ export const getActiveTrips = async (): Promise<TripModel[]> => {
   try {
     return await database
       .get<TripModel>('trips')
-      .query(Q.where('isArchived', false))
+      .query(...buildActiveTripFilterClauses())
       .fetch();
   } catch (error) {
     return logAndRethrow(
@@ -180,12 +199,10 @@ export const getActiveTrips = async (): Promise<TripModel[]> => {
 
 export const getMostRecentActiveTrip = async (): Promise<TripModel | null> => {
   try {
-    const now = Date.now() + 60000;
     const [trip] = await database
       .get<TripModel>('trips')
       .query(
-        Q.where('isArchived', false),
-        Q.or(Q.where('endDate', Q.eq(null)), Q.where('endDate', Q.gt(now))),
+        ...buildActiveTripFilterClauses(),
         Q.sortBy('startDate', Q.desc),
         Q.take(1)
       )

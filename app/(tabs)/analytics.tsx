@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Button, ScrollView, Separator, Text, View, styled } from 'tamagui';
 import type { BudgetModel } from '../../database/budget-model';
+import type { BudgetCategoryModel } from '../../database/budget-category-model';
 import type { CategoryModel } from '../../database/category-model';
 import { database } from '../../database/index';
 import type { TransactionModel } from '../../database/transaction-model';
@@ -32,6 +33,7 @@ type AnalyticsContentProps = {
   transactions: TransactionModel[];
   categories: CategoryModel[];
   budgets: BudgetModel[];
+  budgetCategories: BudgetCategoryModel[];
 };
 
 const AnalyticsContent = withObservables<
@@ -40,6 +42,7 @@ const AnalyticsContent = withObservables<
     transactions: Observable<TransactionModel[]>;
     categories: Observable<CategoryModel[]>;
     budgets: Observable<BudgetModel[]>;
+    budgetCategories: Observable<BudgetCategoryModel[]>;
   }
 >(['database'], ({ database }) => ({
   transactions: database
@@ -56,7 +59,8 @@ const AnalyticsContent = withObservables<
     .get<BudgetModel>('budgets')
     .query(Q.where('isActive', true))
     .observe(),
-}))(({ transactions, categories, budgets }: AnalyticsContentProps) => {
+  budgetCategories: database.get<BudgetCategoryModel>('budget_categories').query().observe(),
+}))(({ transactions, categories, budgets, budgetCategories }: AnalyticsContentProps) => {
   const { top } = useSafeAreaInsets();
   const { defaultCurrency } = useDefaultCurrency();
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
@@ -84,6 +88,7 @@ const AnalyticsContent = withObservables<
     transactions,
     categories,
     budgets,
+    budgetCategories,
     defaultCurrency,
     dateFilter,
   });

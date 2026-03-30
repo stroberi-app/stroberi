@@ -64,13 +64,15 @@ export const ExportDataSheet = ({
   };
 
   const handleExport = async () => {
-    await exportTransactions({
+    const exported = await exportTransactions({
       dateRange,
       columns: includedColumns,
       destination: selectedDestination,
     });
 
-    sheetRef.current?.dismiss();
+    if (exported) {
+      sheetRef.current?.dismiss();
+    }
   };
 
   const getExportButtonText = () => {
