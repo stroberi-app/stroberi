@@ -19,15 +19,21 @@ import { currencies } from '../../data/currencies';
 import type { CategoryModel } from '../../database/category-model';
 import { createCategoriesBatch } from '../../database/actions/categories';
 import { createTransactionsBatch } from '../../database/actions/transactions';
+import { processImportBatches } from '../../features/import/batching';
 import {
   buildImportTransactionPayloads,
   prepareImportRows,
   type PreparedImportTransaction,
 } from '../../features/import/preparation';
-import type { ImportResult } from '../../features/import/types';
 import type { CSVRow } from '../../features/import/validation';
+import type { ConversionResult } from '../../lib/currencyConversion';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
+import {
+  MAX_IMPORT_FILE_SIZE_BYTES,
+  formatFileSize,
+  isLargeImportFile,
+} from '../../lib/dataLimits';
 import { doExport } from '../../lib/downloads';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
@@ -45,6 +51,13 @@ interface ImportProgress {
   message: string;
 }
 
+type ImportSession = {
+  validTransactions: ReturnType<typeof buildImportTransactionPayloads>;
+  conversionCache: Map<string, ConversionResult>;
+  importedCount: number;
+  nextBatchIndex: number;
+};
+
 const snapPoints = ['65%'];
 const BATCH_SIZE = 100;
 const supportedCurrencyCodes = currencies.map((currency) => currency.code);
@@ -58,6 +71,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
   const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
 
   const errorSheetRef = useRef<BottomSheetModal>(null);
+  const importSessionRef = useRef<ImportSession | null>(null);
 
   const { defaultCurrency } = useDefaultCurrency();
   const database = useDatabase();
@@ -77,41 +91,58 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
     setDownloading(false);
     setProgress(null);
     setErrorInfo(null);
+    importSessionRef.current = null;
   };
 
   const handleRetry = () => {
+    const canResumeImport =
+      errorInfo?.type === 'import' && importSessionRef.current !== null;
+
     // First dismiss the error sheet and reset error state
     hideError();
     // Small delay to ensure sheet is dismissed before starting new import
     setTimeout(() => {
+      if (canResumeImport) {
+        resumeImport();
+        return;
+      }
+
       handleImport();
     }, 300);
   };
 
-  const processTransactionsInBatches = async (
-    transactions: ReturnType<typeof buildImportTransactionPayloads>,
-    updateProgress: (current: number) => void
-  ) => {
-    const totalBatches = Math.ceil(transactions.length / BATCH_SIZE);
-    const importResult: ImportResult = {
-      importedCount: 0,
-      failed: [],
-    };
-    const conversionCache = new Map();
+  const clearImportSession = () => {
+    importSessionRef.current = null;
+  };
 
-    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-      const start = batchIndex * BATCH_SIZE;
-      const end = Math.min(start + BATCH_SIZE, transactions.length);
-      const batch = transactions.slice(start, end);
+  const updateImportProgress = (session: ImportSession) => {
+    setProgress({
+      phase: 'importing',
+      current: session.importedCount,
+      total: session.validTransactions.length,
+      message:
+        session.importedCount > 0
+          ? `Added ${session.importedCount} out of ${session.validTransactions.length} transactions`
+          : 'Adding transactions to your account...',
+    });
+  };
 
-      const batchResult = await createTransactionsBatch(batch, conversionCache);
-      importResult.importedCount += batchResult.importedCount;
-      importResult.failed.push(...batchResult.failed);
+  const runImportSession = async (session: ImportSession) => {
+    updateImportProgress(session);
 
-      updateProgress(importResult.importedCount);
-    }
-
-    return importResult;
+    return processImportBatches({
+      transactions: session.validTransactions,
+      batchSize: BATCH_SIZE,
+      startBatchIndex: session.nextBatchIndex,
+      initialImportedCount: session.importedCount,
+      conversionCache: session.conversionCache,
+      createBatch: createTransactionsBatch,
+      onBatchSuccess: ({ importedCount, nextBatchIndex }) => {
+        session.importedCount = importedCount;
+        session.nextBatchIndex = nextBatchIndex;
+        updateImportProgress(session);
+      },
+    });
   };
 
   const handleImport = async () => {
@@ -122,6 +153,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
     setImporting(true);
     setProgress(null);
     setErrorInfo(null);
+    clearImportSession();
 
     try {
       setProgress({
@@ -156,6 +188,27 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       }
 
       setProgress((prev) => (prev ? { ...prev, message: 'Reading your file...' } : null));
+
+      const fileInfo = await FileSystem.getInfoAsync(res.assets[0].uri);
+      const fileSize =
+        'size' in fileInfo && typeof fileInfo.size === 'number'
+          ? fileInfo.size
+          : typeof res.assets[0].size === 'number'
+            ? res.assets[0].size
+            : null;
+
+      if (fileSize !== null && isLargeImportFile(fileSize)) {
+        setImporting(false);
+        setProgress(null);
+        showError({
+          title: 'CSV File Too Large',
+          message: `This file is ${formatFileSize(fileSize)}. Import works best under ${formatFileSize(MAX_IMPORT_FILE_SIZE_BYTES)}. Please split it into smaller files and try again.`,
+          type: 'file',
+          showTemplateButton: false,
+          showRetryButton: true,
+        });
+        return;
+      }
 
       const content = await FileSystem.readAsStringAsync(res.assets[0].uri);
 
@@ -340,27 +393,16 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         categoryIdsByName: categoryNameMap,
       });
 
-      setProgress({
-        phase: 'importing',
-        current: 0,
-        total: validTransactions.length,
-        message: 'Adding transactions to your account...',
-      });
-
-      const importResult = await processTransactionsInBatches(
+      const importSession: ImportSession = {
         validTransactions,
-        (current) => {
-          setProgress((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  current,
-                  message: `Added ${current} out of ${validTransactions.length} transactions`,
-                }
-              : null
-          );
-        }
-      );
+        conversionCache: new Map(),
+        importedCount: 0,
+        nextBatchIndex: 0,
+      };
+
+      importSessionRef.current = importSession;
+
+      const importResult = await runImportSession(importSession);
 
       if (importResult.failed.length > 0) {
         setProgress((prev) =>
@@ -370,10 +412,11 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                 current: importResult.importedCount,
                 message: `Imported ${importResult.importedCount} of ${validTransactions.length}; ${importResult.failed.length} skipped`,
               }
-            : null
+              : null
         );
       }
 
+      clearImportSession();
       setProgress({
         phase: 'complete',
         current: importResult.importedCount,
@@ -437,7 +480,107 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
       showError({
         title: 'Import Failed',
         message:
-          "We couldn't complete the import. Please try again or contact support if the issue persists.",
+          "We couldn't complete the import. Try Again will continue from the last successful batch.",
+        type: 'import',
+        showRetryButton: true,
+      });
+    }
+  };
+
+  const resumeImport = async () => {
+    const importSession = importSessionRef.current;
+    if (!importSession) {
+      return handleImport();
+    }
+
+    if (importing) {
+      return;
+    }
+
+    setImporting(true);
+    setProgress(null);
+    setErrorInfo(null);
+
+    try {
+      const importResult = await runImportSession(importSession);
+
+      if (importResult.failed.length > 0) {
+        setProgress((prev) =>
+          prev
+            ? {
+                ...prev,
+                current: importResult.importedCount,
+                message: `Imported ${importResult.importedCount} of ${importSession.validTransactions.length}; ${importResult.failed.length} skipped`,
+              }
+            : null
+        );
+      }
+
+      clearImportSession();
+      setProgress({
+        phase: 'complete',
+        current: importResult.importedCount,
+        total: importSession.validTransactions.length,
+        message: 'All done! Your transactions are ready.',
+      });
+
+      if (importResult.importedCount > 0 && importResult.failed.length === 0) {
+        toast.show({
+          title: '🎉 Import successful!',
+          message: `Successfully imported ${importResult.importedCount} ${importResult.importedCount === 1 ? 'transaction' : 'transactions'} to your account.`,
+          preset: 'custom',
+          duration: 4,
+        });
+      } else if (importResult.importedCount > 0) {
+        toast.show({
+          title: 'Import completed with issues',
+          message: `Imported ${importResult.importedCount} transactions and skipped ${importResult.failed.length} rows.`,
+          preset: 'custom',
+          duration: 5,
+        });
+
+        showError({
+          title: 'Some Rows Were Skipped',
+          message:
+            'A few rows could not be imported. Review the details below and retry those rows if needed.',
+          errors: importResult.failed
+            .slice(0, 10)
+            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          type: 'validation',
+          showTemplateButton: false,
+          showRetryButton: false,
+        });
+      } else {
+        showError({
+          title: 'No Transactions Imported',
+          message: 'No rows could be imported. Review the issues below and try again.',
+          errors: importResult.failed
+            .slice(0, 10)
+            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          type: 'validation',
+          showTemplateButton: true,
+          showRetryButton: true,
+        });
+      }
+
+      if (importResult.importedCount > 0) {
+        sheetRef.current?.dismiss();
+
+        setTimeout(() => {
+          setImporting(false);
+          setProgress(null);
+        }, 500);
+      } else {
+        setImporting(false);
+        setProgress(null);
+      }
+    } catch (_error) {
+      setImporting(false);
+      setProgress(null);
+      showError({
+        title: 'Import Failed',
+        message:
+          "We couldn't complete the import. Try Again will continue from the last successful batch.",
         type: 'import',
         showRetryButton: true,
       });

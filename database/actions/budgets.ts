@@ -4,6 +4,11 @@ import type { BudgetModel, BudgetPeriod } from '../budget-model';
 import { database } from '../index';
 import type { TransactionModel } from '../transaction-model';
 import { findRecordOrThrow, logAndRethrow } from './shared';
+import {
+  buildBudgetTransactionConditions,
+  calculateRollover,
+  sumBudgetTransactions,
+} from '../../lib/budgetUtils';
 
 export type CreateBudgetPayload = {
   name: string;
@@ -13,30 +18,6 @@ export type CreateBudgetPayload = {
   rollover: boolean;
   alertThreshold: number;
   categoryIds?: string[];
-};
-
-const getBudgetTransactionConditions = (
-  periodStart: Date,
-  periodEnd: Date,
-  categoryIds: string[]
-) => {
-  const conditions = [
-    Q.where('date', Q.gte(periodStart.getTime())),
-    Q.where('date', Q.lte(periodEnd.getTime())),
-    Q.where('amountInBaseCurrency', Q.lt(0)),
-  ];
-
-  if (categoryIds.length > 0) {
-    conditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
-  }
-
-  return conditions;
-};
-
-const sumSpentTransactions = (transactions: TransactionModel[]) => {
-  return transactions.reduce((sum, transaction) => {
-    return sum + Math.abs(transaction.amountInBaseCurrency);
-  }, 0);
 };
 
 export const createBudget = async ({
@@ -182,9 +163,11 @@ export const getBudgetStatus = async (
     );
     const transactions = await database
       .get<TransactionModel>('transactions')
-      .query(...getBudgetTransactionConditions(periodStart, periodEnd, categoryIds))
+      .query(
+        ...buildBudgetTransactionConditions(periodStart, periodEnd, categoryIds)
+      )
       .fetch();
-    const spent = sumSpentTransactions(transactions);
+    const spent = sumBudgetTransactions(transactions);
     let budgetLimit = budget.amount;
 
     if (budget.rollover) {
@@ -196,15 +179,15 @@ export const getBudgetStatus = async (
       const previousTransactions = await database
         .get<TransactionModel>('transactions')
         .query(
-          ...getBudgetTransactionConditions(
+          ...buildBudgetTransactionConditions(
             previousPeriodStart,
             previousPeriodEnd,
             categoryIds
           )
         )
         .fetch();
-      const previousSpent = sumSpentTransactions(previousTransactions);
-      budgetLimit += Math.max(0, budget.amount - previousSpent);
+      const previousSpent = sumBudgetTransactions(previousTransactions);
+      budgetLimit += calculateRollover(budget, previousSpent);
     }
 
     const remaining = budgetLimit - spent;

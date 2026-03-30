@@ -4,6 +4,10 @@ import dayjs from 'dayjs';
 import Papa from 'papaparse';
 import { useState } from 'react';
 import type { TransactionModel } from '../database/transaction-model';
+import {
+  MAX_EXPORT_TRANSACTION_COUNT,
+  isLargeExportTransactionCount,
+} from '../lib/dataLimits';
 import { doExport } from '../lib/downloads';
 import useToast from './useToast';
 
@@ -234,15 +238,28 @@ const useTransactionExport = () => {
     return `stroberi_transactions_${dateRangeStr}.${extension}`;
   };
 
-  const exportTransactions = async (options: ExportOptions): Promise<void> => {
+  const exportTransactions = async (options: ExportOptions): Promise<boolean> => {
     const validationError = validateExportOptions(options);
     if (validationError) {
       show({ title: validationError, preset: 'error' });
-      return;
+      return false;
     }
 
     setIsLoading(true);
     try {
+      const transactionCount =
+        options.preloadedTransactions?.length ??
+        (await fetchTransactionsCount(options.dateRange));
+
+      if (isLargeExportTransactionCount(transactionCount)) {
+        show({
+          title: 'Export Too Large',
+          message: `This export would load ${transactionCount.toLocaleString()} transactions into memory. Please narrow the date range to ${MAX_EXPORT_TRANSACTION_COUNT.toLocaleString()} transactions or fewer.`,
+          preset: 'error',
+        });
+        return false;
+      }
+
       const transactions =
         options.preloadedTransactions ??
         (await fetchTransactionsForExport(options.dateRange));
@@ -252,7 +269,7 @@ const useTransactionExport = () => {
           title: 'No transactions found in the selected date range',
           preset: 'error',
         });
-        return;
+        return false;
       }
 
       await saveExportData({
@@ -266,12 +283,14 @@ const useTransactionExport = () => {
         title: `Successfully exported ${transactions.length} transactions`,
         preset: 'done',
       });
+      return true;
     } catch (error) {
       show({
         title:
           error instanceof Error ? error.message : 'Export failed. Please try again.',
         preset: 'error',
       });
+      return false;
     } finally {
       setIsLoading(false);
     }

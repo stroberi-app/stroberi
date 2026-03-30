@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import { formatCurrency } from './format';
 import type { SpendingForecast } from './forecasting';
+import type { BudgetCategoryModel } from '../database/budget-category-model';
+import type { BudgetModel } from '../database/budget-model';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 
@@ -44,6 +46,9 @@ export type PeriodTotals = {
   net: number;
 };
 
+type MonthlyBudgetSource = Pick<BudgetModel, 'id' | 'amount' | 'period'>;
+type BudgetCategorySource = Pick<BudgetCategoryModel, 'budgetId'>;
+
 export const DATE_FILTER_OPTIONS: Array<{ value: DateFilter; label: string }> = [
   { value: 'thisMonth', label: 'This Month' },
   { value: 'lastMonth', label: 'Last Month' },
@@ -52,8 +57,11 @@ export const DATE_FILTER_OPTIONS: Array<{ value: DateFilter; label: string }> = 
   { value: 'thisYear', label: 'This Year' },
 ];
 
-export const getDateRange = (filter: DateFilter): DateRange => {
-  const today = dayjs();
+export const getDateRange = (
+  filter: DateFilter,
+  now: dayjs.Dayjs = dayjs()
+): DateRange => {
+  const today = dayjs(now);
 
   switch (filter) {
     case 'thisMonth':
@@ -70,13 +78,13 @@ export const getDateRange = (filter: DateFilter): DateRange => {
       };
     case 'last3Months':
       return {
-        fromDate: today.subtract(3, 'month').startOf('month').toDate(),
+        fromDate: today.startOf('month').subtract(2, 'month').toDate(),
         toDate: today.endOf('month').toDate(),
         label: 'Last 3 months',
       };
     case 'last6Months':
       return {
-        fromDate: today.subtract(6, 'month').startOf('month').toDate(),
+        fromDate: today.startOf('month').subtract(5, 'month').toDate(),
         toDate: today.endOf('month').toDate(),
         label: 'Last 6 months',
       };
@@ -100,6 +108,33 @@ export const getPreviousRange = (fromDate: Date, comparisonToDate: Date) => {
     previousToDate: dayjs(fromDate).subtract(1, 'day').toDate(),
     daysInRange,
   };
+};
+
+export const calculateGlobalMonthlyBudgetLimit = (
+  budgets: MonthlyBudgetSource[],
+  budgetCategories: BudgetCategorySource[]
+) => {
+  if (budgets.length === 0) {
+    return undefined;
+  }
+
+  const scopedBudgetIds = new Set(
+    budgetCategories.map((budgetCategory) => budgetCategory.budgetId)
+  );
+
+  const total = budgets.reduce((sum, budget) => {
+    if (budget.period !== 'monthly') {
+      return sum;
+    }
+
+    if (scopedBudgetIds.has(budget.id)) {
+      return sum;
+    }
+
+    return sum + budget.amount;
+  }, 0);
+
+  return total > 0 ? total : undefined;
 };
 
 export const filterTransactionsByDateRange = (

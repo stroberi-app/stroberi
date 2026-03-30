@@ -4,7 +4,6 @@ import {
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Calendar, FolderOpen, TrendingUp, X } from '@tamagui/lucide-icons';
 import type React from 'react';
@@ -21,9 +20,12 @@ import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import '../../lib/date';
 import {
+  buildBudgetTransactionConditions,
   calculateBudgetPeriodDates,
+  calculateRollover,
   formatBudgetPeriod,
   getBudgetProgressColor,
+  sumBudgetTransactions,
 } from '../../lib/budgetUtils';
 import { formatCurrency } from '../../lib/format';
 import { BudgetProgress } from '../BudgetProgress';
@@ -57,9 +59,6 @@ const THRESHOLD_OPTIONS = [
   { value: 90, label: '90%' },
   { value: 95, label: '95%' },
 ];
-
-const sumTransactions = (transactions: TransactionModel[]) =>
-  transactions.reduce((sum, tx) => sum + Math.abs(tx.amountInBaseCurrency), 0);
 
 type BudgetFormSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -123,28 +122,20 @@ export const BudgetFormSheet = ({
     const periodDates = calculateBudgetPeriodDates({ period, startDate });
     const previousPeriodDates = calculateBudgetPeriodDates({ period, startDate }, -1);
 
-    const buildConditions = (start: Date, end: Date) => {
-      const conditions = [
-        Q.where('date', Q.gte(start.getTime())),
-        Q.where('date', Q.lte(end.getTime())),
-        Q.where('amountInBaseCurrency', Q.lt(0)),
-      ];
-
-      if (selectedCategoryIds.length > 0) {
-        conditions.push(Q.where('categoryId', Q.oneOf(selectedCategoryIds)));
-      }
-
-      return conditions;
-    };
-
     const currentTransactionsObservable = database
       .get<TransactionModel>('transactions')
-      .query(...buildConditions(periodDates.start, periodDates.end))
+      .query(
+        ...buildBudgetTransactionConditions(
+          periodDates.start,
+          periodDates.end,
+          selectedCategoryIds
+        )
+      )
       .observeWithColumns(['amountInBaseCurrency', 'categoryId', 'date']);
 
     if (!rollover) {
       const subscription = currentTransactionsObservable.subscribe((transactions) => {
-        setCurrentSpent(sumTransactions(transactions));
+        setCurrentSpent(sumBudgetTransactions(transactions));
         setPreviousSpent(0);
       });
 
@@ -153,15 +144,21 @@ export const BudgetFormSheet = ({
 
     const previousTransactionsObservable = database
       .get<TransactionModel>('transactions')
-      .query(...buildConditions(previousPeriodDates.start, previousPeriodDates.end))
+      .query(
+        ...buildBudgetTransactionConditions(
+          previousPeriodDates.start,
+          previousPeriodDates.end,
+          selectedCategoryIds
+        )
+      )
       .observeWithColumns(['amountInBaseCurrency', 'categoryId', 'date']);
 
     const subscription = combineLatest([
       currentTransactionsObservable,
       previousTransactionsObservable,
     ]).subscribe(([transactions, previousTransactions]) => {
-      setCurrentSpent(sumTransactions(transactions));
-      setPreviousSpent(sumTransactions(previousTransactions));
+      setCurrentSpent(sumBudgetTransactions(transactions));
+      setPreviousSpent(sumBudgetTransactions(previousTransactions));
     });
 
     return () => subscription.unsubscribe();
@@ -174,7 +171,10 @@ export const BudgetFormSheet = ({
       return null;
     }
 
-    const rolloverAmount = rollover ? Math.max(0, parsedAmount - previousSpent) : 0;
+    const rolloverAmount = calculateRollover(
+      { amount: parsedAmount, rollover },
+      previousSpent
+    );
     const budgetLimit = parsedAmount + rolloverAmount;
     const percentage = budgetLimit > 0 ? (currentSpent / budgetLimit) * 100 : 0;
     const remaining = budgetLimit - currentSpent;

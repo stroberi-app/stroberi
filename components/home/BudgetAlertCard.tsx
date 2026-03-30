@@ -2,8 +2,8 @@ import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { AlertTriangle, X } from '@tamagui/lucide-icons';
 import { useEffect, useState } from 'react';
-import { from, type Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { combineLatest, type Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Text, View } from 'tamagui';
 import type { BudgetCategoryModel } from '../../database/budget-category-model';
 import type { BudgetModel } from '../../database/budget-model';
@@ -11,17 +11,13 @@ import { database } from '../../database/index';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
-import { calculateBudgetPeriodDates } from '../../lib/budgetUtils';
+import {
+  calculateBudgetAlerts,
+  type BudgetAlertData,
+} from '../../lib/budgetAlerts';
 import { formatCurrency } from '../../lib/format';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
 import { LinkButton } from '../button/LinkButton';
-
-type BudgetAlertData = {
-  budget: BudgetModel;
-  spent: number;
-  percentage: number;
-  budgetLimit: number;
-};
 
 type BudgetAlertCardProps = {
   budgetAlerts: BudgetAlertData[];
@@ -173,81 +169,27 @@ const enhance = withObservables<
     .get<BudgetModel>('budgets')
     .query(Q.where('isActive', true))
     .observe();
+  const budgetCategoriesObservable = database
+    .get<BudgetCategoryModel>('budget_categories')
+    .query()
+    .observe();
+  const transactionsObservable = database
+    .get<TransactionModel>('transactions')
+    .query(Q.where('amountInBaseCurrency', Q.lt(0)))
+    .observeWithColumns(['amountInBaseCurrency', 'date', 'categoryId']);
 
   return {
-    budgetAlerts: budgetsObservable.pipe(
-      switchMap((budgets) =>
-        from(
-          (async () => {
-            const alerts: BudgetAlertData[] = [];
-
-            for (const budget of budgets) {
-              const { start, end } = calculateBudgetPeriodDates(budget);
-
-              const budgetCategories = await database
-                .get<BudgetCategoryModel>('budget_categories')
-                .query(Q.where('budget_id', budget.id))
-                .fetch();
-
-              const categoryIds = budgetCategories.map((bc) => bc.categoryId);
-
-              const baseConditions = [
-                Q.where('date', Q.gte(start.getTime())),
-                Q.where('date', Q.lte(end.getTime())),
-                Q.where('amountInBaseCurrency', Q.lt(0)),
-              ];
-
-              if (categoryIds.length > 0) {
-                baseConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
-              }
-
-              const transactions = await database
-                .get<TransactionModel>('transactions')
-                .query(...baseConditions)
-                .fetch();
-
-              const spent = transactions.reduce(
-                (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
-                0
-              );
-              let budgetLimit = budget.amount;
-              if (budget.rollover) {
-                const previousPeriod = calculateBudgetPeriodDates(budget, -1);
-                const previousPeriodConditions = [
-                  Q.where('date', Q.gte(previousPeriod.start.getTime())),
-                  Q.where('date', Q.lte(previousPeriod.end.getTime())),
-                  Q.where('amountInBaseCurrency', Q.lt(0)),
-                ];
-
-                if (categoryIds.length > 0) {
-                  previousPeriodConditions.push(
-                    Q.where('categoryId', Q.oneOf(categoryIds))
-                  );
-                }
-
-                const previousPeriodTransactions = await database
-                  .get<TransactionModel>('transactions')
-                  .query(...previousPeriodConditions)
-                  .fetch();
-
-                const previousSpent = previousPeriodTransactions.reduce(
-                  (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
-                  0
-                );
-                const rollover = Math.max(0, budget.amount - previousSpent);
-                budgetLimit += rollover;
-              }
-
-              const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
-
-              if (percentage >= budget.alertThreshold) {
-                alerts.push({ budget, spent, percentage, budgetLimit });
-              }
-            }
-
-            return alerts.sort((a, b) => b.percentage - a.percentage);
-          })()
-        )
+    budgetAlerts: combineLatest([
+      budgetsObservable,
+      budgetCategoriesObservable,
+      transactionsObservable,
+    ]).pipe(
+      map(([budgets, budgetCategories, transactions]) =>
+        calculateBudgetAlerts({
+          budgets,
+          budgetCategories,
+          transactions,
+        })
       )
     ),
   };

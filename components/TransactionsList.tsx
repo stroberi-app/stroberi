@@ -164,7 +164,11 @@ const withData = withObservables<
     });
 
     return {
-      transactions: query.observe(),
+      transactions: query.observeWithColumns([
+        'date',
+        'categoryId',
+        'amountInBaseCurrency',
+      ]),
     };
   }
 );

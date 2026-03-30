@@ -1,9 +1,13 @@
 import dayjs from 'dayjs';
+import { Q } from '@nozbe/watermelondb';
 import type { BudgetModel, BudgetPeriod } from '../database/budget-model';
 import './date';
 
 type BudgetPeriodConfig = Pick<BudgetModel, 'period' | 'startDate'>;
 type BudgetRolloverConfig = Pick<BudgetModel, 'amount' | 'rollover'>;
+type SpendableTransaction = {
+  amountInBaseCurrency: number;
+};
 
 const shiftPeriod = (date: dayjs.Dayjs, period: BudgetPeriod, periods: number) => {
   if (periods === 0) {
@@ -96,6 +100,30 @@ export const calculateRollover = (
 
   const remaining = budget.amount - previousSpent;
   return remaining > 0 ? remaining : 0;
+};
+
+export const buildBudgetTransactionConditions = (
+  periodStart: Date,
+  periodEnd: Date,
+  categoryIds: string[] = []
+) => {
+  const conditions = [
+    Q.where('date', Q.gte(periodStart.getTime())),
+    Q.where('date', Q.lte(periodEnd.getTime())),
+    Q.where('amountInBaseCurrency', Q.lt(0)),
+  ];
+
+  if (categoryIds.length > 0) {
+    conditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
+  }
+
+  return conditions;
+};
+
+export const sumBudgetTransactions = (transactions: SpendableTransaction[]) => {
+  return transactions.reduce((sum, transaction) => {
+    return sum + Math.abs(transaction.amountInBaseCurrency);
+  }, 0);
 };
 
 export const getBudgetProgressColor = (percentage: number, threshold: number): string => {

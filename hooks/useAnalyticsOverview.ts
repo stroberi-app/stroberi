@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import type { BudgetModel } from '../database/budget-model';
+import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
 import {
@@ -15,6 +16,7 @@ import {
   calculatePercentChange,
   calculatePeriodTotals,
   calculatePotentialMonthlySavings,
+  calculateGlobalMonthlyBudgetLimit,
   createCategoryHotspots,
   derivePulseState,
   filterTransactionsByDateRange,
@@ -33,6 +35,7 @@ type UseAnalyticsOverviewArgs = {
   transactions: TransactionModel[];
   categories: CategoryModel[];
   budgets: BudgetModel[];
+  budgetCategories: BudgetCategoryModel[];
   defaultCurrency: string | null;
   dateFilter: DateFilter;
 };
@@ -41,6 +44,7 @@ export const useAnalyticsOverview = ({
   transactions,
   categories,
   budgets,
+  budgetCategories,
   defaultCurrency,
   dateFilter,
 }: UseAnalyticsOverviewArgs) => {
@@ -82,13 +86,8 @@ export const useAnalyticsOverview = ({
     [periodTotals.expenses, previousPeriodTotals.expenses]
   );
   const monthBudgetLimit = useMemo(() => {
-    if (budgets.length === 0) {
-      return undefined;
-    }
-
-    const total = budgets.reduce((sum, budget) => sum + budget.amount, 0);
-    return total > 0 ? total : undefined;
-  }, [budgets]);
+    return calculateGlobalMonthlyBudgetLimit(budgets, budgetCategories);
+  }, [budgets, budgetCategories]);
   const periodBudgetLimit = useMemo(() => {
     if (!monthBudgetLimit) {
       return undefined;

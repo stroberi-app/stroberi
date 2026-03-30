@@ -6,7 +6,10 @@ import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
-import { getTripSpending } from '../../database/actions/trips';
+import {
+  buildActiveTripFilterClauses,
+  getTripSpending,
+} from '../../database/actions/trips';
 import type { TripModel } from '../../database/trip-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';
@@ -141,19 +144,10 @@ const enhance = withObservables<
   { database: Database },
   { activeTrips: Observable<TripModel[]> }
 >(['database'], ({ database }) => {
-  // Use a timestamp slightly in the future to ensure trips marked
-  // as "finished now" are immediately excluded
-  const now = Date.now() + 60000; // Add 1 minute buffer
-
   return {
     activeTrips: database
       .get<TripModel>('trips')
-      .query(
-        Q.where('isArchived', false),
-        Q.or(Q.where('endDate', Q.eq(null)), Q.where('endDate', Q.gt(now))),
-        Q.sortBy('startDate', Q.desc),
-        Q.take(1)
-      )
+      .query(...buildActiveTripFilterClauses(), Q.sortBy('startDate', Q.desc), Q.take(1))
       .observe(),
   };
 });
