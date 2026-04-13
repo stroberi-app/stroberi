@@ -312,7 +312,7 @@ export const BudgetFormSheet = ({
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
       >
-        <BottomSheetView style={{ paddingBottom: bottom }}>
+        <BottomSheetView style={{ flex: 1 }}>
           <View
             flexDirection="row"
             alignItems="center"
@@ -334,7 +334,11 @@ export const BudgetFormSheet = ({
             </LinkButton>
           </View>
 
-          <BottomSheetScrollView keyboardShouldPersistTaps="handled">
+          <BottomSheetScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: bottom + 16 }}
+            keyboardShouldPersistTaps="handled"
+          >
             <View paddingHorizontal="$3" paddingBottom="$4">
               <View marginTop="$4">
                 <Text fontSize="$3" color="$gray10" marginBottom="$2">

@@ -1,75 +1,59 @@
 ---
-description: 
-globs: 
+description: Stroberi repository coding rules and architecture context
+globs:
 alwaysApply: true
 ---
-You are a Senior Software Engineer working on an open-source personal expense tracking app built with React Native. It helps you manage your finances by tracking your expenses and categorizing them. It's privacy first, so your data is stored locally on your device and never leaves it. 
+You are a Senior Software Engineer working on Stroberi, an open-source privacy-first personal expense tracking app built with Expo + React Native.
 
-Make sure you implement scalable code, that is easy to maintain and doesn't add any bugs.
+Core expectations:
 
-* Work with yarn
-* Don't write comments
-* You can use context7 if you need to fetch for any up to date documentation
-* Make sure you don't introduce any regression
-* Make sure the types are good after changes
-
+- Use yarn for all package and script commands.
+- Keep TypeScript strict-safe and avoid regressions.
+- Prefer maintainable, modular code over quick hacks.
+- Keep user financial data local on-device (no cloud persistence for transaction data).
 
 Project structure:
 
-/app - contains main screens
- /app/(tabs) - contains 3 main tab screens - index.tsx(home), settings.tsx and transactions.tsx
- create-transaction.tsx - screen for creating a new transaction
- webview.tsx - screen for showing a webview - used for privacy policy and tos
-/components - different components for the app
-/data - static data
-/database - watermelon db configurations, models, database interactions
-/hooks - shared hooks
-/lib - utilities
+- /app: Expo Router screens and navigation
+- /app/(tabs): tab screens (`index`, `transactions`, `analytics`, `budgets`, `trips`, `settings`)
+- /components: shared UI components and sheets
+- /features: feature modules (currently `import`, `transactions`)
+- /database: WatermelonDB schema, migrations, models, and actions
+- /hooks: shared hooks and feature toggles
+- /lib: analytics, forecasting, conversion, and utility logic
+- /data: static data (currencies, categories)
 
+Development commands:
 
-## **Comprehensive App Analysis**
+- Install deps: `yarn install`
+- Start app: `yarn start`
+- iOS: `yarn ios`
+- Android: `yarn android`
+- Lint: `yarn lint`
+- Format: `yarn format`
+- Type-check: `yarn check:types`
+- Test (single run): `yarn test --watchAll=false`
 
-### **Current Feature Set** 
+Database safety:
 
-Your app has a solid foundation with:
+- Schema changes must update `database/schema.ts`, `database/migrations.ts`, and affected model files together.
+- Keep indexes and query patterns aligned when changing transaction/category filters.
 
-1. **Core Transaction Management**
-   - Create, update, delete transactions
-   - Support for both income and expenses
-   - Multi-currency with automatic conversion & caching
-   - Merchant/payee tracking
-   - Notes and timestamps
+Currency and transaction behavior:
 
-2. **Categories System**
-   - Custom categories with icons
-   - Usage count tracking for smart suggestions
-   - Manageable through settings
+- Preserve conversion logic and `allowMissingRate` semantics in create/update/import flows.
+- Keep amount semantics consistent across transaction entry, imports, and analytics.
 
-3. **Recurring Transactions** (Active Development)
-   - Daily, weekly, monthly, yearly frequencies
-   - Automatic creation on due dates
-   - Start/end date support
-   - Active/inactive toggles
+Feature flags:
 
-4. **Analytics & Visualizations**
-   - Spend overview with period income/expense/balance
-   - Spend by category charts
-   - Spend by type (income/expense)
-   - Spending trends over time
-   - Top spending category identification
+- Preserve existing keys in `lib/storageKeys.ts`:
+  - `budgeting_enabled`
+  - `trips_enabled`
+  - `advanced_analytics_enabled`
 
-5. **Filtering & Search**
-   - Date range filters (preset & custom)
-   - Category filters
-   - Multiple filter support
+Quality gate before completion:
 
-6. **Data Management**
-   - CSV Import/Export
-   - Transaction preview before export
-   - Local-first with WatermelonDB
+- Run `yarn lint` and `yarn check:types` for code changes.
+- Add/update tests for logic-heavy changes.
 
-7. **UX Features**
-   - Carousel for multiple chart views
-   - Bottom sheets for forms
-   - Toast notifications
-   - Date & time pickers
+For detailed release flow, follow `RELEASE_GUIDE.md`.

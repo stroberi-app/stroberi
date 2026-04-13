@@ -2,7 +2,7 @@
   "expo": {
     "name": "Stroberi",
     "slug": "stroberi",
-    "version": "1.0.14",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "stroberi",
@@ -13,7 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stroberi",
-      "buildNumber": "33",
+      "buildNumber": "34",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -21,7 +21,7 @@
     "android": {
       "package": "com.stroberi",
       "icon": "./assets/images/logo-round.png",
-      "versionCode": 37
+      "versionCode": 40
     },
     "web": {
       "bundler": "metro",
