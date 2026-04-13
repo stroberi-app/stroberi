@@ -249,7 +249,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         return;
       }
 
-      const requiredColumns = ['merchant', 'amount', 'date', 'currencyCode'];
+      const requiredColumns = ['amount', 'date', 'currencyCode'];
       const missingColumns = requiredColumns.filter(
         (col) => !results.meta.fields?.includes(col)
       );
@@ -334,7 +334,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         showError({
           title: 'Data Validation Issues',
           message: `We found ${allErrors.length} issue${allErrors.length > 1 ? 's' : ''} in your CSV file. Please fix these issues and try importing again.`,
-          errors: allErrors.slice(0, 10),
+          errors: allErrors,
           type: 'validation',
           showTemplateButton: true,
           showRetryButton: true,
@@ -444,7 +444,6 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
           message:
             'A few rows could not be imported. Review the details below and retry those rows if needed.',
           errors: importResult.failed
-            .slice(0, 10)
             .map((failure) => `Row ${failure.row}: ${failure.reason}`),
           type: 'validation',
           showTemplateButton: false,
@@ -455,7 +454,6 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
           title: 'No Transactions Imported',
           message: 'No rows could be imported. Review the issues below and try again.',
           errors: importResult.failed
-            .slice(0, 10)
             .map((failure) => `Row ${failure.row}: ${failure.reason}`),
           type: 'validation',
           showTemplateButton: true,
@@ -544,7 +542,6 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
           message:
             'A few rows could not be imported. Review the details below and retry those rows if needed.',
           errors: importResult.failed
-            .slice(0, 10)
             .map((failure) => `Row ${failure.row}: ${failure.reason}`),
           type: 'validation',
           showTemplateButton: false,
@@ -555,7 +552,6 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
           title: 'No Transactions Imported',
           message: 'No rows could be imported. Review the issues below and try again.',
           errors: importResult.failed
-            .slice(0, 10)
             .map((failure) => `Row ${failure.row}: ${failure.reason}`),
           type: 'validation',
           showTemplateButton: true,
@@ -662,7 +658,7 @@ Salary,3000.00,2024-01-01,Monthly salary,USD,Income,💰`;
                   </Text>
                   <Text fontSize={'$3'} color={'$gray11'} lineHeight={'$1'}>
                     Upload a CSV file with your transaction data. Make sure it includes
-                    columns for merchant, amount, date, and currency code.
+                    columns for amount, date, and currency code. Merchant is optional.
                   </Text>
                 </YStack>
               </XStack>
@@ -769,6 +765,11 @@ Salary,3000.00,2024-01-01,Monthly salary,USD,Income,💰`;
       </BottomSheetModal>
 
       <ErrorSheet
+        key={
+          errorInfo
+            ? `${errorInfo.type}-${errorInfo.title}-${errorInfo.message}-${errorInfo.errors?.length ?? 0}`
+            : 'error-sheet-empty'
+        }
         sheetRef={errorSheetRef}
         errorInfo={errorInfo}
         onDownloadTemplate={handleDownloadCSVFileTemplate}

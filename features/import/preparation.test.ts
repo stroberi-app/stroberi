@@ -14,7 +14,7 @@ describe('import preparation', () => {
       },
       {
         merchant: '',
-        amount: '-12.00',
+        amount: '',
         date: '2024-01-11',
         currencyCode: 'usd',
       },
@@ -30,9 +30,7 @@ describe('import preparation', () => {
 
     expect(result.preparedTransactions.length).toBe(1);
     expect(result.preparedTransactions[0]?.sourceRowNumber).toBe(101);
-    expect(result.errors).toContain(
-      'Row 102: Missing required fields (merchant, amount, date, or currency)'
-    );
+    expect(result.errors).toContain('Row 102: Missing required fields: amount');
   });
 
   it('collects new categories from valid rows and maps ids when building payloads', () => {

@@ -1,8 +1,10 @@
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { AlertCircle, Download, FileText, RefreshCw, X } from '@tamagui/lucide-icons';
 import type React from 'react';
+import { useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Separator, Text, View, XStack, YStack } from 'tamagui';
+import { summarizeImportIssues } from '../../features/import/errorSummary';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
@@ -25,6 +27,7 @@ type ErrorSheetProps = {
 };
 
 const errorSnapPoints = ['70%', '90%'];
+const ROW_GROUPS_PAGE_SIZE = 20;
 
 export const ErrorSheet = ({
   sheetRef,
@@ -34,8 +37,16 @@ export const ErrorSheet = ({
   onDismiss,
 }: ErrorSheetProps) => {
   const { bottom } = useSafeAreaInsets();
+  const [visibleRowGroups, setVisibleRowGroups] = useState(ROW_GROUPS_PAGE_SIZE);
+  const issueSummary = useMemo(
+    () => summarizeImportIssues(errorInfo?.errors ?? []),
+    [errorInfo?.errors]
+  );
 
   if (!errorInfo) return null;
+
+  const visibleRows = issueSummary.rows.slice(0, visibleRowGroups);
+  const remainingRows = issueSummary.rows.length - visibleRows.length;
 
   const getErrorIcon = () => {
     switch (errorInfo.type) {
@@ -88,38 +99,158 @@ export const ErrorSheet = ({
               {errorInfo.message}
             </Text>
 
-            {errorInfo.errors && errorInfo.errors.length > 0 && (
+            {issueSummary.totalIssues > 0 && (
               <YStack gap={'$3'}>
                 <Text fontSize={'$4'} fontWeight={'600'} color={'$gray12'}>
                   Issues found:
                 </Text>
-                <View
-                  backgroundColor={'$red2'}
-                  borderColor={'$red6'}
-                  borderWidth={1}
-                  borderRadius={'$4'}
-                  padding={'$3'}
-                  maxHeight={200}
-                >
-                  <YStack gap={'$2'}>
-                    {errorInfo.errors.map((error, index) => (
-                      <XStack key={index} alignItems={'flex-start'} gap={'$2'}>
+
+                <XStack gap={'$2'} flexWrap={'wrap'}>
+                  <View
+                    backgroundColor={'$gray3'}
+                    borderRadius={'$10'}
+                    paddingVertical={'$1'}
+                    paddingHorizontal={'$3'}
+                  >
+                    <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
+                      Total issues: {issueSummary.totalIssues}
+                    </Text>
+                  </View>
+
+                  {issueSummary.rows.length > 0 && (
+                    <View
+                      backgroundColor={'$gray3'}
+                      borderRadius={'$10'}
+                      paddingVertical={'$1'}
+                      paddingHorizontal={'$3'}
+                    >
+                      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
+                        Affected rows: {issueSummary.rows.length}
+                      </Text>
+                    </View>
+                  )}
+
+                  {issueSummary.rowIssueCount > 0 && (
+                    <View
+                      backgroundColor={'$gray3'}
+                      borderRadius={'$10'}
+                      paddingVertical={'$1'}
+                      paddingHorizontal={'$3'}
+                    >
+                      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
+                        Row-specific issues: {issueSummary.rowIssueCount}
+                      </Text>
+                    </View>
+                  )}
+
+                  {issueSummary.generalIssues.length > 0 && (
+                    <View
+                      backgroundColor={'$gray3'}
+                      borderRadius={'$10'}
+                      paddingVertical={'$1'}
+                      paddingHorizontal={'$3'}
+                    >
+                      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
+                        General issues: {issueSummary.generalIssues.length}
+                      </Text>
+                    </View>
+                  )}
+                </XStack>
+
+                {issueSummary.rows.length > 0 && (
+                  <YStack
+                    gap={'$2'}
+                    backgroundColor={'$yellow2'}
+                    borderColor={'$yellow6'}
+                    borderWidth={1}
+                    borderRadius={'$4'}
+                    padding={'$3'}
+                  >
+                    {visibleRows.map((rowIssue) => (
+                      <View
+                        key={rowIssue.rowNumber}
+                        backgroundColor={'$background'}
+                        borderRadius={'$3'}
+                        borderColor={'$yellow5'}
+                        borderWidth={1}
+                        padding={'$2'}
+                      >
+                        <XStack justifyContent={'space-between'} alignItems={'center'}>
+                          <Text fontSize={'$3'} color={'$yellow11'} fontWeight={'700'}>
+                            Row {rowIssue.rowNumber}
+                          </Text>
+                          <Text fontSize={'$2'} color={'$yellow10'}>
+                            {rowIssue.messages.length}{' '}
+                            {rowIssue.messages.length === 1 ? 'issue' : 'issues'}
+                          </Text>
+                        </XStack>
+                        <YStack mt={'$1'} gap={'$1'}>
+                          {rowIssue.messages.map((message, index) => (
+                            <XStack
+                              key={`${rowIssue.rowNumber}-${message}`}
+                              alignItems={'flex-start'}
+                              gap={'$2'}
+                            >
+                              <Text fontSize={'$2'} color={'$yellow9'} mt={'$0.5'}>
+                                {index + 1}.
+                              </Text>
+                              <Text
+                                fontSize={'$3'}
+                                color={'$yellow11'}
+                                flex={1}
+                                lineHeight={'$1'}
+                              >
+                                {message}
+                              </Text>
+                            </XStack>
+                          ))}
+                        </YStack>
+                      </View>
+                    ))}
+                  </YStack>
+                )}
+
+                {remainingRows > 0 && (
+                  <Button
+                    size={'$3'}
+                    fontWeight={'600'}
+                    backgroundColor={'$gray8'}
+                    onPress={() => {
+                      setVisibleRowGroups((current) =>
+                        Math.min(current + ROW_GROUPS_PAGE_SIZE, issueSummary.rows.length)
+                      );
+                    }}
+                  >
+                    <Text color={'white'} fontWeight={'600'}>
+                      Show next {Math.min(ROW_GROUPS_PAGE_SIZE, remainingRows)} row
+                      {remainingRows === 1 ? '' : 's'} ({remainingRows} remaining)
+                    </Text>
+                  </Button>
+                )}
+
+                {issueSummary.generalIssues.length > 0 && (
+                  <YStack
+                    gap={'$2'}
+                    backgroundColor={'$red2'}
+                    borderColor={'$red6'}
+                    borderWidth={1}
+                    borderRadius={'$4'}
+                    padding={'$3'}
+                  >
+                    <Text fontSize={'$3'} color={'$red11'} fontWeight={'600'}>
+                      General issues
+                    </Text>
+                    {issueSummary.generalIssues.map((issue, index) => (
+                      <XStack key={`${index}-${issue}`} alignItems={'flex-start'} gap={'$2'}>
                         <Text fontSize={'$2'} color={'$red9'} mt={'$0.5'}>
                           •
                         </Text>
                         <Text fontSize={'$3'} color={'$red11'} flex={1} lineHeight={'$1'}>
-                          {error}
+                          {issue}
                         </Text>
                       </XStack>
                     ))}
                   </YStack>
-                </View>
-                {errorInfo.errors.length > 5 && (
-                  <Text fontSize={'$2'} color={'$gray10'} fontStyle={'italic'}>
-                    {errorInfo.errors.length > 10
-                      ? `Showing first 10 of ${errorInfo.errors.length} errors`
-                      : `${errorInfo.errors.length} errors found`}
-                  </Text>
                 )}
               </YStack>
             )}

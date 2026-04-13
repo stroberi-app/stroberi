@@ -1,7 +1,7 @@
 {
   "name": "stroberi",
-  "main": "expo-router/entry",
-  "version": "1.0.14",
+  "main": "index.js",
+  "version": "1.1.0",
   "scripts": {
     "upgrade:tamagui": "yarn up '*tamagui*'@latest '@tamagui/*'@latest",
     "upgrade:tamagui:canary": "yarn up '*tamagui*'@canary '@tamagui/*'@canary",
@@ -50,7 +50,7 @@
     "expo-font": "~13.0.4",
     "expo-linear-gradient": "~14.0.2",
     "expo-linking": "~7.0.5",
-    "expo-localization": "17.0.7",
+    "expo-localization": "~16.0.1",
     "expo-router": "~4.0.22",
     "expo-sharing": "~13.0.1",
     "expo-splash-screen": "~0.29.24",
