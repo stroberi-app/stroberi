@@ -1,5 +1,5 @@
 export interface CSVRow {
-  merchant: string;
+  merchant?: string;
   amount: string;
   date: string;
   note?: string;
@@ -17,15 +17,25 @@ export const validateCSVRow = (
   supportedCurrencyCodes: string[]
 ): string[] => {
   const errors: string[] = [];
-  const merchant = row.merchant?.trim() ?? '';
   const amount = row.amount?.trim() ?? '';
   const date = row.date?.trim() ?? '';
   const currencyCode = normalizeCurrencyCode(row.currencyCode ?? '');
+  const missingFields: string[] = [];
 
-  if (!merchant || !amount || !date || !currencyCode) {
-    errors.push(
-      `Row ${index + 1}: Missing required fields (merchant, amount, date, or currency)`
-    );
+  if (!amount) {
+    missingFields.push('amount');
+  }
+
+  if (!date) {
+    missingFields.push('date');
+  }
+
+  if (!currencyCode) {
+    missingFields.push('currency');
+  }
+
+  if (missingFields.length > 0) {
+    errors.push(`Row ${index + 1}: Missing required fields: ${missingFields.join(', ')}`);
   }
 
   if (amount && Number.isNaN(Number(amount))) {

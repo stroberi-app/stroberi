@@ -47,6 +47,7 @@ export const prepareImportRows = ({
     }
 
     const { merchant, amount, date, note, currencyCode, category, categoryIcon } = row;
+    const normalizedMerchant = merchant?.trim() ?? '';
     const rawCategoryName = category?.trim() ?? '';
     const normalizedCategoryName = rawCategoryName.toLowerCase() || null;
 
@@ -63,7 +64,7 @@ export const prepareImportRows = ({
     }
 
     preparedTransactions.push({
-      merchant: merchant.trim(),
+      merchant: normalizedMerchant,
       amount: Number(amount),
       date: new Date(date),
       note: note?.trim() || '',

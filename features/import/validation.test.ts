@@ -7,7 +7,7 @@ describe('import validation', () => {
     expect(normalizeCurrencyCode(' usd ')).toBe('USD');
   });
 
-  it('validates required fields including merchant', () => {
+  it('does not require merchant', () => {
     const row: CSVRow = {
       merchant: ' ',
       amount: '-12.50',
@@ -16,9 +16,19 @@ describe('import validation', () => {
     };
 
     const errors = validateCSVRow(row, 0, supportedCurrencyCodes);
-    expect(errors).toContain(
-      'Row 1: Missing required fields (merchant, amount, date, or currency)'
-    );
+    expect(errors.includes('Row 1: Missing required fields: merchant')).toBe(false);
+  });
+
+  it('lists all missing required fields precisely', () => {
+    const row: CSVRow = {
+      merchant: 'Coffee Shop',
+      amount: ' ',
+      date: '',
+      currencyCode: ' ',
+    };
+
+    const errors = validateCSVRow(row, 4, supportedCurrencyCodes);
+    expect(errors).toContain('Row 5: Missing required fields: amount, date, currency');
   });
 
   it('validates unsupported currency code', () => {
