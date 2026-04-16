@@ -241,7 +241,11 @@ export const ErrorSheet = ({
                       General issues
                     </Text>
                     {issueSummary.generalIssues.map((issue, index) => (
-                      <XStack key={`${index}-${issue}`} alignItems={'flex-start'} gap={'$2'}>
+                      <XStack
+                        key={`${index}-${issue}`}
+                        alignItems={'flex-start'}
+                        gap={'$2'}
+                      >
                         <Text fontSize={'$2'} color={'$red9'} mt={'$0.5'}>
                           •
                         </Text>

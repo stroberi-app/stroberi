@@ -244,7 +244,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (7.0.5):
     - ExpoModulesCore
-  - ExpoLocalization (17.0.7):
+  - ExpoLocalization (16.0.1):
     - ExpoModulesCore
   - ExpoModulesCore (2.2.3):
     - DoubleConversion
@@ -316,11 +316,6 @@ PODS:
   - hermes-engine (0.76.9):
     - hermes-engine/Pre-built (= 0.76.9)
   - hermes-engine/Pre-built (0.76.9)
-  - PurchasesHybridCommon (17.21.2):
-    - RevenueCat (= 5.49.2)
-  - PurchasesHybridCommonUI (17.21.2):
-    - PurchasesHybridCommon (= 17.21.2)
-    - RevenueCatUI (= 5.49.2)
   - RCT-Folly (2024.10.14.00):
     - boost
     - DoubleConversion
@@ -1950,9 +1945,6 @@ PODS:
     - ComputableLayout (~> 0.7)
     - DGSwiftUtilities (~> 0.46.3)
     - ExpoModulesCore
-  - RevenueCat (5.49.2)
-  - RevenueCatUI (5.49.2):
-    - RevenueCat (= 5.49.2)
   - RNDateTimePicker (8.2.0):
     - React-Core
   - RNFlashList (1.7.3):
@@ -1997,12 +1989,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNPaywalls (9.6.9):
-    - PurchasesHybridCommonUI (= 17.21.2)
-    - React-Core
-  - RNPurchases (9.6.9):
-    - PurchasesHybridCommon (= 17.21.2)
-    - React-Core
   - RNReanimated (3.16.2):
     - DoubleConversion
     - glog
@@ -2228,8 +2214,6 @@ DEPENDENCIES:
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNFlashList (from `../node_modules/@shopify/flash-list`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
-  - RNPaywalls (from `../node_modules/react-native-purchases-ui`)
-  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
@@ -2242,11 +2226,7 @@ SPEC REPOS:
     - ComputableLayout
     - ContextMenuAuxiliaryPreview
     - DGSwiftUtilities
-    - PurchasesHybridCommon
-    - PurchasesHybridCommonUI
     - ReachabilitySwift
-    - RevenueCat
-    - RevenueCatUI
     - SocketRocket
     - SPAlert
     - SPIndicator
@@ -2457,10 +2437,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@shopify/flash-list"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
-  RNPaywalls:
-    :path: "../node_modules/react-native-purchases-ui"
-  RNPurchases:
-    :path: "../node_modules/react-native-purchases"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -2499,7 +2475,7 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: b0171a73665bfcefcfcc311742a72a956e6aa680
   ExpoLinearGradient: 35ebd83b16f80b3add053a2fd68cc328ed927f60
   ExpoLinking: 8d12bee174ba0cdf31239706578e29e74a417402
-  ExpoLocalization: b852a5d8ec14c5349c1593eca87896b5b3ebfcca
+  ExpoLocalization: 7776ea3bdb112125390745bbaf919b734b2ad1c7
   ExpoModulesCore: 725faec070d590810d2ea5983d9f78f7cf6a38ec
   ExpoSharing: 849a5ce9985c22598c16ec027e32969be8062e8e
   ExpoSplashScreen: 399ee9f85b6c8a61b965e13a1ecff8384db591c2
@@ -2514,8 +2490,6 @@ SPEC CHECKSUMS:
   fmt: 01b82d4ca6470831d1cc0852a1af644be019e8f6
   glog: 08b301085f15bcbb6ff8632a8ebaf239aae04e6a
   hermes-engine: 9e868dc7be781364296d6ee2f56d0c1a9ef0bb11
-  PurchasesHybridCommon: 71c94158ff8985657d37d5f3be05602881227619
-  PurchasesHybridCommonUI: c490142361da500ea8fe2f75cd6d56df0f7e3152
   RCT-Folly: ea9d9256ba7f9322ef911169a9f696e5857b9e17
   RCTDeprecation: ebe712bb05077934b16c6bf25228bdec34b64f83
   RCTRequired: ca91e5dd26b64f577b528044c962baf171c6b716
@@ -2580,13 +2554,9 @@ SPEC CHECKSUMS:
   ReactCommon: 300d8d9c5cb1a6cd79a67cf5d8f91e4d477195f9
   ReactNativeIosContextMenu: 7d99f73bc1cb6e6e92d503cfd46faae74e32335e
   ReactNativeIosUtilities: 780b35bfc6dd1deab9e2bd76c579ad5ebe04be02
-  RevenueCat: d185cbff8be9425b5835042afd6889389bb756c8
-  RevenueCatUI: 3d17f9f0bf7ed299c1671552378086ceeff308fd
   RNDateTimePicker: 818460dc31b0dc5ec58289003e27dd8d022fb79c
   RNFlashList: 05596dda3121fada6e168460d6804a2ebeeab3c5
   RNGestureHandler: 32336458ef842088a459ccfcc10b583186de2633
-  RNPaywalls: fd144a33362accc76fd650ce5aab4a1d197a0b8c
-  RNPurchases: 34da99c0e14ee484ed57e77dc06dcfe8e7cb1cee
   RNReanimated: 1162ed3d12b3abf25d9843a71c37aac637959b2b
   RNScreens: 295d9c0aaeb7f680d03d7e9b476569a4959aae89
   RNSVG: 8542aa11770b27563714bbd8494a8436385fc85f
@@ -2597,6 +2567,6 @@ SPEC CHECKSUMS:
   WatermelonDB: 358332faedb8dd4aa699a178e308586e4e3a8b23
   Yoga: feb4910aba9742cfedc059e2b2902e22ffe9954a
 
-PODFILE CHECKSUM: f543fa4a1b03785b505d3080e937b002e407d9cd
+PODFILE CHECKSUM: 279b36636c190542fbc9331a31c2fe1986440c73
 
 COCOAPODS: 1.16.2

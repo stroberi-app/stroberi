@@ -163,9 +163,7 @@ export const getBudgetStatus = async (
     );
     const transactions = await database
       .get<TransactionModel>('transactions')
-      .query(
-        ...buildBudgetTransactionConditions(periodStart, periodEnd, categoryIds)
-      )
+      .query(...buildBudgetTransactionConditions(periodStart, periodEnd, categoryIds))
       .fetch();
     const spent = sumBudgetTransactions(transactions);
     let budgetLimit = budget.amount;
