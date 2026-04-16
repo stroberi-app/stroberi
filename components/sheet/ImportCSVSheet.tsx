@@ -412,7 +412,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
                 current: importResult.importedCount,
                 message: `Imported ${importResult.importedCount} of ${validTransactions.length}; ${importResult.failed.length} skipped`,
               }
-              : null
+            : null
         );
       }
 
@@ -443,8 +443,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
           title: 'Some Rows Were Skipped',
           message:
             'A few rows could not be imported. Review the details below and retry those rows if needed.',
-          errors: importResult.failed
-            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          errors: importResult.failed.map(
+            (failure) => `Row ${failure.row}: ${failure.reason}`
+          ),
           type: 'validation',
           showTemplateButton: false,
           showRetryButton: false,
@@ -453,8 +454,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         showError({
           title: 'No Transactions Imported',
           message: 'No rows could be imported. Review the issues below and try again.',
-          errors: importResult.failed
-            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          errors: importResult.failed.map(
+            (failure) => `Row ${failure.row}: ${failure.reason}`
+          ),
           type: 'validation',
           showTemplateButton: true,
           showRetryButton: true,
@@ -541,8 +543,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
           title: 'Some Rows Were Skipped',
           message:
             'A few rows could not be imported. Review the details below and retry those rows if needed.',
-          errors: importResult.failed
-            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          errors: importResult.failed.map(
+            (failure) => `Row ${failure.row}: ${failure.reason}`
+          ),
           type: 'validation',
           showTemplateButton: false,
           showRetryButton: false,
@@ -551,8 +554,9 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         showError({
           title: 'No Transactions Imported',
           message: 'No rows could be imported. Review the issues below and try again.',
-          errors: importResult.failed
-            .map((failure) => `Row ${failure.row}: ${failure.reason}`),
+          errors: importResult.failed.map(
+            (failure) => `Row ${failure.row}: ${failure.reason}`
+          ),
           type: 'validation',
           showTemplateButton: true,
           showRetryButton: true,

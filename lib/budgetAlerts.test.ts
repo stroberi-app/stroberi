@@ -21,11 +21,13 @@ const buildBudget = ({ id, ...overrides }: BuildBudgetOptions): BudgetModel =>
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
-  } as unknown as BudgetModel);
+  }) as unknown as BudgetModel;
 
-const buildTransaction = (
-  { id, categoryId, ...overrides }: BuildTransactionOptions
-): TransactionModel =>
+const buildTransaction = ({
+  id,
+  categoryId,
+  ...overrides
+}: BuildTransactionOptions): TransactionModel =>
   ({
     id,
     amountInBaseCurrency: -10,
@@ -43,7 +45,7 @@ const buildTransaction = (
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,
-  } as unknown as TransactionModel);
+  }) as unknown as TransactionModel;
 
 describe('calculateBudgetAlert', () => {
   it('calculates alert values from the current period and matching categories', () => {

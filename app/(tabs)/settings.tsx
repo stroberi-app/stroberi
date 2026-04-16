@@ -5,6 +5,7 @@ import {
   FolderOutput,
   Plane,
   RefreshCw,
+  Smartphone,
   Tags,
   TrendingUp,
   Wallet,
@@ -12,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View, YGroup } from 'tamagui';
 import { CurrencySelect } from '../../components/CurrencySelect';
@@ -20,6 +22,7 @@ import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
 import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
+import { ShortcutsSetupSheet } from '../../components/sheet/ShortcutsSetupSheet';
 import { ManageRecurringTransactionsSheet } from '../../components/sheet/ManageRecurringTransactionsSheet';
 import {
   TransactionPreviewSheet,
@@ -41,6 +44,7 @@ export default function SettingsScreen() {
     null
   );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const shortcutsSetupSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } =
     useDefaultCurrency();
   const { budgetingEnabled, setBudgetingEnabled } = useBudgetingEnabled();
@@ -266,6 +270,24 @@ export default function SettingsScreen() {
           </YGroup>
         </View>
 
+        {Platform.OS === 'ios' && (
+          <>
+            <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
+              Integrations
+            </Text>
+            <YGroup>
+              <SettingsItem
+                label={'Apple Wallet Automation'}
+                IconComponent={Smartphone}
+                rightLabel={''}
+                onPress={() => {
+                  shortcutsSetupSheetRef.current?.present();
+                }}
+              />
+            </YGroup>
+          </>
+        )}
+
         <Text fontSize={'$7'} marginTop="$4" marginBottom={'$2'}>
           Data
         </Text>
@@ -336,6 +358,7 @@ export default function SettingsScreen() {
         onBack={handleBackToExport}
       />
       <ImportCSVSheet sheetRef={importCsvSheetRef} />
+      {Platform.OS === 'ios' && <ShortcutsSetupSheet sheetRef={shortcutsSetupSheetRef} />}
     </>
   );
 }
