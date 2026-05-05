@@ -201,11 +201,7 @@ export const getMostRecentActiveTrip = async (): Promise<TripModel | null> => {
   try {
     const [trip] = await database
       .get<TripModel>('trips')
-      .query(
-        ...buildActiveTripFilterClauses(),
-        Q.sortBy('startDate', Q.desc),
-        Q.take(1)
-      )
+      .query(...buildActiveTripFilterClauses(), Q.sortBy('startDate', Q.desc), Q.take(1))
       .fetch();
 
     return trip ?? null;

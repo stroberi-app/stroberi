@@ -59,7 +59,10 @@ const AnalyticsContent = withObservables<
     .get<BudgetModel>('budgets')
     .query(Q.where('isActive', true))
     .observe(),
-  budgetCategories: database.get<BudgetCategoryModel>('budget_categories').query().observe(),
+  budgetCategories: database
+    .get<BudgetCategoryModel>('budget_categories')
+    .query()
+    .observe(),
 }))(({ transactions, categories, budgets, budgetCategories }: AnalyticsContentProps) => {
   const { top } = useSafeAreaInsets();
   const { defaultCurrency } = useDefaultCurrency();
