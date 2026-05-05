@@ -11,10 +11,7 @@ import { database } from '../../database/index';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
-import {
-  calculateBudgetAlerts,
-  type BudgetAlertData,
-} from '../../lib/budgetAlerts';
+import { calculateBudgetAlerts, type BudgetAlertData } from '../../lib/budgetAlerts';
 import { formatCurrency } from '../../lib/format';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
 import { LinkButton } from '../button/LinkButton';

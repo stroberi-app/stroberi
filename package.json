@@ -13,7 +13,8 @@
     "lint": "biome lint app/ data/ database/ hooks/ components/ lib/",
     "format": "biome format --write app/ data/ database/ hooks/ components/ lib/",
     "check": "biome check app/ data/ database/ hooks/ components/ lib/ --write --unsafe",
-    "check:types": "tsc --noEmit"
+    "check:types": "tsc --noEmit",
+    "postinstall": "patch-package"
   },
   "jest": {
     "preset": "jest-expo"
@@ -50,7 +51,7 @@
     "expo-font": "~13.0.4",
     "expo-linear-gradient": "~14.0.2",
     "expo-linking": "~7.0.5",
-    "expo-localization": "~16.0.1",
+    "expo-localization": "16.1.6",
     "expo-router": "~4.0.22",
     "expo-sharing": "~13.0.1",
     "expo-splash-screen": "~0.29.24",
@@ -86,6 +87,8 @@
     "@react-native-community/cli": "^15.1.2",
     "@types/papaparse": "^5",
     "@types/react": "~18.3.12",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "repomix": "^0.2.6"
   },
   "private": true,

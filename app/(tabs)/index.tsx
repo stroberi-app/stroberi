@@ -62,9 +62,11 @@ export default function HomeScreen() {
           scrollRef={scrollRef}
           header={(transactionCount) => (
             <>
-              <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
-                Overview
-              </Text>
+              <View flexDirection="row" justifyContent="space-between" alignItems="center">
+                <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
+                  Overview
+                </Text>
+              </View>
               <BudgetAlertCard database={database} />
               <ActiveTripCard database={database} />
               <Carousel renderItem={renderCarouselItem} data={carouselData} />
