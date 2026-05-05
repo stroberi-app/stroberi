@@ -17,11 +17,19 @@ import { Button } from './button/Button';
 import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
 import { TransactionItem } from './TransactionItem';
 
-type TransactionsListProps = {
+type TransactionsListViewProps = {
   transactions: TransactionModel[];
   appliedNumberOfFilters?: number;
   onClearFilters?: () => void;
   scrollRef?: React.RefObject<FlashList<ListItem>>;
+};
+
+type TransactionsListDataProps = {
+  database: Database;
+  dateFilter?: DateFilters | null;
+  customRange?: [Date, Date];
+  categories: CategoryModel[];
+  transactionType?: TransactionTypeFilter;
 };
 
 type ListItem = string | TransactionModel;
@@ -50,7 +58,7 @@ const TransactionsList = ({
   appliedNumberOfFilters,
   onClearFilters,
   scrollRef,
-}: TransactionsListProps) => {
+}: TransactionsListViewProps) => {
   const { bottom } = useSafeAreaInsets();
 
   const data = useMemo(() => {
@@ -145,13 +153,7 @@ const overrideItemLayout = (layout: { size?: number }, item: ListItem) => {
 };
 
 const withData = withObservables<
-  {
-    database: Database;
-    dateFilter?: DateFilters | null;
-    customRange?: [Date, Date];
-    categories: CategoryModel[];
-    transactionType?: TransactionTypeFilter;
-  },
+  TransactionsListDataProps,
   { transactions: Observable<TransactionModel[]> }
 >(
   ['dateFilter', 'customRange', 'categories', 'transactionType'],
@@ -173,4 +175,10 @@ const withData = withObservables<
   }
 );
 
-export default withData(TransactionsList);
+const TransactionsListBase = withData(TransactionsList);
+
+export default function TransactionsListWithRefresh(
+  props: TransactionsListDataProps & Omit<TransactionsListViewProps, 'transactions'>
+) {
+  return <TransactionsListBase {...props} />;
+}
