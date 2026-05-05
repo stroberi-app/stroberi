@@ -1,7 +1,7 @@
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Image, Linking, NativeModules, Platform } from 'react-native';
+import { Alert, Image, NativeModules, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner, Text, View } from 'tamagui';
 import { Button } from '../button/Button';
@@ -57,7 +57,6 @@ export const ShortcutsSetupSheet = ({ sheetRef }: ShortcutsSetupSheetProps) => {
   const [isTesting, setIsTesting] = useState(false);
 
   const handleTestPress = useCallback(async () => {
-    Linking.openURL('https://www.icloud.com/shortcuts/2d1a19f1410a43bda0fc283c46c84520')
     if (isTesting) return;
     setIsTesting(true);
     try {
