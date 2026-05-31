@@ -63,7 +63,7 @@ export const SpendLineChart = <
       defaultCurrency ?? 'USD'
     );
     return `${state.x.value.value}: ${formattedCurrency}`;
-  }, [state?.y.total.value.value]);
+  });
 
   const ttX = useSharedValue(0);
   const ttY = useSharedValue(0);

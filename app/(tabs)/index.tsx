@@ -50,37 +50,35 @@ export default function HomeScreen() {
   }, [carouselItems]);
 
   return (
-    <>
-      <View
-        paddingTop={top || '$2'}
-        flex={1}
-        backgroundColor="$bgPrimary"
-        paddingHorizontal="$2"
-      >
-        <HomeTransactionsSection
-          database={database}
-          scrollRef={scrollRef}
-          header={(transactionCount) => (
-            <>
-              <View flexDirection="row" justifyContent="space-between" alignItems="center">
-                <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
-                  Overview
-                </Text>
+    <View
+      paddingTop={top || '$2'}
+      flex={1}
+      backgroundColor="$bgPrimary"
+      paddingHorizontal="$2"
+    >
+      <HomeTransactionsSection
+        database={database}
+        scrollRef={scrollRef}
+        header={(transactionCount) => (
+          <>
+            <View flexDirection="row" justifyContent="space-between" alignItems="center">
+              <Text fontSize="$8" fontWeight="bold" marginBottom="$2">
+                Overview
+              </Text>
+            </View>
+            <BudgetAlertCard database={database} />
+            <ActiveTripCard database={database} />
+            <Carousel renderItem={renderCarouselItem} data={carouselData} />
+            {transactionCount > 0 ? (
+              <View flexDirection="row" gap="$2" marginTop="$4" width="100%">
+                <CreateTransactionButtons />
               </View>
-              <BudgetAlertCard database={database} />
-              <ActiveTripCard database={database} />
-              <Carousel renderItem={renderCarouselItem} data={carouselData} />
-              {transactionCount > 0 ? (
-                <View flexDirection="row" gap="$2" marginTop="$4" width="100%">
-                  <CreateTransactionButtons />
-                </View>
-              ) : (
-                <CreateFirstTransactionSection />
-              )}
-            </>
-          )}
-        />
-      </View>
-    </>
+            ) : (
+              <CreateFirstTransactionSection />
+            )}
+          </>
+        )}
+      />
+    </View>
   );
 }

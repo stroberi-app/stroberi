@@ -1,10 +1,14 @@
-import { Stack, styled } from '@tamagui/core';
+import { View, styled } from 'tamagui';
 
 import { createSwitch } from '@tamagui/switch';
 
-const Frame = styled(Stack, {
+const Frame = styled(View, {
+  backgroundColor: '$gray4',
+  borderRadius: 999,
+  justifyContent: 'center',
+
   variants: {
-    checked: {
+    active: {
       true: {
         backgroundColor: '$green',
       },
@@ -12,63 +16,54 @@ const Frame = styled(Stack, {
         backgroundColor: '$gray4',
       },
     },
-    switchSize: {
-      small: {
-        width: 48,
-        height: 24,
-        borderRadius: 16,
-      },
-      medium: {
-        width: 60,
-        height: 30,
-        borderRadius: 20,
-      },
-      large: {
-        width: 72,
-        height: 36,
-        borderRadius: 24,
+    size: {
+      '...size': (token, { tokens }) => {
+        const raw = tokens.size[token];
+        const baseSize = typeof raw === 'number' ? raw : raw?.val;
+        const height = Math.round((baseSize ?? 24) * 0.65);
+        return {
+          height,
+          minHeight: height,
+          width: height * 2,
+        };
       },
     },
   } as const,
 
   defaultVariants: {
-    checked: false,
-    switchSize: 'small',
+    size: '$true',
   },
 });
 
-const Thumb = styled(Stack, {
-  backgroundColor: 'white',
+const Thumb = styled(View, {
+  backgroundColor: '$gray2',
+  borderRadius: 999,
   variants: {
-    checked: {
+    active: {
       true: {
-        opacity: 0.8,
+        backgroundColor: 'white',
+        opacity: 1,
       },
       false: {
-        opacity: 0.5,
+        backgroundColor: '$gray2',
+        opacity: 1,
       },
     },
-    switchSize: {
-      small: {
-        width: 24,
-        height: 24,
-        borderRadius: 16,
-      },
-      medium: {
-        width: 30,
-        height: 30,
-        borderRadius: 20,
-      },
-      large: {
-        width: 36,
-        height: 36,
-        borderRadius: 24,
+    size: {
+      '...size': (token, { tokens }) => {
+        const raw = tokens.size[token];
+        const baseSize = typeof raw === 'number' ? raw : raw?.val;
+        const dim = Math.round((baseSize ?? 24) * 0.65);
+        return {
+          width: dim,
+          height: dim,
+        };
       },
     },
   } as const,
+
   defaultVariants: {
-    checked: false,
-    switchSize: 'small',
+    size: '$true',
   },
 });
 export const Switch = createSwitch({
