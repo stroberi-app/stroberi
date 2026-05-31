@@ -9,7 +9,9 @@ import { STORAGE_KEYS } from '../lib/storageKeys';
 let defaultCurrencyListeners: Array<(currency: string | null) => void> = [];
 
 const notifyDefaultCurrencyChanged = (currency: string | null) => {
-  defaultCurrencyListeners.forEach((listener) => listener(currency));
+  defaultCurrencyListeners.forEach((listener) => {
+    listener(currency);
+  });
 };
 
 export const useDefaultCurrency = () => {
