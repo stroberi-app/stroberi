@@ -28,6 +28,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.stroberi"/>
         <data android:scheme="exp+stroberi"/>
+        <data android:scheme="exp+stroberi" android:host="expo-development-client"/>
         <data android:scheme="stroberi"/>
       </intent-filter>
     </activity>

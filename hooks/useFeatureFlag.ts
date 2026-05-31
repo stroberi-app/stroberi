@@ -12,7 +12,9 @@ export const notifyFeatureFlagChanged = (key: string, enabled: boolean) => {
     return;
   }
 
-  listeners.forEach((listener) => listener(enabled));
+  listeners.forEach((listener) => {
+    listener(enabled);
+  });
 };
 
 export const useFeatureFlag = (key: string, defaultValue: boolean) => {

@@ -33,36 +33,34 @@ export const HomeTransactionsSection = withObservables<
 })(({ transactions, header, scrollRef }: RecentTransactionsSectionProps) => {
   const { bottom } = useSafeAreaInsets();
   return (
-    <>
-      <YGroup>
-        <Reanimated.FlatList
-          ref={scrollRef}
-          contentInset={{
-            bottom: 64 + bottom,
-          }}
-          ListHeaderComponent={() => (
-            <>
-              {header(transactions.length)}
-              {transactions.length > 0 && (
-                <Text
-                  fontSize={'$8'}
-                  fontWeight={'bold'}
-                  marginTop={'$4'}
-                  marginBottom={'$2'}
-                >
-                  Recent Transactions
-                </Text>
-              )}
-            </>
-          )}
-          itemLayoutAnimation={LinearTransition}
-          data={transactions}
-          keyExtractor={(transaction) => transaction.id}
-          renderItem={({ item: transaction }) => (
-            <TransactionItem transaction={transaction} />
-          )}
-        />
-      </YGroup>
-    </>
+    <YGroup>
+      <Reanimated.FlatList
+        ref={scrollRef}
+        contentInset={{
+          bottom: 64 + bottom,
+        }}
+        ListHeaderComponent={() => (
+          <>
+            {header(transactions.length)}
+            {transactions.length > 0 && (
+              <Text
+                fontSize={'$8'}
+                fontWeight={'bold'}
+                marginTop={'$4'}
+                marginBottom={'$2'}
+              >
+                Recent Transactions
+              </Text>
+            )}
+          </>
+        )}
+        itemLayoutAnimation={LinearTransition}
+        data={transactions}
+        keyExtractor={(transaction) => transaction.id}
+        renderItem={({ item: transaction }) => (
+          <TransactionItem transaction={transaction} />
+        )}
+      />
+    </YGroup>
   );
 });
