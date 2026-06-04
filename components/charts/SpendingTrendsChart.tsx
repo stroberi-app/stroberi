@@ -161,6 +161,7 @@ export const SpendingTrends = withObservables<
 
   return (
     <SpendLineChart
+      key={`spending-trends-${trendType}`}
       chartData={chartData}
       title={chartTitle}
       isEmpty={chartData.every((el) => el.total === 0)}
