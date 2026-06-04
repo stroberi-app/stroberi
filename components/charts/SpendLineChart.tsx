@@ -12,6 +12,7 @@ import { View } from 'tamagui';
 import { useChartPressState } from 'victory-native';
 import type { InputFields, NumericalFields } from 'victory-native/dist/types';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { sanitizeChartPressNumber } from '../../lib/chartPressState';
 import { formatCurrencyWorklet } from '../../lib/format';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
 import { CarouselItemText } from '../carousel/CarouselItemText';
@@ -58,11 +59,15 @@ export const SpendLineChart = <
     y: Object.fromEntries(yKeys.map((key) => [key, 0])),
   });
   const amount = useDerivedValue(() => {
+    const rawValue = state?.y.total.value.value;
+    const safeValue = sanitizeChartPressNumber(rawValue, 0);
     const formattedCurrency = formatCurrencyWorklet(
-      state?.y.total.value.value,
+      safeValue,
       defaultCurrency ?? 'USD'
     );
-    return `${state.x.value.value}: ${formattedCurrency}`;
+    const xValue = state?.x.value.value;
+    const xLabel = xValue === undefined || xValue === null ? '' : String(xValue);
+    return `${xLabel}: ${formattedCurrency}`;
   });
 
   const ttX = useSharedValue(0);
@@ -71,13 +76,13 @@ export const SpendLineChart = <
   useAnimatedReaction(
     () => state?.x.position.value,
     (val) => {
-      ttX.value = withTiming(val, animConfig);
+      ttX.value = withTiming(sanitizeChartPressNumber(val, ttX.value), animConfig);
     }
   );
   useAnimatedReaction(
     () => state?.y.total.position.value,
     (val) => {
-      ttY.value = withTiming(val, animConfig);
+      ttY.value = withTiming(sanitizeChartPressNumber(val, ttY.value), animConfig);
     }
   );
 

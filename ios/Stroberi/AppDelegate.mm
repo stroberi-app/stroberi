@@ -2,24 +2,16 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import <Expo-Swift.h>
 
-@implementation AppDelegate
+static UIWindow *sBootstrapWindow = nil;
+static ExpoReactNativeFactory *sReactNativeFactory = nil;
+static ExpoReactNativeFactoryDelegate *sReactNativeFactoryDelegate = nil;
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
-  self.moduleName = @"main";
+@interface ExpoReactNativeFactoryDelegate (StroberiBundleURL)
+@end
 
-  // You can add your custom initial props in the dictionary below.
-  // They will be passed down to the ViewController used by React Native.
-  self.initialProps = @{};
-
-  return [super application:application didFinishLaunchingWithOptions:launchOptions];
-}
-
-- (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
-{
-  return [self bundleURL];
-}
+@implementation ExpoReactNativeFactoryDelegate (StroberiBundleURL)
 
 - (NSURL *)bundleURL
 {
@@ -28,6 +20,53 @@
 #else
   return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
 #endif
+}
+
+@end
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+  // Expo Dev Launcher expects a key window to exist during app delegate subscription.
+  // Ensure one is present before calling super, without relying on `window` selector
+  // on the Expo wrapper delegate classes.
+  UIWindow *launchWindow = nil;
+  for (UIWindow *window in application.windows) {
+    if (window.isKeyWindow) {
+      launchWindow = window;
+      break;
+    }
+  }
+
+  if (launchWindow == nil) {
+    launchWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    launchWindow.rootViewController = [UIViewController new];
+    [launchWindow makeKeyAndVisible];
+  }
+  sBootstrapWindow = launchWindow;
+
+  self.moduleName = @"main";
+
+  // You can add your custom initial props in the dictionary below.
+  // They will be passed down to the ViewController used by React Native.
+  self.initialProps = @{};
+
+  // Set up the Expo React Native factory before AppDelegate subscribers run.
+  // Dev Client depends on this factory being ready so it can call autoSetupPrepare
+  // before the launch subscriber calls autoSetupStart.
+  sReactNativeFactoryDelegate = [ExpoReactNativeFactoryDelegate new];
+  sReactNativeFactory = [[ExpoReactNativeFactory alloc] initWithDelegate:sReactNativeFactoryDelegate];
+  EXExpoAppDelegate *expoAppDelegate = [self valueForKey:@"_expoAppDelegate"];
+  expoAppDelegate.factory = sReactNativeFactory;
+  [sReactNativeFactory startReactNativeWithModuleName:self.moduleName
+                                              inWindow:sBootstrapWindow
+                                     initialProperties:self.initialProps
+                                         launchOptions:launchOptions];
+
+  BOOL didFinishLaunching = [super application:application didFinishLaunchingWithOptions:launchOptions];
+
+  return didFinishLaunching;
 }
 
 // Linking API
