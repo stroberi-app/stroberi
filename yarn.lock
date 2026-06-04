@@ -3312,13 +3312,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nozbe/simdjson@npm:^3.1.0-wmelon1":
-  version: 3.9.4
-  resolution: "@nozbe/simdjson@npm:3.9.4"
-  checksum: e6e526c87865aecd27dcd33d389bdb4ae17a9c68d6274850ce491fa0c1dbc16c152a6a03d1e97335c08dc7f769c7bf58201795bf82b2da69c40a5eb1ad33d289
-  languageName: node
-  linkType: hard
-
 "@nozbe/sqlite@npm:3.40.1":
   version: 3.40.1
   resolution: "@nozbe/sqlite@npm:3.40.1"
@@ -13390,28 +13383,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-ios-context-menu@npm:^2.5.2":
-  version: 2.5.2
-  resolution: "react-native-ios-context-menu@npm:2.5.2"
+"react-native-ios-context-menu@npm:3.2.1":
+  version: 3.2.1
+  resolution: "react-native-ios-context-menu@npm:3.2.1"
   dependencies:
     "@dominicstop/ts-event-emitter": "npm:^1.1.0"
   peerDependencies:
-    expo: "*"
     react: "*"
     react-native: "*"
-    react-native-ios-utilities: ">= 4.4.x <=4.5.x"
-  checksum: de20dc8eca7c0dce4c752ed590a93cdd638cf49bd3b761885d183eb1302c061ccfb61de208bbf5d9214c65b49dc408a410ae2e0aec7643b6a99f0c8ecb52a98b
+    react-native-ios-utilities: "*"
+  checksum: 9b2fb64fd2c30b13b78f0c2e14cdba7031c5b1759c72da4b5c7f6e6be0afdaecf496d6e0a5a17efb847239c836e63304e3af315fee3569677a255520ab96bab1
   languageName: node
   linkType: hard
 
-"react-native-ios-utilities@npm:^4.5.2":
-  version: 4.5.3
-  resolution: "react-native-ios-utilities@npm:4.5.3"
+"react-native-ios-utilities@npm:5.2.0":
+  version: 5.2.0
+  resolution: "react-native-ios-utilities@npm:5.2.0"
   peerDependencies:
-    expo: "*"
     react: "*"
     react-native: "*"
-  checksum: 6bb3f2f849b9e67492f7eb0ce246159e890dd0079b42df3587cdf7cc9c892de7840e5bcebe2d78ed8b9ec09ca7fcd9e0ca95879449f5a0bad50d28155174b1c8
+  checksum: 36cc68d9773459959714e644d322d9697f7097ed13082fdcc238fe94649f0af206bb1015bee283c10e1a64aa923f095717c37ad1f3afd275cc3245bd27a9c6be
   languageName: node
   linkType: hard
 
@@ -14865,7 +14856,7 @@ __metadata:
     "@expo/react-native-action-sheet": "npm:^4.1.0"
     "@gorhom/bottom-sheet": "npm:^5.0.6"
     "@morrowdigital/watermelondb-expo-plugin": "npm:^2.3.3"
-    "@nozbe/simdjson": "npm:^3.1.0-wmelon1"
+    "@nozbe/simdjson": "npm:3.1.0-wmelon1"
     "@nozbe/watermelondb": "npm:^0.27.1"
     "@react-native-community/cli": "npm:^15.1.2"
     "@react-native-community/datetimepicker": "npm:8.4.4"
@@ -14888,6 +14879,7 @@ __metadata:
     expo: "npm:~54.0.35"
     expo-blur: "npm:~15.0.8"
     expo-build-properties: "npm:~1.0.10"
+    expo-constants: "npm:~18.0.13"
     expo-dev-client: "npm:~6.0.21"
     expo-document-picker: "npm:~14.0.8"
     expo-file-system: "npm:~19.0.23"
@@ -14910,8 +14902,8 @@ __metadata:
     react-dom: "npm:19.1.0"
     react-native: "npm:0.81.5"
     react-native-gesture-handler: "npm:~2.28.0"
-    react-native-ios-context-menu: "npm:^2.5.2"
-    react-native-ios-utilities: "npm:^4.5.2"
+    react-native-ios-context-menu: "npm:3.2.1"
+    react-native-ios-utilities: "npm:5.2.0"
     react-native-keyboard-controller: "npm:1.18.5"
     react-native-reanimated: "npm:~4.1.1"
     react-native-reanimated-carousel: "npm:v4.0.0-alpha.12"

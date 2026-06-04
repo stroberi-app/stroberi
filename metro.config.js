@@ -5,7 +5,7 @@ const path = require('path');
 /** @type {import('expo/metro-config').MetroConfig} */
 let config = getDefaultConfig(__dirname, {
   // [Web-only]: Enables CSS support in Metro.
-  isCSSEnabled: false,
+  isCSSEnabled: true,
 });
 
 // Force native Tamagui resolution on Android/iOS.
