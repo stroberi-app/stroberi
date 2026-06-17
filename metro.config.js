@@ -1,6 +1,5 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 let config = getDefaultConfig(__dirname, {
@@ -8,16 +7,12 @@ let config = getDefaultConfig(__dirname, {
   isCSSEnabled: true,
 });
 
-// Force native Tamagui resolution on Android/iOS.
+// Let Metro resolve Tamagui through package exports, preferring native entrypoints.
 config.resolver = config.resolver || {};
 config.resolver.unstable_conditionNames = [
   ...(config.resolver.unstable_conditionNames || []),
   'react-native',
 ];
-config.resolver.extraNodeModules = {
-  ...(config.resolver.extraNodeModules || {}),
-  tamagui: path.resolve(__dirname, 'node_modules/tamagui/dist/cjs/index.native.js'),
-};
 
 // 2. Enable Tamagui
 const { withTamagui } = require('@tamagui/metro-plugin');

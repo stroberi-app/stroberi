@@ -2,11 +2,16 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import <ReactAppDependencyProvider/RCTAppDependencyProvider.h>
 #import <Expo-Swift.h>
 
 static UIWindow *sBootstrapWindow = nil;
 static ExpoReactNativeFactory *sReactNativeFactory = nil;
 static ExpoReactNativeFactoryDelegate *sReactNativeFactoryDelegate = nil;
+
+@interface EXAppDelegateWrapper (StroberiReactNativeFactory)
+@property (nonatomic, strong, nullable) RCTReactNativeFactory *factory;
+@end
 
 @interface ExpoReactNativeFactoryDelegate (StroberiBundleURL)
 @end
@@ -56,9 +61,9 @@ static ExpoReactNativeFactoryDelegate *sReactNativeFactoryDelegate = nil;
   // Dev Client depends on this factory being ready so it can call autoSetupPrepare
   // before the launch subscriber calls autoSetupStart.
   sReactNativeFactoryDelegate = [ExpoReactNativeFactoryDelegate new];
+  sReactNativeFactoryDelegate.dependencyProvider = [RCTAppDependencyProvider new];
   sReactNativeFactory = [[ExpoReactNativeFactory alloc] initWithDelegate:sReactNativeFactoryDelegate];
-  EXExpoAppDelegate *expoAppDelegate = [self valueForKey:@"_expoAppDelegate"];
-  expoAppDelegate.factory = sReactNativeFactory;
+  self.factory = sReactNativeFactory;
   [sReactNativeFactory startReactNativeWithModuleName:self.moduleName
                                               inWindow:sBootstrapWindow
                                      initialProperties:self.initialProps
