@@ -8,7 +8,7 @@ const Frame = styled(View, {
   justifyContent: 'center',
 
   variants: {
-    active: {
+    checked: {
       true: {
         backgroundColor: '$green',
       },
@@ -39,7 +39,7 @@ const Thumb = styled(View, {
   backgroundColor: '$gray2',
   borderRadius: 999,
   variants: {
-    active: {
+    checked: {
       true: {
         backgroundColor: 'white',
         opacity: 1,
