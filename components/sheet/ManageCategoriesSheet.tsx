@@ -17,7 +17,7 @@ type ManageCategoriesSheetProps = {
   selectedCategories?: CategoryModel[];
   setSelectedCategory?: (category: CategoryModel) => void;
   interactive?: boolean;
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   containerComponent?: React.ComponentType<React.PropsWithChildren>;
   preventClose?: boolean;
   noSearch?: boolean;

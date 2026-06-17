@@ -221,7 +221,7 @@ const FilterButton = styled(Button, {
       },
     },
   },
-});
+} as Record<string, unknown>) as React.ComponentType<React.ComponentProps<typeof Button> & { active?: boolean }>;
 
 type WithFiltersProps = {
   database: Database;

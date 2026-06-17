@@ -19,7 +19,7 @@ export interface ErrorInfo {
 }
 
 type ErrorSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   errorInfo: ErrorInfo | null;
   onDownloadTemplate: () => void;
   onRetry: () => void;

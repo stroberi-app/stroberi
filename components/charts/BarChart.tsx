@@ -2,7 +2,18 @@ import { Circle, LinearGradient, useFont, vec } from '@shopify/react-native-skia
 import React from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import { Bar, CartesianChart, type ChartPressState } from 'victory-native';
-import type { InputFields, NumericalFields } from 'victory-native/dist/types';
+type InputFields<T> = {
+  [K in keyof T as T[K] extends string | number ? K : never]: T[K];
+};
+
+type NumericalFields<T> = {
+  [K in keyof T as T[K] extends number ? K : never]: T[K];
+};
+
+// biome-ignore lint/suspicious/noExplicitAny: Victory 41's public generics are stricter than this reusable wrapper can express.
+type VictoryCompatKey = any;
+// biome-ignore lint/suspicious/noExplicitAny: Victory 41 does not export compatible generic helper types for wrapper state.
+type VictoryCompatPressState = ChartPressState<any>;
 import inter from '../../assets/fonts/Inter-Medium.ttf';
 import { calculateChartDomain, formatYAxisLabel } from '../../lib/chartUtils';
 
@@ -21,9 +32,7 @@ type CartesianChartProps<
     bottom?: number;
   };
   barWidth?: number;
-  state?:
-    | ChartPressState<{ x: InputFields<RawData>[XK]; y: Record<YK, number> }>
-    | ChartPressState<{ x: InputFields<RawData>[XK]; y: Record<YK, number> }>[];
+  state?: VictoryCompatPressState | VictoryCompatPressState[];
   isActive?: boolean;
   tooltip?: {
     ttX: SharedValue<number>;
@@ -85,7 +94,7 @@ export const BarChart = <
   }, []);
 
   return (
-    <CartesianChart<RawData, XK, YK>
+    <CartesianChart<RawData, VictoryCompatKey, VictoryCompatKey>
       data={data}
       xKey={xKey}
       yKeys={yKeys}

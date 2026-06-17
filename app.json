@@ -2,20 +2,26 @@
   "expo": {
     "name": "Stroberi",
     "slug": "stroberi",
-    "version": "1.0.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "stroberi",
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stroberi"
+      "bundleIdentifier": "com.stroberi",
+      "buildNumber": "48",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.dev.stroberi"
+      "package": "com.stroberi",
+      "icon": "./assets/images/logo-round.png",
+      "versionCode": 40
     },
     "web": {
       "bundler": "metro",
@@ -25,13 +31,20 @@
       "expo-router",
       "expo-font",
       [
-        "@morrowdigital/watermelondb-expo-plugin", { "disableJsi": true }
+        "@morrowdigital/watermelondb-expo-plugin",
+        {
+          "disableJsi": true
+        }
       ],
       [
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "1.6.21",
+            "minSdkVersion": 24,
+            "targetSdkVersion": 35,
+            "compileSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
+            "kotlinVersion": "2.1.20",
             "packagingOptions": {
               "pickFirst": [
                 "**/libc++_shared.so"
@@ -53,12 +66,19 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash.png",
+          "image": "./assets/images/icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#E54B4B",
-          "imageWidth": 200
+          "ios": {
+            "imageWidth": 230
+          },
+          "android": {
+            "imageWidth": 180
+          }
         }
-      ]
+      ],
+      "expo-sqlite",
+      "./plugins/withAppIntents"
     ],
     "experiments": {
       "typedRoutes": true
@@ -71,6 +91,10 @@
         "projectId": "f50955a8-0565-4300-8310-031161d5a861"
       }
     },
-    "owner": "gacevicdanilo18"
+    "owner": "gacevicdanilo18",
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/f50955a8-0565-4300-8310-031161d5a861"
+    }
   }
 }

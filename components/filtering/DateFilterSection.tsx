@@ -12,7 +12,7 @@ type DateFilterSectionProps = {
   setDateFilter: React.Dispatch<React.SetStateAction<DateFilters | null>>;
   fromDate: Date;
   toDate: Date;
-  dateSheetRef: React.RefObject<BottomSheetModal>;
+  dateSheetRef: React.RefObject<BottomSheetModal | null>;
 };
 
 const DateFilterSection = ({

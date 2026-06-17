@@ -6,7 +6,7 @@ import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from '../sheet/constants';
 
 type BottomSheetWrapperProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   children: React.ReactNode;
 } & React.ComponentProps<typeof BottomSheetModal>;
 
@@ -18,7 +18,7 @@ const BottomSheetDynamicSize = ({
   const { bottom } = useSafeAreaInsets();
   return (
     <BottomSheetModal
-      ref={sheetRef}
+      ref={sheetRef as React.Ref<BottomSheetModal<unknown>>}
       enableDynamicSizing={true}
       backdropComponent={CustomBackdrop}
       stackBehavior="push"
