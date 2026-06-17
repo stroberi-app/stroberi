@@ -188,7 +188,7 @@ const RecurringItem = withObservables<
           </Text>
           <View>
             <Switch checked={recurring.isActive} onCheckedChange={handleToggle}>
-              <Switch.Thumb animation="bouncy" />
+              <Switch.Thumb />
             </Switch>
           </View>
         </View>
@@ -263,7 +263,7 @@ const EnhancedRecurringList = withObservables(
 )(RecurringList);
 
 type ManageRecurringTransactionsSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 };
 
 export const ManageRecurringTransactionsSheet = ({

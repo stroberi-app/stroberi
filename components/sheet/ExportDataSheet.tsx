@@ -17,7 +17,7 @@ import { DatePicker } from '../DatePicker';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
 
 type ExportDataSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   onViewTransactions: (dateRange: ExportDateRange) => void;
 };
 

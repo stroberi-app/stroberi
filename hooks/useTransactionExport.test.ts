@@ -1,3 +1,7 @@
+jest.mock('burnt', () => ({
+  toast: jest.fn(),
+}));
+
 import {
   EXPORT_PREVIEW_FULL_THRESHOLD,
   EXPORT_PREVIEW_SAMPLE_SIZE,

@@ -36,7 +36,7 @@ import {
 const SNAP_POINTS = ['80%'];
 
 type TripFormSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   trip?: TripModel | null;
   onSuccess: () => void;
 };
@@ -264,7 +264,7 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
                 />
               </View>
 
-              <YGroup bordered marginTop="$4">
+              <YGroup borderWidth={1} borderColor="$borderColor" marginTop="$4">
                 <CreateExpenseItem IconComponent={Smile} label="Icon">
                   <LinkButton
                     color="white"

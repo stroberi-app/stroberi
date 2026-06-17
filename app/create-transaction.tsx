@@ -422,7 +422,7 @@ function CreateTransaction() {
           />
         </View>
 
-        <YGroup bordered mt="$4">
+        <YGroup borderWidth={1} borderColor="$borderColor" mt="$4">
           <CreateExpenseItem IconComponent={Calendar} label="Date">
             <DatePicker mode="date" date={date} setDate={setDate} />
           </CreateExpenseItem>
