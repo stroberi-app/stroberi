@@ -186,7 +186,7 @@ export default function SettingsScreen() {
                   checked={budgetingEnabled}
                   onCheckedChange={handleBudgetingToggle}
                 >
-                  <Switch.Thumb animation="bouncy" />
+                  <Switch.Thumb />
                 </Switch>
               </View>
             </YGroup.Item>
@@ -223,7 +223,7 @@ export default function SettingsScreen() {
                   </View>
                 </View>
                 <Switch checked={tripsEnabled} onCheckedChange={handleTripsToggle}>
-                  <Switch.Thumb animation="bouncy" />
+                  <Switch.Thumb />
                 </Switch>
               </View>
             </YGroup.Item>
@@ -263,7 +263,7 @@ export default function SettingsScreen() {
                   checked={advancedAnalyticsEnabled}
                   onCheckedChange={handleAnalyticsToggle}
                 >
-                  <Switch.Thumb animation="bouncy" />
+                  <Switch.Thumb />
                 </Switch>
               </View>
             </YGroup.Item>

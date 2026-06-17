@@ -41,7 +41,7 @@ import { backgroundStyle, handleIndicatorStyle } from './constants';
 import { type ErrorInfo, ErrorSheet } from './ErrorSheet';
 
 type ImportCSVSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 };
 
 interface ImportProgress {

@@ -1,7 +1,14 @@
-import { styled } from '@tamagui/core';
-import { Button as TamaguiButton } from 'tamagui';
+import type React from 'react';
+import { Button as TamaguiButton, styled } from 'tamagui';
 
-const Button = styled(TamaguiButton, {
+type AppButtonProps = React.ComponentProps<typeof TamaguiButton> & {
+  color?: string;
+  fontSize?: React.ComponentProps<typeof TamaguiButton>['size'];
+  fontWeight?: string;
+  brand?: 'primary' | 'secondary';
+};
+
+const StyledButton = styled(TamaguiButton, {
   fontSize: '$5',
   fontWeight: 'bold',
   variants: {
@@ -16,5 +23,8 @@ const Button = styled(TamaguiButton, {
       },
     },
   },
-});
+} as Record<string, unknown>);
+
+const Button = StyledButton as React.ComponentType<AppButtonProps>;
+
 export { Button };

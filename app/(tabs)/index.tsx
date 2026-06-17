@@ -59,7 +59,7 @@ export default function HomeScreen() {
       <HomeTransactionsSection
         database={database}
         scrollRef={scrollRef}
-        header={(transactionCount) => (
+        header={(transactionCount: number) => (
           <>
             <View flexDirection="row" justifyContent="space-between" alignItems="center">
               <Text fontSize="$8" fontWeight="bold" marginBottom="$2">

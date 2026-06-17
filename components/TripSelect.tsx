@@ -21,7 +21,7 @@ import { LinkButton } from './button/LinkButton';
 import { backgroundStyle, handleIndicatorStyle } from './sheet/constants';
 
 type TripSelectProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   selectedTrip: TripModel | null;
   onSelect: (trip: TripModel | null) => void;
   containerComponent?: React.ComponentType<React.PropsWithChildren>;

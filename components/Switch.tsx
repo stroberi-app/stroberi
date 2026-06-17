@@ -18,7 +18,7 @@ const Frame = styled(View, {
     },
     size: {
       '...size': (token, { tokens }) => {
-        const raw = tokens.size[token];
+        const raw = (tokens.size as Record<string, { val?: number } | number>)[String(token)];
         const baseSize = typeof raw === 'number' ? raw : raw?.val;
         const height = Math.round((baseSize ?? 24) * 0.65);
         return {
@@ -51,7 +51,7 @@ const Thumb = styled(View, {
     },
     size: {
       '...size': (token, { tokens }) => {
-        const raw = tokens.size[token];
+        const raw = (tokens.size as Record<string, { val?: number } | number>)[String(token)];
         const baseSize = typeof raw === 'number' ? raw : raw?.val;
         const dim = Math.round((baseSize ?? 24) * 0.65);
         return {

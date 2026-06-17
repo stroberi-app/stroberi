@@ -17,7 +17,7 @@ import { BottomSheetTextInput } from './BottomSheetTextInput';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 
 type CreateCategorySheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   category?: CategoryModel | null;
   onClose: () => void;
   containerComponent?: React.ComponentType<React.PropsWithChildren>;

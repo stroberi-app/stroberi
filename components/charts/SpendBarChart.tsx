@@ -10,7 +10,13 @@ import {
 } from 'react-native-reanimated';
 import { View } from 'tamagui';
 import { useChartPressState } from 'victory-native';
-import type { InputFields, NumericalFields } from 'victory-native/dist/types';
+type InputFields<T> = {
+  [K in keyof T as T[K] extends string | number ? K : never]: T[K];
+};
+
+type NumericalFields<T> = {
+  [K in keyof T as T[K] extends number ? K : never]: T[K];
+};
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { sanitizeChartPressNumber } from '../../lib/chartPressState';
 import { formatCurrencyWorklet } from '../../lib/format';
@@ -149,7 +155,6 @@ export const SpendBarChart = <
               xKey={xKey}
               yKeys={yKeys}
               data={chartData}
-              // @ts-expect-error ignore for now
               state={state}
               isActive={isActive}
               tooltip={{
