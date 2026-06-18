@@ -2,17 +2,21 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { PlusCircle } from '@tamagui/lucide-icons';
 import React, { useEffect, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmojiPicker from 'rn-emoji-keyboard';
 import type { OnEmojiSelected } from 'rn-emoji-keyboard/lib/typescript/contexts/KeyboardContext';
-import { Text, useTheme, View } from 'tamagui';
+import { ScrollView, Text, View } from 'tamagui';
 import { spendingCategories } from '../../data/emojis';
 import type { CategoryModel } from '../../database/category-model';
 import { createCategory, updateCategory } from '../../database/actions/categories';
 import useToast from '../../hooks/useToast';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
+import {
+  getAndroidCategoryIconPresets,
+  shouldUseNativeCategoryIconPicker,
+} from './categoryIconPicker';
 import { BottomSheetTextInput } from './BottomSheetTextInput';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
 
@@ -29,16 +33,18 @@ export const ManageCategoryItemSheet = ({
   onClose,
   containerComponent,
 }: CreateCategorySheetProps) => {
-  const { stroberi } = useTheme();
-  const stroberiColor = stroberi?.get() ?? 'black';
   const toast = useToast();
   const database = useDatabase();
   const [name, setName] = useState(category?.name || '');
   const [selectedIcon, setSelectedIcon] = useState(category?.icon || getRandomIcon());
   const { bottom } = useSafeAreaInsets();
-  const [isOpen, setIsOpen] = React.useState<boolean>(false);
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const useNativeIconPicker = shouldUseNativeCategoryIconPicker(Platform.OS);
+  const androidIconPresets = getAndroidCategoryIconPresets();
 
   useEffect(() => {
+    setIsIconPickerOpen(false);
+
     if (category) {
       setName(category.name);
       setSelectedIcon(category.icon);
@@ -48,9 +54,13 @@ export const ManageCategoryItemSheet = ({
     }
   }, [category]);
 
-  const handlePick: OnEmojiSelected = (emoji) => {
-    setSelectedIcon(emoji.emoji);
-    setIsOpen(false);
+  const handlePick = (icon: string) => {
+    setSelectedIcon(icon);
+    setIsIconPickerOpen(false);
+  };
+
+  const handleNativePick: OnEmojiSelected = (emoji) => {
+    handlePick(emoji.emoji);
   };
 
   const handleSave = async () => {
@@ -66,28 +76,28 @@ export const ManageCategoryItemSheet = ({
       return;
     }
 
-    const existingCategories = await database
-      .get<CategoryModel>('categories')
-      .query()
-      .fetch();
-
-    const existingDuplicate = existingCategories.find(
-      (item) =>
-        item.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
-        item.id !== category?.id
-    );
-
-    if (existingDuplicate) {
-      toast.show({
-        title: 'Duplicate Category',
-        message: 'A category with this name already exists',
-        preset: 'error',
-        haptic: 'error',
-      });
-      return;
-    }
-
     try {
+      const existingCategories = await database
+        .get<CategoryModel>('categories')
+        .query()
+        .fetch();
+
+      const existingDuplicate = existingCategories.find(
+        (item) =>
+          item.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
+          item.id !== category?.id
+      );
+
+      if (existingDuplicate) {
+        toast.show({
+          title: 'Duplicate Category',
+          message: 'A category with this name already exists',
+          preset: 'error',
+          haptic: 'error',
+        });
+        return;
+      }
+
       if (category?.id) {
         await updateCategory({ id: category.id, name: trimmedName, icon: selectedIcon });
         sheetRef.current?.dismiss();
@@ -139,13 +149,15 @@ export const ManageCategoryItemSheet = ({
               width="auto"
               onPress={() => {
                 Keyboard.dismiss();
-                setIsOpen(true);
+                setIsIconPickerOpen((current) => !current);
               }}
             >
               <Text width={30} textAlign="center">
                 {selectedIcon}
               </Text>
             </Button>
+          </View>
+          {useNativeIconPicker && (
             <EmojiPicker
               enableCategoryChangeAnimation
               enableCategoryChangeGesture
@@ -160,9 +172,9 @@ export const ManageCategoryItemSheet = ({
                 'flags',
                 'smileys_emotion',
               ]}
-              onEmojiSelected={handlePick}
-              open={isOpen}
-              onClose={() => setIsOpen(false)}
+              onEmojiSelected={handleNativePick}
+              open={isIconPickerOpen}
+              onClose={() => setIsIconPickerOpen(false)}
               theme={{
                 search: {
                   text: '#fff',
@@ -170,7 +182,7 @@ export const ManageCategoryItemSheet = ({
                   icon: '#fff',
                 },
                 backdrop: '#16161888',
-                knob: stroberiColor,
+                knob: '#E54B4B',
                 container: '#282829',
                 header: '#fff',
                 skinTonesContainer: '#252427',
@@ -178,11 +190,48 @@ export const ManageCategoryItemSheet = ({
                   icon: '#fff',
                   iconActive: '#fff',
                   container: '#252427',
-                  containerActive: stroberiColor,
+                  containerActive: '#E54B4B',
                 },
               }}
             />
-          </View>
+          )}
+          {!useNativeIconPicker && isIconPickerOpen && (
+            <ScrollView
+              maxHeight={220}
+              keyboardShouldPersistTaps="always"
+              borderWidth={1}
+              borderColor="$borderColor"
+              borderRadius="$3"
+              backgroundColor="$black3"
+              contentContainerStyle={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                padding: 8,
+                gap: 6,
+              }}
+            >
+              {androidIconPresets.map((icon, index) => {
+                const isSelected = icon === selectedIcon;
+
+                return (
+                  <Button
+                    key={`${icon}-${index}`}
+                    width={42}
+                    height={42}
+                    padding="$0"
+                    borderWidth={1}
+                    borderColor={isSelected ? '$green' : '$borderColor'}
+                    backgroundColor={isSelected ? '$gray5' : '$gray3'}
+                    onPress={() => handlePick(icon)}
+                    accessibilityLabel={`Use ${icon} as category icon`}
+                    accessibilityRole="button"
+                  >
+                    <Text fontSize="$7">{icon}</Text>
+                  </Button>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
         <View padding="$4" gap="$2" mb={bottom} mt="auto">
           <Button backgroundColor="$green" onPress={() => handleSave()}>

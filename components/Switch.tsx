@@ -1,72 +1,84 @@
-import { View, styled } from 'tamagui';
+import type { ReactNode } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useDerivedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { useTheme } from 'tamagui';
 
-import { createSwitch } from '@tamagui/switch';
+const TRACK_WIDTH = 48;
+const TRACK_HEIGHT = 28;
+const THUMB_SIZE = 24;
+const PADDING = 2;
+const TRAVEL = TRACK_WIDTH - THUMB_SIZE - PADDING * 2;
 
-const Frame = styled(View, {
-  backgroundColor: '$gray4',
-  borderRadius: 999,
-  justifyContent: 'center',
+// Matches the `quick` spring preset we previously tried to use via tamagui.
+const SPRING_CONFIG = { damping: 25, mass: 1, stiffness: 550 } as const;
 
-  variants: {
-    checked: {
-      true: {
-        backgroundColor: '$green',
-      },
-      false: {
-        backgroundColor: '$gray4',
-      },
-    },
-    size: {
-      '...size': (token, { tokens }) => {
-        const raw = (tokens.size as Record<string, { val?: number } | number>)[String(token)];
-        const baseSize = typeof raw === 'number' ? raw : raw?.val;
-        const height = Math.round((baseSize ?? 24) * 0.65);
-        return {
-          height,
-          minHeight: height,
-          width: height * 2,
-        };
-      },
-    },
-  } as const,
+type SwitchProps = {
+  checked: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  disabled?: boolean;
+  // Accepted for API compatibility with the previous compound `<Switch.Thumb />`
+  // usage. The thumb is rendered internally, so children are ignored.
+  children?: ReactNode;
+};
 
-  defaultVariants: {
-    size: '$true',
+function SwitchComponent({ checked, onCheckedChange, disabled }: SwitchProps) {
+  const theme = useTheme();
+  const offColor = theme.gray4?.val ?? '#3a3a3a';
+  const onColor = theme.green?.val ?? 'hsl(151, 50.0%, 53.2%)';
+
+  const progress = useDerivedValue(
+    () => withSpring(checked ? 1 : 0, SPRING_CONFIG),
+    [checked]
+  );
+
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(progress.value, [0, 1], [offColor, onColor]),
+  }));
+
+  const thumbStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: progress.value * TRAVEL }],
+  }));
+
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={() => onCheckedChange?.(!checked)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked, disabled }}
+      hitSlop={8}
+    >
+      <Animated.View style={[styles.track, disabled && styles.disabled, trackStyle]}>
+        <Animated.View style={[styles.thumb, thumbStyle]} />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  track: {
+    width: TRACK_WIDTH,
+    height: TRACK_HEIGHT,
+    borderRadius: 999,
+    padding: PADDING,
+    justifyContent: 'center',
+  },
+  thumb: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: 999,
+    backgroundColor: 'white',
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });
 
-const Thumb = styled(View, {
-  backgroundColor: '$gray2',
-  borderRadius: 999,
-  variants: {
-    checked: {
-      true: {
-        backgroundColor: 'white',
-        opacity: 1,
-      },
-      false: {
-        backgroundColor: '$gray2',
-        opacity: 1,
-      },
-    },
-    size: {
-      '...size': (token, { tokens }) => {
-        const raw = (tokens.size as Record<string, { val?: number } | number>)[String(token)];
-        const baseSize = typeof raw === 'number' ? raw : raw?.val;
-        const dim = Math.round((baseSize ?? 24) * 0.65);
-        return {
-          width: dim,
-          height: dim,
-        };
-      },
-    },
-  } as const,
+// No-op kept so existing `<Switch.Thumb />` children remain valid.
+const Thumb = () => null;
 
-  defaultVariants: {
-    size: '$true',
-  },
-});
-export const Switch = createSwitch({
-  Frame,
-  Thumb,
-});
+export const Switch = Object.assign(SwitchComponent, { Thumb });
