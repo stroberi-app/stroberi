@@ -1,6 +1,9 @@
 import Foundation
+import SQLite3
 
 struct IntentDatabaseHelper {
+
+    private static let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
     // Must stay in sync with data/currencies.ts — Intl.NumberFormat in the
     // JS layer rejects codes outside this set, which would crash the app
@@ -166,12 +169,28 @@ struct IntentDatabaseHelper {
 
     static func readBaseCurrency() -> String {
         guard let dbPath = getDatabasePath() else { return "USD" }
-        guard let raw = IntentSQLiteBridge.readString(
-            forKey: "defaultCurrency", fromPath: dbPath
-        ) else {
+
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
             return "USD"
         }
-        return normalizedCurrencyCode(unwrapJSONString(raw)) ?? "USD"
+        defer { sqlite3_close(db) }
+
+        var stmt: OpaquePointer?
+        let query = "SELECT value FROM local_storage WHERE key = 'defaultCurrency'"
+        guard sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK else {
+            return "USD"
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        if sqlite3_step(stmt) == SQLITE_ROW,
+           let cString = sqlite3_column_text(stmt, 0) {
+            let raw = String(cString: cString)
+            let unwrapped = unwrapJSONString(raw)
+            return normalizedCurrencyCode(unwrapped) ?? "USD"
+        }
+
+        return "USD"
     }
 
     // MARK: - Insert Transaction
@@ -188,18 +207,42 @@ struct IntentDatabaseHelper {
         conversionStatus: String
     ) -> Bool {
         guard let dbPath = getDatabasePath() else { return false }
-        return IntentSQLiteBridge.insertTransaction(
-            intoPath: dbPath,
-            identifier: id,
-            merchant: merchant,
-            amount: amount,
-            date: date,
-            currencyCode: currencyCode,
-            baseCurrencyCode: baseCurrencyCode,
-            amountInBaseCurrency: amountInBaseCurrency,
-            exchangeRate: exchangeRate,
-            conversionStatus: conversionStatus
-        )
+
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(dbPath, &db, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK else {
+            return false
+        }
+        defer { sqlite3_close(db) }
+
+        let sql = """
+            INSERT INTO transactions (
+                id, merchant, note, amount, created_at, updated_at, date,
+                "currencyCode", "categoryId", "baseCurrencyCode",
+                "amountInBaseCurrency", "exchangeRate", "conversionStatus",
+                "recurringTransactionId", "tripId", _status, _changed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, NULL, NULL, 'created', '')
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            return false
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, (id as NSString).utf8String, -1, Self.SQLITE_TRANSIENT)
+        sqlite3_bind_text(stmt, 2, (merchant as NSString).utf8String, -1, Self.SQLITE_TRANSIENT)
+        sqlite3_bind_text(stmt, 3, ("" as NSString).utf8String, -1, Self.SQLITE_TRANSIENT) // note
+        sqlite3_bind_double(stmt, 4, amount)
+        sqlite3_bind_double(stmt, 5, date) // created_at
+        sqlite3_bind_double(stmt, 6, date) // updated_at
+        sqlite3_bind_double(stmt, 7, date) // date
+        sqlite3_bind_text(stmt, 8, (currencyCode as NSString).utf8String, -1, Self.SQLITE_TRANSIENT)
+        sqlite3_bind_text(stmt, 9, (baseCurrencyCode as NSString).utf8String, -1, Self.SQLITE_TRANSIENT)
+        sqlite3_bind_double(stmt, 10, amountInBaseCurrency)
+        sqlite3_bind_double(stmt, 11, exchangeRate)
+        sqlite3_bind_text(stmt, 12, (conversionStatus as NSString).utf8String, -1, Self.SQLITE_TRANSIENT)
+
+        return sqlite3_step(stmt) == SQLITE_DONE
     }
 
     // MARK: - Currency Conversion

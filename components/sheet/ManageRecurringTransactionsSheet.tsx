@@ -8,7 +8,7 @@ import { Pen, Plus, Trash2 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, useWindowDimensions } from 'react-native';
+import { Pressable } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
   type SharedValue,
@@ -210,13 +210,9 @@ const RecurringList = ({
   onCreate,
   bottomInset,
 }: RecurringListProps) => {
-  const { height } = useWindowDimensions();
   return (
-    <BottomSheetView>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 8 }}
-        style={{ height: height - 260 }}
-      >
+    <View flex={1}>
+      <ScrollView flex={1} contentContainerStyle={{ paddingBottom: 8 }}>
         {recurringTransactions.length === 0 ? (
           <View paddingVertical="$8" alignItems="center" gap="$3">
             <Text fontSize="$6" color="gray">
@@ -233,12 +229,10 @@ const RecurringList = ({
           ))
         )}
       </ScrollView>
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 16,
-          paddingBottom: bottomInset + 16,
-          paddingTop: 16,
-        }}
+      <View
+        paddingHorizontal="$4"
+        paddingTop="$4"
+        style={{ paddingBottom: bottomInset + 16 }}
       >
         <Button
           backgroundColor="$green"
@@ -247,8 +241,8 @@ const RecurringList = ({
         >
           Add Recurring Transaction
         </Button>
-      </BottomSheetView>
-    </BottomSheetView>
+      </View>
+    </View>
   );
 };
 
@@ -296,23 +290,23 @@ export const ManageRecurringTransactionsSheet = ({
         backgroundStyle={backgroundStyle}
         enableDynamicSizing={false}
       >
-        <BottomSheetView
-          style={{
-            paddingHorizontal: 16,
-            paddingTop: 8,
-            paddingBottom: 8,
-          }}
-        >
-          <Text fontSize="$7" fontWeight="bold" marginBottom="$3">
+        <BottomSheetView style={{ flex: 1 }}>
+          <Text
+            fontSize="$7"
+            fontWeight="bold"
+            paddingHorizontal="$4"
+            paddingTop="$2"
+            marginBottom="$3"
+          >
             Recurring Transactions
           </Text>
+          <EnhancedRecurringList
+            database={database}
+            onEdit={handleEdit}
+            onCreate={handleCreate}
+            bottomInset={bottom}
+          />
         </BottomSheetView>
-        <EnhancedRecurringList
-          database={database}
-          onEdit={handleEdit}
-          onCreate={handleCreate}
-          bottomInset={bottom}
-        />
       </BottomSheetModal>
       <RecurringTransactionFormSheet
         sheetRef={formSheetRef}

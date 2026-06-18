@@ -2,8 +2,10 @@ import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { TamaguiProvider } from 'tamagui';
+import '@tamagui/native/setup-zeego';
 import '../tamagui-web.css';
 
 import { DatabaseProvider } from '@nozbe/watermelondb/react';
@@ -63,6 +65,7 @@ function RootLayoutNav() {
           <ActionSheetProvider>
             <DatabaseProvider database={database}>
               <BottomSheetModalProvider>
+                <StatusBar style="light" />
                 <Stack>
                   <Stack.Screen name="(tabs)" options={tabsOptions} />
                   <Stack.Screen name="create-transaction" options={options} />

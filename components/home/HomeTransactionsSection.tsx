@@ -6,6 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Text, YGroup } from 'tamagui';
 import type { TransactionModel } from '../../database/transaction-model';
+import {
+  TransactionDetailSheet,
+  type TransactionDetailSheetRef,
+} from '../sheet/TransactionDetailSheet';
 import { TransactionItem } from '../TransactionItem';
 
 type RecentTransactionsSectionProps = {
@@ -32,6 +36,7 @@ export const HomeTransactionsSection = withObservables<
   };
 })(({ transactions, header, scrollRef }: RecentTransactionsSectionProps) => {
   const { bottom } = useSafeAreaInsets();
+  const detailSheetRef = React.useRef<TransactionDetailSheetRef>(null);
   return (
     <YGroup>
       <Reanimated.FlatList
@@ -58,9 +63,15 @@ export const HomeTransactionsSection = withObservables<
         data={transactions}
         keyExtractor={(transaction) => transaction.id}
         renderItem={({ item: transaction }) => (
-          <TransactionItem transaction={transaction} />
+          <TransactionItem
+            transaction={transaction}
+            onPress={(item: TransactionModel) =>
+              detailSheetRef.current?.present(item)
+            }
+          />
         )}
       />
+      <TransactionDetailSheet ref={detailSheetRef} />
     </YGroup>
   );
 });
