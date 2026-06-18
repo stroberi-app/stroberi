@@ -1,4 +1,4 @@
-import { BottomSheetModalProvider, type BottomSheetModal } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import {
   ArrowLeft,
@@ -9,7 +9,7 @@ import {
   Plane,
   User,
 } from '@tamagui/lucide-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { type ErrorBoundaryProps, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   type ReactNode,
   type RefObject,
@@ -48,6 +48,7 @@ import {
   getInitialTransactionAmount,
   parseTransactionRouteParams,
   shouldAutoPopulateActiveTrip,
+  shouldFocusTransactionAmountInput,
 } from '../features/transactions/form';
 import { MissingCurrencyRateError } from '../lib/currencyConversion';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
@@ -63,6 +64,35 @@ const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
 const modalContainerComponent =
   Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
 type SheetType = 'currency' | 'categories' | 'trip';
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const router = useRouter();
+
+  return (
+    <StyledScrollView>
+      <View flex={1} minHeight={420} justifyContent="center" gap="$4">
+        <Text color="white" fontSize="$7" fontWeight="700">
+          Transaction screen failed to load
+        </Text>
+        <Text color="gray" fontSize="$3">
+          {error.message || 'Close this screen and try again.'}
+        </Text>
+        <View flexDirection="row" gap="$2">
+          <LinkButton backgroundColor="$green" color="white" onPress={retry}>
+            Try Again
+          </LinkButton>
+          <LinkButton
+            backgroundColor="transparent"
+            color="gray"
+            onPress={() => router.back()}
+          >
+            Back
+          </LinkButton>
+        </View>
+      </View>
+    </StyledScrollView>
+  );
+}
 
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
@@ -371,7 +401,7 @@ function CreateTransaction() {
   }, [defaultCurrency, isDefaultCurrencyLoaded, requestSheetOpen]);
 
   return (
-    <BottomSheetModalProvider>
+    <>
       <StyledScrollView keyboardShouldPersistTaps="always">
         <View flexDirection="row" justifyContent="space-between" alignItems="center">
           <LinkButton
@@ -417,7 +447,10 @@ function CreateTransaction() {
             selectedCurrency={selectedCurrency}
             value={amount}
             onChangeText={handleAmountChange}
-            focusOnMount={!transaction}
+            focusOnMount={shouldFocusTransactionAmountInput({
+              platform: Platform.OS,
+              transaction,
+            })}
             onValidationError={setAmountValidationError}
           />
         </View>
@@ -519,7 +552,7 @@ function CreateTransaction() {
           containerComponent={modalContainerComponent}
         />
       )}
-    </BottomSheetModalProvider>
+    </>
   );
 }
 

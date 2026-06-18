@@ -21,10 +21,11 @@ import { formatCurrency } from '../lib/format';
 type TransactionItemProps = {
   category?: CategoryModel | null;
   transaction: TransactionModel;
+  onPress?: (transaction: TransactionModel) => void;
 };
 
 export const TransactionItem = withObservables<
-  { transaction: TransactionModel },
+  { transaction: TransactionModel; onPress?: (transaction: TransactionModel) => void },
   {
     transaction: Observable<TransactionModel>;
     category?: Observable<CategoryModel | null>;
@@ -34,7 +35,7 @@ export const TransactionItem = withObservables<
     category: transaction.category?.observe(),
     transaction: transaction.observe(),
   };
-})(({ category, transaction }: TransactionItemProps) => {
+})(({ category, transaction, onPress }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
@@ -119,6 +120,11 @@ export const TransactionItem = withObservables<
       rightThreshold={40}
       renderRightActions={renderRightAction}
     >
+      <Pressable
+        onPress={onPress ? () => onPress(transaction) : undefined}
+        accessibilityRole={onPress ? 'button' : undefined}
+        accessibilityLabel={onPress ? 'View transaction details' : undefined}
+      >
       <View
         flexDirection="row"
         alignItems="center"
@@ -156,6 +162,7 @@ export const TransactionItem = withObservables<
           </Text>
         </View>
       </View>
+      </Pressable>
     </ReanimatedSwipeable>
   );
 });

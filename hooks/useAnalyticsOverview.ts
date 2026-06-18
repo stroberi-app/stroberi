@@ -30,6 +30,7 @@ import {
   detectRecurringTransactions,
   type SpendingForecast,
 } from '../lib/forecasting';
+import { buildInsightsOverview, type InsightTransaction } from '../lib/insights';
 
 type UseAnalyticsOverviewArgs = {
   transactions: TransactionModel[];
@@ -163,6 +164,61 @@ export const useAnalyticsOverview = ({
     return Math.max(1, dayjs(toDate).diff(dayjs().startOf('day'), 'day') + 1);
   }, [isCurrentPeriod, toDate]);
   const currency = defaultCurrency || 'USD';
+  const insightTransactions: InsightTransaction[] = useMemo(
+    () =>
+      transactions.map((transaction) => ({
+        id: transaction.id,
+        amountInBaseCurrency: transaction.amountInBaseCurrency,
+        date: transaction.date,
+        categoryId: transaction.categoryId ?? null,
+        merchant: transaction.merchant,
+        type: transaction.amountInBaseCurrency < 0 ? 'expense' : 'income',
+      })),
+    [transactions]
+  );
+
+  const insightCategories = useMemo(
+    () =>
+      categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        icon: category.icon,
+      })),
+    [categories]
+  );
+
+  const insightsOverview = useMemo(
+    () =>
+      buildInsightsOverview({
+        transactions: insightTransactions,
+        categories: insightCategories,
+        fromDate,
+        toDate,
+        comparisonToDate,
+        previousFromDate: previousRange.previousFromDate,
+        previousToDate: previousRange.previousToDate,
+        today: new Date(),
+        currency,
+        budgetLimit: monthBudgetLimit,
+        expectedRecurring: upcomingRecurring.reduce(
+          (sum, item) => sum + Math.abs(item.amount),
+          0
+        ),
+      }),
+    [
+      comparisonToDate,
+      currency,
+      fromDate,
+      insightCategories,
+      insightTransactions,
+      monthBudgetLimit,
+      previousRange.previousFromDate,
+      previousRange.previousToDate,
+      toDate,
+      upcomingRecurring,
+    ]
+  );
+
   const actionPlan = useMemo(
     () =>
       buildActionPlan({
@@ -223,6 +279,7 @@ export const useAnalyticsOverview = ({
     hasAnyData: transactions.length > 0,
     hasPeriodData: periodTransactions.length > 0,
     healthScore,
+    insightsOverview,
     isCurrentPeriod,
     label,
     monthBudgetLimit,

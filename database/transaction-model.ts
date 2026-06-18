@@ -39,6 +39,7 @@ export class TransactionModel extends Model {
   @field('exchangeRate') exchangeRate: number;
   @text('conversionStatus') conversionStatus: ConversionStatus | null;
   @text('recurringTransactionId') recurringTransactionId: string | null;
+  @text('categoryId') categoryId: string | null;
   @text('tripId') tripId: string | null;
 
   @date('date') date: Date;

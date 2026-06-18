@@ -85,6 +85,16 @@ export const shouldAutoPopulateActiveTrip = ({
   return !transaction && !transactionId && tripsEnabled;
 };
 
+export const shouldFocusTransactionAmountInput = ({
+  platform,
+  transaction,
+}: {
+  platform: string;
+  transaction: TransactionModel | null;
+}) => {
+  return platform !== 'android' && !transaction;
+};
+
 export const buildTransactionPayload = ({
   merchant,
   amount,

@@ -2,7 +2,7 @@ import type { Database } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
@@ -15,6 +15,10 @@ import {
 } from '../lib/transactionQuery';
 import { Button } from './button/Button';
 import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
+import {
+  TransactionDetailSheet,
+  type TransactionDetailSheetRef,
+} from './sheet/TransactionDetailSheet';
 import { TransactionItem } from './TransactionItem';
 
 type TransactionsListViewProps = {
@@ -58,6 +62,7 @@ const TransactionsList = ({
   scrollRef,
 }: TransactionsListViewProps) => {
   const { bottom } = useSafeAreaInsets();
+  const detailSheetRef = useRef<TransactionDetailSheetRef>(null);
 
   const data = useMemo(() => {
     const result: ListItem[] = [];
@@ -86,7 +91,14 @@ const TransactionsList = ({
         </Text>
       );
     } else {
-      return <TransactionItem transaction={item} />;
+      return (
+        <TransactionItem
+          transaction={item}
+          onPress={(transaction: TransactionModel) =>
+            detailSheetRef.current?.present(transaction)
+          }
+        />
+      );
     }
   }, []);
 
@@ -121,15 +133,18 @@ const TransactionsList = ({
   }
 
   return (
-    <FlashList
-      ref={scrollRef}
-      contentInset={contentInset}
-      keyExtractor={keyExtractor}
-      data={data}
-      renderItem={renderItem}
-      getItemType={getItemType}
-      drawDistance={TRANSACTIONS_DRAW_DISTANCE}
-    />
+    <>
+      <FlashList
+        ref={scrollRef}
+        contentInset={contentInset}
+        keyExtractor={keyExtractor}
+        data={data}
+        renderItem={renderItem}
+        getItemType={getItemType}
+        drawDistance={TRANSACTIONS_DRAW_DISTANCE}
+      />
+      <TransactionDetailSheet ref={detailSheetRef} />
+    </>
   );
 };
 

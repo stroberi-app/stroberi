@@ -11,7 +11,7 @@ const StyledLinkButton = styled(Button, {
   height: 36,
   fontSize: '$5',
   variants: {
-    size: {
+    spacing: {
       regular: {
         paddingVertical: '$0',
         paddingHorizontal: '$4',
@@ -24,7 +24,7 @@ const StyledLinkButton = styled(Button, {
   },
 
   defaultVariants: {
-    size: 'regular',
+    spacing: 'regular',
   },
 } as Record<string, unknown>);
 
@@ -32,5 +32,6 @@ export const LinkButton = StyledLinkButton as React.ComponentType<
   React.ComponentProps<typeof Button> & {
     color?: string;
     fontSize?: React.ComponentProps<typeof Button>['size'];
+    spacing?: 'regular' | 'small';
   }
 >;

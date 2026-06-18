@@ -5,7 +5,8 @@ import CarouselComp, {
   type ICarouselInstance,
   Pagination,
 } from 'react-native-reanimated-carousel';
-import { useWindowDimensions, View } from 'tamagui';
+import { useWindowDimensions } from 'react-native';
+import { View } from 'tamagui';
 import { CAROUSEL_ITEM_WRAPPER_HEIGHT } from './CarouselItemWrapper';
 
 const colors = ['#26292E', '#26292E', '#26292E', '#26292E', '#26292E', '#26292E'];
