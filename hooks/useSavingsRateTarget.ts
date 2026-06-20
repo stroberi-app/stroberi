@@ -9,7 +9,9 @@ type Listener = (value: number) => void;
 const listeners = new Set<Listener>();
 
 export const notifySavingsRateTargetChanged = (value: number) => {
-  listeners.forEach((listener) => listener(value));
+  listeners.forEach((listener) => {
+    listener(value);
+  });
 };
 
 const parseTarget = (stored: unknown): number => {
