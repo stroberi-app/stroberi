@@ -24,20 +24,20 @@
 		13B07F961A680F5B00A75B9A /* Stroberi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stroberi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Stroberi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Stroberi/Info.plist; sourceTree = "<group>"; };
-		19F8061A9E374E3993F09BFD /* IntentDatabaseHelper.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = IntentDatabaseHelper.swift; path = IntentDatabaseHelper.swift; sourceTree = "<group>"; };
+		19F8061A9E374E3993F09BFD /* IntentDatabaseHelper.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = IntentDatabaseHelper.swift; sourceTree = "<group>"; };
 		9B7866192B3ECB9F8150041B /* Pods-Stroberi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Stroberi.debug.xcconfig"; path = "Target Support Files/Pods-Stroberi/Pods-Stroberi.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Stroberi/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B2365B8DA85243719ECAF198 /* ShortcutsModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ShortcutsModule.swift; path = ShortcutsModule.swift; sourceTree = "<group>"; };
+		B2365B8DA85243719ECAF198 /* ShortcutsModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = ShortcutsModule.swift; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BD88ECA269424D2486ACC41E /* ShortcutsModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = ShortcutsModule.m; path = ShortcutsModule.m; sourceTree = "<group>"; };
+		BD88ECA269424D2486ACC41E /* ShortcutsModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; path = ShortcutsModule.m; sourceTree = "<group>"; };
 		C3727A19F76B57CB5B46A543 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Stroberi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		C6048B7F33B5F1024C6452D6 /* libPods-Stroberi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Stroberi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA26DFE4EDCC1F34300E1D1A /* Pods-Stroberi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Stroberi.release.xcconfig"; path = "Target Support Files/Pods-Stroberi/Pods-Stroberi.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Stroberi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Stroberi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Stroberi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Stroberi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Stroberi-Bridging-Header.h"; path = "Stroberi/Stroberi-Bridging-Header.h"; sourceTree = "<group>"; };
-		F1BCBFAE43BC409E9638C26E /* LogTransactionIntent.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = LogTransactionIntent.swift; path = LogTransactionIntent.swift; sourceTree = "<group>"; };
+		F1BCBFAE43BC409E9638C26E /* LogTransactionIntent.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = LogTransactionIntent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +63,7 @@
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				3E1FD4E2F5FD44F1B54E75D0 /* Intents */,
 				EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */,
+				06A8C56C241642F9AF14CCC4 /* Intents */,
 			);
 			name = Stroberi;
 			sourceTree = "<group>";
@@ -94,7 +95,6 @@
 				9B7866192B3ECB9F8150041B /* Pods-Stroberi.debug.xcconfig */,
 				DA26DFE4EDCC1F34300E1D1A /* Pods-Stroberi.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -151,6 +151,14 @@
 				C3727A19F76B57CB5B46A543 /* ExpoModulesProvider.swift */,
 			);
 			name = Stroberi;
+			sourceTree = "<group>";
+		};
+		06A8C56C241642F9AF14CCC4 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Intents;
+			path = Stroberi/Intents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -376,6 +384,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Stroberi/Stroberi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R5HU4U6K38;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -395,7 +404,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stroberi;
-				PRODUCT_NAME = Stroberi;
+				PRODUCT_NAME = "Stroberi";
 				SWIFT_OBJC_BRIDGING_HEADER = "Stroberi/Stroberi-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -412,6 +421,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Stroberi/Stroberi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R5HU4U6K38;
 				INFOPLIST_FILE = Stroberi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -426,7 +436,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stroberi;
-				PRODUCT_NAME = Stroberi;
+				PRODUCT_NAME = "Stroberi";
 				SWIFT_OBJC_BRIDGING_HEADER = "Stroberi/Stroberi-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
