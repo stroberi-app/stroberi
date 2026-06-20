@@ -1,8 +1,10 @@
-import { Award, PiggyBank, TrendingDown, TrendingUp } from '@tamagui/lucide-icons';
+import { Award, PiggyBank, Target, TrendingDown, TrendingUp } from '@tamagui/lucide-icons';
 import { Text, View } from 'tamagui';
+import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { SavingsRateAnalysis } from '../../lib/advancedAnalytics';
 import { formatMonthLabel } from '../../lib/advancedAnalytics';
 import { formatCurrency } from '../../lib/format';
+import { buildSavingsRateSummary } from '../../lib/savingsRate';
 import { AnalyticsCard, ProgressBar, TrendBadge } from './AnalyticsCard';
 
 type SavingsRateCardProps = {
@@ -11,12 +13,23 @@ type SavingsRateCardProps = {
 };
 
 export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) => {
-  const isPositive = analysis.savingsRate > 0;
-  const rateColor = isPositive
-    ? '$green'
-    : analysis.savingsRate < 0
-      ? '$stroberi'
-      : 'white';
+  const { savingsRateTarget } = useSavingsRateTarget();
+  const summary = buildSavingsRateSummary({
+    analysis,
+    target: savingsRateTarget,
+  });
+
+  const rateColor =
+    summary.status === 'onTrack'
+      ? '$green'
+      : summary.status === 'behind'
+        ? '$stroberi'
+        : 'white';
+
+  const progressTowardTarget =
+    savingsRateTarget > 0
+      ? Math.min(100, Math.max(0, (summary.currentRate / savingsRateTarget) * 100))
+      : 0;
 
   return (
     <AnalyticsCard
@@ -24,55 +37,104 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
       icon={<PiggyBank size={20} color="$green" />}
       accentColor="$green"
     >
-      {/* Main Savings Rate */}
-      <View alignItems="center" marginBottom="$4">
+      {/* Current month rate vs target */}
+      <View alignItems="center" marginBottom="$3">
         <View flexDirection="row" alignItems="baseline" gap="$1">
           <Text fontSize="$9" fontWeight="bold" color={rateColor}>
-            {analysis.savingsRate > 0 ? '+' : ''}
-            {analysis.savingsRate.toFixed(1)}
+            {summary.currentRate > 0 ? '+' : ''}
+            {summary.currentRate.toFixed(1)}
           </Text>
           <Text fontSize="$5" color={rateColor}>
             %
           </Text>
         </View>
+        <Text fontSize="$2" color="$gray10" marginTop="$1">
+          this month
+        </Text>
         <View flexDirection="row" alignItems="center" gap="$2" marginTop="$2">
+          <View
+            flexDirection="row"
+            alignItems="center"
+            gap="$1"
+            backgroundColor="$gray4"
+            paddingHorizontal="$2"
+            paddingVertical="$1"
+            borderRadius="$2"
+          >
+            <Target size={12} color="$gray11" />
+            <Text fontSize="$2" color="$gray11" fontWeight="600">
+              Target {savingsRateTarget}%
+            </Text>
+          </View>
+          <View
+            paddingHorizontal="$2"
+            paddingVertical="$1"
+            borderRadius="$2"
+            backgroundColor={
+              summary.status === 'onTrack'
+                ? 'rgba(34, 197, 94, 0.15)'
+                : summary.status === 'behind'
+                  ? 'rgba(244, 63, 94, 0.15)'
+                  : '$gray4'
+            }
+          >
+            <Text fontSize="$2" color={rateColor} fontWeight="600">
+              {summary.status === 'onTrack'
+                ? 'On track'
+                : summary.status === 'behind'
+                  ? `${summary.gap.toFixed(1)}% behind`
+                  : 'No data'}
+            </Text>
+          </View>
           <TrendBadge trend={analysis.trend} />
-          {analysis.consecutivePositiveMonths > 0 && (
-            <View
-              flexDirection="row"
-              alignItems="center"
-              gap="$1"
-              backgroundColor="rgba(34, 197, 94, 0.15)"
-              paddingHorizontal="$2"
-              paddingVertical="$1"
-              borderRadius="$2"
-            >
-              <Award size={12} color="$green" />
-              <Text fontSize="$2" color="$green" fontWeight="600">
-                {analysis.consecutivePositiveMonths} month streak
-              </Text>
-            </View>
-          )}
         </View>
       </View>
 
-      {/* Visual Progress Bar */}
+      {/* Progress toward target */}
       <View marginBottom="$3">
         <View flexDirection="row" justifyContent="space-between" marginBottom="$1">
           <Text fontSize="$2" color="$gray11">
-            Savings Progress
+            Progress to target
           </Text>
           <Text fontSize="$2" color="$gray11">
-            {isPositive ? 'Saving' : 'Overspending'}
+            {Math.round(progressTowardTarget)}%
           </Text>
         </View>
-        <ProgressBar
-          value={Math.min(100, Math.abs(analysis.savingsRate))}
-          color={rateColor}
-        />
+        <ProgressBar value={progressTowardTarget} color={rateColor} />
       </View>
 
-      {/* Income & Expense Summary */}
+      {/* Target stats */}
+      <View flexDirection="row" gap="$2" marginBottom="$3">
+        <View flex={1} backgroundColor="$gray4" padding="$3" borderRadius="$3">
+          <Text fontSize="$2" color="$gray10">
+            Average
+          </Text>
+          <Text fontSize="$4" fontWeight="bold" color="white" marginTop="$1">
+            {summary.averageRate.toFixed(1)}%
+          </Text>
+        </View>
+        <View flex={1} backgroundColor="$gray4" padding="$3" borderRadius="$3">
+          <Text fontSize="$2" color="$gray10">
+            Best month
+          </Text>
+          <Text fontSize="$4" fontWeight="bold" color="white" marginTop="$1">
+            {summary.bestMonth ? `${summary.bestMonth.rate.toFixed(1)}%` : '—'}
+          </Text>
+        </View>
+        <View flex={1} backgroundColor="$gray4" padding="$3" borderRadius="$3">
+          <View flexDirection="row" alignItems="center" gap="$1">
+            <Award size={12} color="$green" />
+            <Text fontSize="$2" color="$gray10">
+              Met / streak
+            </Text>
+          </View>
+          <Text fontSize="$4" fontWeight="bold" color="white" marginTop="$1">
+            {summary.monthsMet} / {summary.streak}
+          </Text>
+        </View>
+      </View>
+
+      {/* Income & Expense Summary (trailing window) */}
       <View backgroundColor="$gray4" padding="$3" borderRadius="$3" gap="$2">
         <View flexDirection="row" justifyContent="space-between">
           <View flexDirection="row" alignItems="center" gap="$2">
@@ -109,13 +171,13 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
       </View>
 
       {/* Monthly Mini-Chart */}
-      {analysis.monthlyRates.length > 1 && (
+      {summary.chartData.length > 1 && (
         <View marginTop="$3">
           <Text fontSize="$2" color="$gray11" marginBottom="$2">
             Monthly Trend
           </Text>
           <View flexDirection="row" gap="$1" justifyContent="space-between">
-            {analysis.monthlyRates.slice(-6).map((month) => (
+            {summary.chartData.map((month) => (
               <View key={month.month} alignItems="center" flex={1}>
                 <View
                   height={40}
@@ -127,7 +189,9 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
                 >
                   <View
                     height={`${Math.min(100, Math.abs(month.rate) * 2)}%`}
-                    backgroundColor={month.rate >= 0 ? '$green' : '$stroberi'}
+                    backgroundColor={
+                      month.rate >= savingsRateTarget ? '$green' : '$stroberi'
+                    }
                     borderRadius="$1"
                   />
                 </View>
@@ -139,6 +203,11 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
           </View>
         </View>
       )}
+
+      {/* Actionable tip */}
+      <Text fontSize="$3" color="$gray11" marginTop="$3">
+        {summary.tip}
+      </Text>
     </AnalyticsCard>
   );
 };
