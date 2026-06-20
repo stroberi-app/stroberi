@@ -49,7 +49,7 @@ describe('buildSavingsRateSummary', () => {
     expect(summary.currentRate).toBe(0);
     expect(summary.status).toBe('unknown');
     expect(summary.chartData).toEqual([]);
-    expect(summary.bestMonth).toBeNull();
+    expect(summary.bestMonth).toEqual(null);
     expect(summary.averageRate).toBe(0);
     expect(summary.monthsMet).toBe(0);
     expect(summary.streak).toBe(0);
