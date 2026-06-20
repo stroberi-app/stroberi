@@ -3,6 +3,7 @@ import {
   DollarSign,
   FolderInput,
   FolderOutput,
+  PiggyBank,
   Plane,
   RefreshCw,
   Smartphone,
@@ -24,6 +25,7 @@ import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
 import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
 import { ShortcutsSetupSheet } from '../../components/sheet/ShortcutsSetupSheet';
 import { ManageRecurringTransactionsSheet } from '../../components/sheet/ManageRecurringTransactionsSheet';
+import { SavingsRateTargetSheet } from '../../components/sheet/SavingsRateTargetSheet';
 import {
   TransactionPreviewSheet,
   type TransactionPreviewSheetRef,
@@ -32,6 +34,7 @@ import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';
 import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
 
 export default function SettingsScreen() {
@@ -45,12 +48,14 @@ export default function SettingsScreen() {
   );
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const shortcutsSetupSheetRef = React.useRef<BottomSheetModal | null>(null);
+  const savingsRateTargetSheetRef = React.useRef<BottomSheetModal | null>(null);
   const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } =
     useDefaultCurrency();
   const { budgetingEnabled, setBudgetingEnabled } = useBudgetingEnabled();
   const { tripsEnabled, setTripsEnabled } = useTripsEnabled();
   const { advancedAnalyticsEnabled, setAdvancedAnalyticsEnabled } =
     useAdvancedAnalyticsEnabled();
+  const { savingsRateTarget } = useSavingsRateTarget();
   const [isTogglingFeature, setIsTogglingFeature] = useState(false);
 
   const router = useRouter();
@@ -133,6 +138,14 @@ export default function SettingsScreen() {
             rightLabel={''}
             onPress={() => {
               manageRecurringSheetRef.current?.present();
+            }}
+          />
+          <SettingsItem
+            label={'Savings Rate Target'}
+            IconComponent={PiggyBank}
+            rightLabel={`${savingsRateTarget}%`}
+            onPress={() => {
+              savingsRateTargetSheetRef.current?.present();
             }}
           />
         </YGroup>
@@ -338,6 +351,7 @@ export default function SettingsScreen() {
       </ScrollView>
       <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />
       <ManageRecurringTransactionsSheet sheetRef={manageRecurringSheetRef} />
+      <SavingsRateTargetSheet sheetRef={savingsRateTargetSheetRef} />
       <CurrencySelect
         sheetRef={currencySheetRef}
         onSelect={(currency) => {
