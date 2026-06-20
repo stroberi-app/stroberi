@@ -117,6 +117,11 @@ export const useAnalyticsOverview = ({
     () => calculateSavingsRate(transactions, fromDate, toDate),
     [transactions, fromDate, toDate]
   );
+  const savingsTrend: SavingsRateAnalysis = useMemo(() => {
+    const trendFrom = dayjs().subtract(5, 'month').startOf('month').toDate();
+    const trendTo = dayjs().endOf('day').toDate();
+    return calculateSavingsRate(transactions, trendFrom, trendTo);
+  }, [transactions]);
   const healthScore: FinancialHealthScore = useMemo(
     () => calculateFinancialHealthScore(transactions, fromDate, toDate, budgetAdherence),
     [transactions, fromDate, toDate, budgetAdherence]
@@ -292,6 +297,7 @@ export const useAnalyticsOverview = ({
     previousRange,
     pulseState,
     savingsAnalysis,
+    savingsTrend,
     toDate,
     upcomingRecurring,
   };
