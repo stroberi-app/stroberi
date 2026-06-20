@@ -20,9 +20,11 @@ import type { CategoryModel } from '../../database/category-model';
 import { database } from '../../database/index';
 import { InsightInbox } from '../../components/analytics/InsightInbox';
 import { SafeToSpendCard } from '../../components/analytics/SafeToSpendCard';
+import { SavingsRateCard } from '../../components/analytics/SavingsRateCard';
 import { WeeklyRecapCard } from '../../components/analytics/WeeklyRecapCard';
 import { INSIGHTS_CARD_GAP } from '../../components/analytics/emptyStates';
 import type { TransactionModel } from '../../database/transaction-model';
+import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { DateFilter } from '../../lib/analyticsOverview';
@@ -70,6 +72,7 @@ const AnalyticsContent = withObservables<
 }))(({ transactions, categories, budgets, budgetCategories }: AnalyticsContentProps) => {
   const { top } = useSafeAreaInsets();
   const { defaultCurrency } = useDefaultCurrency();
+  const { advancedAnalyticsEnabled } = useAdvancedAnalyticsEnabled();
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
   const {
     actionPlan,
@@ -90,6 +93,7 @@ const AnalyticsContent = withObservables<
     previousPeriodTotals,
     previousRange,
     pulseState,
+    savingsTrend,
     toDate,
     upcomingRecurring,
   } = useAnalyticsOverview({
@@ -146,7 +150,8 @@ const AnalyticsContent = withObservables<
             No analytics yet
           </Text>
           <Text fontSize="$3" color="$gray10" textAlign="center" marginTop="$1">
-            Add or import transactions to unlock safe-to-spend, weekly recaps, and private local insights.
+            Add or import transactions to unlock safe-to-spend, weekly recaps, and private
+            local insights.
           </Text>
         </SectionCard>
       ) : !hasPeriodData ? (
@@ -178,6 +183,10 @@ const AnalyticsContent = withObservables<
             <InsightInbox insights={insightsOverview.insights} />
 
             <WeeklyRecapCard recap={insightsOverview.weeklyRecap} currency={currency} />
+
+            {advancedAnalyticsEnabled ? (
+              <SavingsRateCard analysis={savingsTrend} currency={currency} />
+            ) : null}
           </View>
 
           <SectionCard borderWidth={1} borderColor="$gray5">
