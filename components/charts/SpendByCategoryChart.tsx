@@ -3,7 +3,8 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { map, type Observable } from 'rxjs';
-import { Button, styled, Text, useWindowDimensions, View } from 'tamagui';
+import { useWindowDimensions } from 'react-native';
+import { Button, styled, Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
@@ -204,7 +205,9 @@ const FilterButton = styled(Button, {
       },
     },
   },
-});
+} as Record<string, unknown>) as React.ComponentType<
+  React.ComponentProps<typeof Button> & { active?: boolean }
+>;
 
 type WithFiltersProps = {
   database: Database;

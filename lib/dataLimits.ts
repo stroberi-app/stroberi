@@ -27,6 +27,6 @@ export const formatFileSize = (sizeInBytes: number) => {
     unitIndex += 1;
   }
 
-  const precision = value >= 10 ? 0 : 1;
+  const precision = value >= 10 || Number.isInteger(value) ? 0 : 1;
   return `${value.toFixed(precision)} ${units[unitIndex]}`;
 };

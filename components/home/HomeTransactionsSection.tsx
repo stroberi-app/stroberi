@@ -6,6 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Text, YGroup } from 'tamagui';
 import type { TransactionModel } from '../../database/transaction-model';
+import {
+  TransactionDetailSheet,
+  type TransactionDetailSheetRef,
+} from '../sheet/TransactionDetailSheet';
 import { TransactionItem } from '../TransactionItem';
 
 type RecentTransactionsSectionProps = {
@@ -32,37 +36,40 @@ export const HomeTransactionsSection = withObservables<
   };
 })(({ transactions, header, scrollRef }: RecentTransactionsSectionProps) => {
   const { bottom } = useSafeAreaInsets();
+  const detailSheetRef = React.useRef<TransactionDetailSheetRef>(null);
   return (
-    <>
-      <YGroup>
-        <Reanimated.FlatList
-          ref={scrollRef}
-          contentInset={{
-            bottom: 64 + bottom,
-          }}
-          ListHeaderComponent={() => (
-            <>
-              {header(transactions.length)}
-              {transactions.length > 0 && (
-                <Text
-                  fontSize={'$8'}
-                  fontWeight={'bold'}
-                  marginTop={'$4'}
-                  marginBottom={'$2'}
-                >
-                  Recent Transactions
-                </Text>
-              )}
-            </>
-          )}
-          itemLayoutAnimation={LinearTransition}
-          data={transactions}
-          keyExtractor={(transaction) => transaction.id}
-          renderItem={({ item: transaction }) => (
-            <TransactionItem transaction={transaction} />
-          )}
-        />
-      </YGroup>
-    </>
+    <YGroup>
+      <Reanimated.FlatList
+        ref={scrollRef}
+        contentInset={{
+          bottom: 64 + bottom,
+        }}
+        ListHeaderComponent={() => (
+          <>
+            {header(transactions.length)}
+            {transactions.length > 0 && (
+              <Text
+                fontSize={'$8'}
+                fontWeight={'bold'}
+                marginTop={'$4'}
+                marginBottom={'$2'}
+              >
+                Recent Transactions
+              </Text>
+            )}
+          </>
+        )}
+        itemLayoutAnimation={LinearTransition}
+        data={transactions}
+        keyExtractor={(transaction) => transaction.id}
+        renderItem={({ item: transaction }) => (
+          <TransactionItem
+            transaction={transaction}
+            onPress={(item: TransactionModel) => detailSheetRef.current?.present(item)}
+          />
+        )}
+      />
+      <TransactionDetailSheet ref={detailSheetRef} />
+    </YGroup>
   );
 });

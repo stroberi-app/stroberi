@@ -1,4 +1,3 @@
-// @ts-expect-error Jest globals are available at runtime in test execution.
 jest.mock('@nozbe/watermelondb', () => ({
   Q: {
     where: (field: string, condition: unknown) => ({ field, condition }),

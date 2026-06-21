@@ -6,23 +6,27 @@ import type { CategoryModel } from '../database/category-model';
 export const useSeedCategories = () => {
   useEffect(() => {
     (async () => {
-      const existingCategories = await database.collections
-        .get<CategoryModel>('categories')
-        .query()
-        .fetch();
+      try {
+        const existingCategories = await database.collections
+          .get<CategoryModel>('categories')
+          .query()
+          .fetch();
 
-      if (existingCategories.length === 0) {
-        await database.write(async () => {
-          for (const category of DEFAULT_CATEGORIES) {
-            await database.collections
-              .get<CategoryModel>('categories')
-              .create((newCategory) => {
-                newCategory.name = category.name;
-                newCategory.icon = category.icon;
-                newCategory.usageCount = 0;
-              });
-          }
-        });
+        if (existingCategories.length === 0) {
+          await database.write(async () => {
+            for (const category of DEFAULT_CATEGORIES) {
+              await database.collections
+                .get<CategoryModel>('categories')
+                .create((newCategory) => {
+                  newCategory.name = category.name;
+                  newCategory.icon = category.icon;
+                  newCategory.usageCount = 0;
+                });
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to seed default categories:', error);
       }
     })();
   }, []);

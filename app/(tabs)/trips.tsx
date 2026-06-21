@@ -52,7 +52,7 @@ export default function TripsScreen() {
           <Text fontSize="$8" fontWeight="bold">
             Trips
           </Text>
-          <LinkButton backgroundColor="$green" onPress={handleAddTrip} size="small">
+          <LinkButton backgroundColor="$green" onPress={handleAddTrip} spacing="small">
             <PlusCircle size={20} color="white" />
           </LinkButton>
         </View>

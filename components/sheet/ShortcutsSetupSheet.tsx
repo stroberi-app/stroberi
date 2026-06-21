@@ -22,7 +22,7 @@ const renderBoldText = (text: string) => {
 };
 
 type ShortcutsSetupSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 };
 
 // Previews shown inline after the step they illustrate (0-indexed).

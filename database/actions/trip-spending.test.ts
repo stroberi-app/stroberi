@@ -3,8 +3,6 @@ import { getTripSpending } from './trips';
 let mockSql = '';
 let mockParams: unknown[] = [];
 let unsafeFetchRawCalls = 0;
-
-// @ts-expect-error Jest globals are available at runtime in test execution.
 jest.mock('../index', () => ({
   database: {
     get: (table: string) => {
@@ -38,8 +36,6 @@ jest.mock('../index', () => ({
     },
   },
 }));
-
-// @ts-expect-error Jest globals are available at runtime in test execution.
 jest.mock('@nozbe/watermelondb', () => ({
   Q: {
     unsafeSqlQuery: (sql: string, params: unknown[]) => {

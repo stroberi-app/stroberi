@@ -1,3 +1,7 @@
+jest.mock('../index', () => ({
+  database: {},
+}));
+
 import { isTripActiveAt } from './trips';
 
 describe('isTripActiveAt', () => {

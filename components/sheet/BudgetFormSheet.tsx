@@ -61,7 +61,7 @@ const THRESHOLD_OPTIONS = [
 ];
 
 type BudgetFormSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   budget?: BudgetModel | null;
   onSuccess: () => void;
 };
@@ -422,7 +422,7 @@ export const BudgetFormSheet = ({
                 />
               </View>
 
-              <YGroup bordered marginTop="$4">
+              <YGroup borderWidth={1} borderColor="$borderColor" marginTop="$4">
                 <CreateExpenseItem IconComponent={TrendingUp} label="Period">
                   <LinkButton
                     color="white"

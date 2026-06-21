@@ -25,8 +25,6 @@ export interface TransactionPreviewSheetRef {
   dismiss: () => void;
 }
 
-const TRANSACTION_PREVIEW_ROW_ESTIMATED_SIZE = 76;
-
 export const TransactionPreviewSheet = forwardRef<
   TransactionPreviewSheetRef,
   TransactionPreviewSheetProps
@@ -305,7 +303,6 @@ export const TransactionPreviewSheet = forwardRef<
               data={transactions}
               renderItem={renderItem}
               keyExtractor={(item) => item.id}
-              estimatedItemSize={TRANSACTION_PREVIEW_ROW_ESTIMATED_SIZE}
               contentContainerStyle={{ paddingBottom: bottom + 16 }}
             />
           </View>

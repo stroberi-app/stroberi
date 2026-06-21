@@ -11,16 +11,14 @@ export default function NotFoundScreen() {
     navigation.setOptions({ headerShown: false });
   }, [navigation.setOptions]);
   return (
-    <>
-      <View padding={10} paddingTop={32 + top} backgroundColor="$black4" flex={1}>
-        <Text>This screen doesn't exist.</Text>
-        <Link href="/" style={styles.link}>
-          <Text style={styles.linkText} color="$stroberi">
-            Go to home screen!
-          </Text>
-        </Link>
-      </View>
-    </>
+    <View padding={10} paddingTop={32 + top} backgroundColor="$black4" flex={1}>
+      <Text>This screen doesn't exist.</Text>
+      <Link href="/" style={styles.link}>
+        <Text style={styles.linkText} color="$stroberi">
+          Go to home screen!
+        </Text>
+      </Link>
+    </View>
   );
 }
 

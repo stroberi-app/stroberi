@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { type ReactElement, useMemo } from 'react';
+import type { ReactElement } from 'react';
 import { useSharedValue } from 'react-native-reanimated';
 import CarouselComp, {
   type ICarouselInstance,
   Pagination,
 } from 'react-native-reanimated-carousel';
-import { useWindowDimensions, View } from 'tamagui';
+import { useWindowDimensions } from 'react-native';
+import { View } from 'tamagui';
 import { CAROUSEL_ITEM_WRAPPER_HEIGHT } from './CarouselItemWrapper';
 
 const colors = ['#26292E', '#26292E', '#26292E', '#26292E', '#26292E', '#26292E'];
@@ -20,42 +21,41 @@ export function Carousel({ renderItem, data }: CarouselProps) {
 
   const ref = React.useRef<ICarouselInstance>(null);
 
-  const pagination = useMemo(() => {
-    const onPressPagination = (index: number) => {
-      ref.current?.scrollTo({
-        /**
-         * Calculate the difference between the current index and the target index
-         * to ensure that the carousel scrolls to the nearest index
-         */
-        count: index - progress.value,
-        animated: true,
-      });
-    };
-    return {
-      data: new Array(data.length).fill({ color: colors[0] }),
-      dotStyle: {
-        borderRadius: 100,
-        backgroundColor: 'rgba(73,72,72,0.8)',
-      } as const,
-      activeDotStyle: {
-        borderRadius: 100,
-        overflow: 'hidden',
-      } as const,
-      containerStyle: {
-        gap: 14,
-        marginTop: 14,
-      } as const,
-      renderItem: (item: { color: string }) => (
-        <View
-          style={{
-            backgroundColor: item.color,
-            flex: 1,
-          }}
-        />
-      ),
-      onPress: onPressPagination,
-    };
-  }, [data.length, progress.value]);
+  const onPressPagination = (index: number) => {
+    ref.current?.scrollTo({
+      /**
+       * Calculate the difference between the current index and the target index
+       * to ensure that the carousel scrolls to the nearest index
+       */
+      count: index - progress.value,
+      animated: true,
+    });
+  };
+
+  const pagination = {
+    data: new Array(data.length).fill({ color: colors[0] }),
+    dotStyle: {
+      borderRadius: 100,
+      backgroundColor: 'rgba(73,72,72,0.8)',
+    } as const,
+    activeDotStyle: {
+      borderRadius: 100,
+      overflow: 'hidden',
+    } as const,
+    containerStyle: {
+      gap: 14,
+      marginTop: 14,
+    } as const,
+    renderItem: (item: { color: string }) => (
+      <View
+        style={{
+          backgroundColor: item.color,
+          flex: 1,
+        }}
+      />
+    ),
+    onPress: onPressPagination,
+  };
   return (
     <>
       <CarouselComp
