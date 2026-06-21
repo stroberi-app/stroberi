@@ -125,43 +125,43 @@ export const TransactionItem = withObservables<
         accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={onPress ? 'View transaction details' : undefined}
       >
-      <View
-        flexDirection="row"
-        alignItems="center"
-        paddingVertical="$2"
-        paddingHorizontal="$4"
-        gap="$4"
-        borderWidth="$0.5"
-        borderColor="$borderColor"
-      >
-        <Text fontSize="$5">{category?.icon ?? '📦'}</Text>
-        <View flexDirection="column" justifyContent="center">
-          <View flexDirection="row" gap="$2" alignItems="center">
-            <Text fontSize="$5" fontWeight="bold">
-              {category?.name ?? 'Uncategorized'}
-            </Text>
-            {transaction.recurringTransactionId && (
-              <RefreshCw size={14} color="$blue10" />
+        <View
+          flexDirection="row"
+          alignItems="center"
+          paddingVertical="$2"
+          paddingHorizontal="$4"
+          gap="$4"
+          borderWidth="$0.5"
+          borderColor="$borderColor"
+        >
+          <Text fontSize="$5">{category?.icon ?? '📦'}</Text>
+          <View flexDirection="column" justifyContent="center">
+            <View flexDirection="row" gap="$2" alignItems="center">
+              <Text fontSize="$5" fontWeight="bold">
+                {category?.name ?? 'Uncategorized'}
+              </Text>
+              {transaction.recurringTransactionId && (
+                <RefreshCw size={14} color="$blue10" />
+              )}
+            </View>
+            {transaction.merchant && (
+              <Text fontSize="$3" color="gray">
+                {transaction.merchant}
+              </Text>
             )}
           </View>
-          {transaction.merchant && (
-            <Text fontSize="$3" color="gray">
-              {transaction.merchant}
+          <View marginLeft="auto" alignItems="flex-end">
+            <Text
+              fontSize="$5"
+              color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}
+            >
+              {formatCurrency(transaction.amount, transaction.currencyCode)}
             </Text>
-          )}
+            <Text fontSize="$3" color="gray">
+              {dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
+            </Text>
+          </View>
         </View>
-        <View marginLeft="auto" alignItems="flex-end">
-          <Text
-            fontSize="$5"
-            color={transaction.amount > 0 ? '$greenLight' : '$stroberiLight'}
-          >
-            {formatCurrency(transaction.amount, transaction.currencyCode)}
-          </Text>
-          <Text fontSize="$3" color="gray">
-            {dayjs(transaction.date).format(DateFormats.FullMonthFullDayTime)}
-          </Text>
-        </View>
-      </View>
       </Pressable>
     </ReanimatedSwipeable>
   );

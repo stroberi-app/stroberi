@@ -17,10 +17,7 @@ import type { TripModel } from '../../database/trip-model';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
-import {
-  getConversionStatusChip,
-  shouldShowConversionBlock,
-} from './transactionDetail';
+import { getConversionStatusChip, shouldShowConversionBlock } from './transactionDetail';
 
 export interface TransactionDetailSheetRef {
   present: (transaction: TransactionModel) => void;
@@ -119,9 +116,7 @@ const DetailContent = ({
             {transaction.merchant && (
               <DetailRow label="Merchant" value={transaction.merchant} />
             )}
-            {transaction.note && (
-              <DetailRow label="Note" value={transaction.note} />
-            )}
+            {transaction.note && <DetailRow label="Note" value={transaction.note} />}
           </Section>
         )}
 
@@ -139,16 +134,11 @@ const DetailContent = ({
                 transaction.baseCurrencyCode
               )}
             />
-            <DetailRow
-              label="Exchange rate"
-              value={String(transaction.exchangeRate)}
-            />
+            <DetailRow label="Exchange rate" value={String(transaction.exchangeRate)} />
             {statusChip && (
               <XStack
                 alignSelf="flex-start"
-                backgroundColor={
-                  statusChip.tone === 'error' ? '$red2' : '$orange2'
-                }
+                backgroundColor={statusChip.tone === 'error' ? '$red2' : '$orange2'}
                 borderColor={statusChip.tone === 'error' ? '$red8' : '$orange8'}
                 borderWidth={1}
                 borderRadius="$2"
@@ -190,15 +180,11 @@ const DetailContent = ({
           )}
           <DetailRow
             label="Created"
-            value={dayjs(transaction.createdAt).format(
-              DateFormats.FullMonthFullDayTime
-            )}
+            value={dayjs(transaction.createdAt).format(DateFormats.FullMonthFullDayTime)}
           />
           <DetailRow
             label="Updated"
-            value={dayjs(transaction.updatedAt).format(
-              DateFormats.FullMonthFullDayTime
-            )}
+            value={dayjs(transaction.updatedAt).format(DateFormats.FullMonthFullDayTime)}
           />
         </Section>
 

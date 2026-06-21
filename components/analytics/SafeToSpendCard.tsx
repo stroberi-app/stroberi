@@ -2,10 +2,7 @@ import { AlertTriangle, ShieldCheck } from '@tamagui/lucide-icons';
 import { Text, View, styled } from 'tamagui';
 import { formatCurrency } from '../../lib/format';
 import type { MonthForecast, SafeToSpendSummary } from '../../lib/insights';
-import {
-  getSafeToSpendDisplayText,
-  getSafeToSpendExplanation,
-} from './emptyStates';
+import { getSafeToSpendDisplayText, getSafeToSpendExplanation } from './emptyStates';
 
 type SafeToSpendCardProps = {
   safeToSpend: SafeToSpendSummary;

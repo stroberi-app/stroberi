@@ -31,7 +31,9 @@ const clampMoney = (value: number) => Math.round(value * 100) / 100;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const utcDayNumber = (date: Date) =>
-  Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / MS_PER_DAY);
+  Math.floor(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / MS_PER_DAY
+  );
 
 const sumExpenses = (transactions: InsightTransaction[]) =>
   transactions
@@ -80,11 +82,17 @@ export const getHistoricalMonthlyAverage = (
     return undefined;
   }
 
-  const total = Array.from(monthlyTotals.values()).reduce((sum, amount) => sum + amount, 0);
+  const total = Array.from(monthlyTotals.values()).reduce(
+    (sum, amount) => sum + amount,
+    0
+  );
   return clampMoney(total / monthlyTotals.size);
 };
 
-const getSafeStatus = (dailyAmount: number, remainingAmount: number): SafeToSpendStatus => {
+const getSafeStatus = (
+  dailyAmount: number,
+  remainingAmount: number
+): SafeToSpendStatus => {
   if (remainingAmount < 0) {
     return 'danger';
   }
@@ -108,7 +116,8 @@ export const calculateSafeToSpend = ({
   const periodTransactions = getTransactionsInRange(transactions, fromDate, toDate);
   const spentSoFar = clampMoney(sumExpenses(periodTransactions));
   const incomeSoFar = clampMoney(sumIncome(periodTransactions));
-  const baseline = historicalMonthlyAverage ?? getHistoricalMonthlyAverage(transactions, today);
+  const baseline =
+    historicalMonthlyAverage ?? getHistoricalMonthlyAverage(transactions, today);
   const daysLeft = Math.max(1, utcDayNumber(toDate) - utcDayNumber(today) + 1);
 
   let availableMonthlyAmount: number | undefined;
@@ -118,15 +127,18 @@ export const calculateSafeToSpend = ({
   if (budgetLimit && budgetLimit > 0) {
     availableMonthlyAmount = budgetLimit;
     confidence = 'high';
-    explanation = 'Based on your monthly budget, spending so far, and expected recurring expenses.';
+    explanation =
+      'Based on your monthly budget, spending so far, and expected recurring expenses.';
   } else if (incomeSoFar > 0) {
     availableMonthlyAmount = incomeSoFar;
     confidence = 'medium';
-    explanation = 'Based on income recorded this month, spending so far, and expected recurring expenses.';
+    explanation =
+      'Based on income recorded this month, spending so far, and expected recurring expenses.';
   } else if (baseline && baseline > 0) {
     availableMonthlyAmount = baseline;
     confidence = 'medium';
-    explanation = 'Based on your recent monthly spending average and expected recurring expenses.';
+    explanation =
+      'Based on your recent monthly spending average and expected recurring expenses.';
   }
 
   if (!availableMonthlyAmount) {
@@ -149,7 +161,9 @@ export const calculateSafeToSpend = ({
     };
   }
 
-  const remainingAmount = clampMoney(availableMonthlyAmount - spentSoFar - expectedRecurring);
+  const remainingAmount = clampMoney(
+    availableMonthlyAmount - spentSoFar - expectedRecurring
+  );
   const dailyAmount = clampMoney(Math.max(0, remainingAmount) / daysLeft);
 
   return {
@@ -182,7 +196,10 @@ export const calculateMonthForecast = ({
 }: CalculateMonthForecastArgs): MonthForecast => {
   const daysInPeriod = Math.max(1, utcDayNumber(toDate) - utcDayNumber(fromDate) + 1);
   const boundedToday = today.getTime() > toDate.getTime() ? toDate : today;
-  const daysElapsed = Math.max(1, utcDayNumber(boundedToday) - utcDayNumber(fromDate) + 1);
+  const daysElapsed = Math.max(
+    1,
+    utcDayNumber(boundedToday) - utcDayNumber(fromDate) + 1
+  );
   const projectedSpend = clampMoney((currentSpend / daysElapsed) * daysInPeriod);
   const status: SafeToSpendStatus = !budgetLimit
     ? 'unknown'

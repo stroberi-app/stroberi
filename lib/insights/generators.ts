@@ -69,7 +69,9 @@ export const generateCategoryPaceInsights = ({
       continue;
     }
 
-    const changePercent = Math.round(((currentValue.amount - previousValue) / previousValue) * 100);
+    const changePercent = Math.round(
+      ((currentValue.amount - previousValue) / previousValue) * 100
+    );
     const label = categoryName(categories, categoryId);
 
     insights.push({
@@ -155,7 +157,8 @@ export const generateSmallPurchaseInsights = ({
 }: SmallPurchaseArgs): MoneyInsight[] => {
   const smallPurchases = currentTransactions.filter(
     (transaction) =>
-      transaction.type === 'expense' && Math.abs(transaction.amountInBaseCurrency) <= threshold
+      transaction.type === 'expense' &&
+      Math.abs(transaction.amountInBaseCurrency) <= threshold
   );
 
   if (smallPurchases.length < minimumCount) {
@@ -233,7 +236,8 @@ export const buildSpendingLeaks = (
   currentTransactions: InsightTransaction[]
 ): SpendingLeak[] => {
   const smallPurchases = currentTransactions.filter(
-    (transaction) => transaction.type === 'expense' && Math.abs(transaction.amountInBaseCurrency) <= 8
+    (transaction) =>
+      transaction.type === 'expense' && Math.abs(transaction.amountInBaseCurrency) <= 8
   );
 
   if (smallPurchases.length < 5) {
