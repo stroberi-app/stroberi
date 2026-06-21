@@ -1,3 +1,4 @@
+import type { PlatformOSType } from 'react-native';
 import type { CreateTransactionPayload } from '../../database/actions/transactions';
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
@@ -83,6 +84,16 @@ export const shouldAutoPopulateActiveTrip = ({
   tripsEnabled: boolean;
 }) => {
   return !transaction && !transactionId && tripsEnabled;
+};
+
+export const shouldFocusTransactionAmountInput = ({
+  platform,
+  transaction,
+}: {
+  platform: PlatformOSType;
+  transaction: TransactionModel | null;
+}) => {
+  return platform !== 'android' && !transaction;
 };
 
 export const buildTransactionPayload = ({

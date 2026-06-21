@@ -47,7 +47,7 @@ export default function BudgetsScreen() {
           <Text fontSize="$8" fontWeight="bold">
             Budgets
           </Text>
-          <LinkButton backgroundColor="$green" onPress={handleAddBudget} size="small">
+          <LinkButton backgroundColor="$green" onPress={handleAddBudget} spacing="small">
             <PlusCircle size={20} color="white" />
           </LinkButton>
         </View>

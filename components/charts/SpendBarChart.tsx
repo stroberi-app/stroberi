@@ -10,8 +10,15 @@ import {
 } from 'react-native-reanimated';
 import { View } from 'tamagui';
 import { useChartPressState } from 'victory-native';
-import type { InputFields, NumericalFields } from 'victory-native/dist/types';
+type InputFields<T> = {
+  [K in keyof T as T[K] extends string | number ? K : never]: T[K];
+};
+
+type NumericalFields<T> = {
+  [K in keyof T as T[K] extends number ? K : never]: T[K];
+};
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { sanitizeChartPressNumber } from '../../lib/chartPressState';
 import { formatCurrencyWorklet } from '../../lib/format';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
 import { CarouselItemText } from '../carousel/CarouselItemText';
@@ -58,12 +65,13 @@ export const SpendBarChart = <
     y: Object.fromEntries(yKeys.map((key) => [key, 0])),
   });
   const amount = useDerivedValue(() => {
-    const formattedCurrency = formatCurrencyWorklet(
-      state?.y.total.value.value,
-      defaultCurrency ?? 'USD'
-    );
-    return `${state.x.value.value}: ${formattedCurrency}`;
-  }, [state?.y.total.value.value]);
+    const rawValue = state?.y.total.value.value;
+    const safeValue = sanitizeChartPressNumber(rawValue, 0);
+    const formattedCurrency = formatCurrencyWorklet(safeValue, defaultCurrency ?? 'USD');
+    const xValue = state?.x.value.value;
+    const xLabel = xValue === undefined || xValue === null ? '' : String(xValue);
+    return `${xLabel}: ${formattedCurrency}`;
+  });
 
   const ttX = useSharedValue(0);
   const ttY = useSharedValue(0);
@@ -71,13 +79,13 @@ export const SpendBarChart = <
   useAnimatedReaction(
     () => state?.x.position.value,
     (val) => {
-      ttX.value = withTiming(val, animConfig);
+      ttX.value = withTiming(sanitizeChartPressNumber(val, ttX.value), animConfig);
     }
   );
   useAnimatedReaction(
     () => state?.y.total.position.value,
     (val) => {
-      ttY.value = withTiming(val, animConfig);
+      ttY.value = withTiming(sanitizeChartPressNumber(val, ttY.value), animConfig);
     }
   );
 
@@ -144,7 +152,6 @@ export const SpendBarChart = <
               xKey={xKey}
               yKeys={yKeys}
               data={chartData}
-              // @ts-expect-error ignore for now
               state={state}
               isActive={isActive}
               tooltip={{

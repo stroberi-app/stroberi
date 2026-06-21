@@ -2,7 +2,7 @@ import type { Database } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
@@ -15,13 +15,17 @@ import {
 } from '../lib/transactionQuery';
 import { Button } from './button/Button';
 import { CreateFirstTransactionSection } from './CreateFirstTransactionSection';
+import {
+  TransactionDetailSheet,
+  type TransactionDetailSheetRef,
+} from './sheet/TransactionDetailSheet';
 import { TransactionItem } from './TransactionItem';
 
 type TransactionsListViewProps = {
   transactions: TransactionModel[];
   appliedNumberOfFilters?: number;
   onClearFilters?: () => void;
-  scrollRef?: React.RefObject<FlashList<ListItem>>;
+  scrollRef?: React.RefObject<React.ElementRef<typeof FlashList<ListItem>> | null>;
 };
 
 type TransactionsListDataProps = {
@@ -34,8 +38,6 @@ type TransactionsListDataProps = {
 
 type ListItem = string | TransactionModel;
 
-const SECTION_HEADER_ESTIMATED_SIZE = 44;
-const TRANSACTION_ROW_ESTIMATED_SIZE = 76;
 const TRANSACTIONS_DRAW_DISTANCE = 900;
 
 const getDateKey = (date: Date) => {
@@ -60,6 +62,7 @@ const TransactionsList = ({
   scrollRef,
 }: TransactionsListViewProps) => {
   const { bottom } = useSafeAreaInsets();
+  const detailSheetRef = useRef<TransactionDetailSheetRef>(null);
 
   const data = useMemo(() => {
     const result: ListItem[] = [];
@@ -88,7 +91,14 @@ const TransactionsList = ({
         </Text>
       );
     } else {
-      return <TransactionItem transaction={item} />;
+      return (
+        <TransactionItem
+          transaction={item}
+          onPress={(transaction: TransactionModel) =>
+            detailSheetRef.current?.present(transaction)
+          }
+        />
+      );
     }
   }, []);
 
@@ -123,17 +133,18 @@ const TransactionsList = ({
   }
 
   return (
-    <FlashList
-      ref={scrollRef}
-      contentInset={contentInset}
-      keyExtractor={keyExtractor}
-      data={data}
-      renderItem={renderItem}
-      getItemType={getItemType}
-      estimatedItemSize={TRANSACTION_ROW_ESTIMATED_SIZE}
-      overrideItemLayout={overrideItemLayout}
-      drawDistance={TRANSACTIONS_DRAW_DISTANCE}
-    />
+    <>
+      <FlashList
+        ref={scrollRef}
+        contentInset={contentInset}
+        keyExtractor={keyExtractor}
+        data={data}
+        renderItem={renderItem}
+        getItemType={getItemType}
+        drawDistance={TRANSACTIONS_DRAW_DISTANCE}
+      />
+      <TransactionDetailSheet ref={detailSheetRef} />
+    </>
   );
 };
 
@@ -143,13 +154,6 @@ const getItemType = (item: ListItem) => {
 
 const keyExtractor = (item: ListItem) => {
   return typeof item === 'string' ? item : item.id;
-};
-
-const overrideItemLayout = (layout: { size?: number }, item: ListItem) => {
-  layout.size =
-    typeof item === 'string'
-      ? SECTION_HEADER_ESTIMATED_SIZE
-      : TRANSACTION_ROW_ESTIMATED_SIZE;
 };
 
 const withData = withObservables<
