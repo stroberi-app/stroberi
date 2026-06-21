@@ -55,7 +55,7 @@ const FREQUENCY_OPTIONS: { value: RecurringFrequency; label: string }[] = [
 ];
 
 type RecurringTransactionFormSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   recurring?: RecurringTransactionModel | null;
   onSuccess: () => void;
 };
@@ -285,7 +285,7 @@ export const RecurringTransactionFormSheet = ({
             />
           </View>
 
-          <YGroup bordered mt="$4">
+          <YGroup borderWidth={1} borderColor="$borderColor" mt="$4">
             <CreateExpenseItem IconComponent={User} label="Merchant/Description">
               <Input
                 placeholder="Enter merchant name"
@@ -346,7 +346,7 @@ export const RecurringTransactionFormSheet = ({
           </View>
 
           {hasEndDate && (
-            <YGroup bordered mt="$3">
+            <YGroup borderWidth={1} borderColor="$borderColor" mt="$3">
               <CreateExpenseItem IconComponent={Calendar} label="End Date">
                 <DatePicker mode="date" date={endDate} setDate={setEndDate} />
               </CreateExpenseItem>

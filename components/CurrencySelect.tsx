@@ -14,7 +14,7 @@ import { backgroundStyle, handleIndicatorStyle, snapPoints } from './sheet/const
 type CurrencySelectProps = {
   selectedCurrency: string;
   onSelect: (currency: Currency) => void;
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
   containerComponent?: React.ComponentType<React.PropsWithChildren>;
 };
 

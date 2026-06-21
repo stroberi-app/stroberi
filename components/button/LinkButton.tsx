@@ -1,6 +1,7 @@
+import type React from 'react';
 import { Button, styled } from 'tamagui';
 
-export const LinkButton = styled(Button, {
+const StyledLinkButton = styled(Button, {
   alignSelf: 'flex-start',
   backgroundColor: '$gray',
   color: '$stroberi',
@@ -10,7 +11,7 @@ export const LinkButton = styled(Button, {
   height: 36,
   fontSize: '$5',
   variants: {
-    size: {
+    spacing: {
       regular: {
         paddingVertical: '$0',
         paddingHorizontal: '$4',
@@ -23,6 +24,14 @@ export const LinkButton = styled(Button, {
   },
 
   defaultVariants: {
-    size: 'regular',
+    spacing: 'regular',
   },
-});
+} as Record<string, unknown>);
+
+export const LinkButton = StyledLinkButton as React.ComponentType<
+  React.ComponentProps<typeof Button> & {
+    color?: string;
+    fontSize?: React.ComponentProps<typeof Button>['size'];
+    spacing?: 'regular' | 'small';
+  }
+>;

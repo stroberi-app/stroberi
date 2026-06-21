@@ -1,4 +1,4 @@
-import { BottomSheetModalProvider, type BottomSheetModal } from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import {
   ArrowLeft,
@@ -9,7 +9,12 @@ import {
   Plane,
   User,
 } from '@tamagui/lucide-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  type ErrorBoundaryProps,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from 'expo-router';
 import {
   type ReactNode,
   type RefObject,
@@ -25,8 +30,10 @@ import {
   StyleSheet,
   View as RNView,
 } from 'react-native';
+import type { ParamListBase } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FullWindowOverlay } from 'react-native-screens';
-import { Input, Text, TextArea, View, YGroup } from 'tamagui';
+import { Input, type InputRef, Text, TextArea, View, YGroup } from 'tamagui';
 import { LinkButton } from '../components/button/LinkButton';
 import { CreateExpenseItem } from '../components/CreateExpenseItem';
 import { CurrencyInput } from '../components/CurrencyInput';
@@ -48,6 +55,7 @@ import {
   getInitialTransactionAmount,
   parseTransactionRouteParams,
   shouldAutoPopulateActiveTrip,
+  shouldFocusTransactionAmountInput,
 } from '../features/transactions/form';
 import { MissingCurrencyRateError } from '../lib/currencyConversion';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
@@ -64,12 +72,43 @@ const modalContainerComponent =
   Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
 type SheetType = 'currency' | 'categories' | 'trip';
 
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const router = useRouter();
+
+  return (
+    <StyledScrollView>
+      <View flex={1} minHeight={420} justifyContent="center" gap="$4">
+        <Text color="white" fontSize="$7" fontWeight="700">
+          Transaction screen failed to load
+        </Text>
+        <Text color="gray" fontSize="$3">
+          {error.message || 'Close this screen and try again.'}
+        </Text>
+        <View flexDirection="row" gap="$2">
+          <LinkButton backgroundColor="$green" color="white" onPress={retry}>
+            Try Again
+          </LinkButton>
+          <LinkButton
+            backgroundColor="transparent"
+            color="gray"
+            onPress={() => router.back()}
+          >
+            Back
+          </LinkButton>
+        </View>
+      </View>
+    </StyledScrollView>
+  );
+}
+
 function CreateTransaction() {
   const bottomSheetRef = useRef<BottomSheetModal | null>(null);
   const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
   const tripSelectSheetRef = useRef<BottomSheetModal | null>(null);
   const params = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+  const amountInputRef = useRef<InputRef | null>(null);
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
   const { legacyCategory, legacyTransaction, transactionId, transactionType } =
@@ -370,8 +409,26 @@ function CreateTransaction() {
     }
   }, [defaultCurrency, isDefaultCurrencyLoaded, requestSheetOpen]);
 
+  // Autofocus the amount input once the modal present animation completes.
+  // `autoFocus` alone is unreliable on modally-presented native-stack screens,
+  // so we focus on `transitionEnd` (the open transition) instead.
+  useEffect(() => {
+    if (!shouldFocusTransactionAmountInput({ platform: Platform.OS, transaction })) {
+      return;
+    }
+
+    const unsubscribe = navigation.addListener('transitionEnd', (event) => {
+      if (event.data?.closing) {
+        return;
+      }
+      amountInputRef.current?.focus();
+    });
+
+    return unsubscribe;
+  }, [navigation, transaction]);
+
   return (
-    <BottomSheetModalProvider>
+    <>
       <StyledScrollView keyboardShouldPersistTaps="always">
         <View flexDirection="row" justifyContent="space-between" alignItems="center">
           <LinkButton
@@ -411,18 +468,22 @@ function CreateTransaction() {
         )}
         <View mt="$8">
           <CurrencyInput
+            ref={amountInputRef}
             onCurrencySelect={() => {
               requestSheetOpen('currency');
             }}
             selectedCurrency={selectedCurrency}
             value={amount}
             onChangeText={handleAmountChange}
-            focusOnMount={!transaction}
+            focusOnMount={shouldFocusTransactionAmountInput({
+              platform: Platform.OS,
+              transaction,
+            })}
             onValidationError={setAmountValidationError}
           />
         </View>
 
-        <YGroup bordered mt="$4">
+        <YGroup borderWidth={1} borderColor="$borderColor" mt="$4">
           <CreateExpenseItem IconComponent={Calendar} label="Date">
             <DatePicker mode="date" date={date} setDate={setDate} />
           </CreateExpenseItem>
@@ -519,7 +580,7 @@ function CreateTransaction() {
           containerComponent={modalContainerComponent}
         />
       )}
-    </BottomSheetModalProvider>
+    </>
   );
 }
 

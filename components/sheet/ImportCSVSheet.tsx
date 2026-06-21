@@ -9,7 +9,7 @@ import {
   Info,
 } from '@tamagui/lucide-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 import Papa from 'papaparse';
 import type React from 'react';
 import { useRef, useState } from 'react';
@@ -41,7 +41,7 @@ import { backgroundStyle, handleIndicatorStyle } from './constants';
 import { type ErrorInfo, ErrorSheet } from './ErrorSheet';
 
 type ImportCSVSheetProps = {
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 };
 
 interface ImportProgress {
@@ -189,10 +189,10 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
 
       setProgress((prev) => (prev ? { ...prev, message: 'Reading your file...' } : null));
 
-      const fileInfo = await FileSystem.getInfoAsync(res.assets[0].uri);
+      const file = new File(res.assets[0].uri);
       const fileSize =
-        'size' in fileInfo && typeof fileInfo.size === 'number'
-          ? fileInfo.size
+        typeof file.size === 'number'
+          ? file.size
           : typeof res.assets[0].size === 'number'
             ? res.assets[0].size
             : null;
@@ -210,7 +210,7 @@ export const ImportCSVSheet = ({ sheetRef }: ImportCSVSheetProps) => {
         return;
       }
 
-      const content = await FileSystem.readAsStringAsync(res.assets[0].uri);
+      const content = await file.text();
 
       setProgress((prev) =>
         prev ? { ...prev, message: 'Processing CSV data...' } : null
@@ -655,7 +655,9 @@ Salary,3000.00,2024-01-01,Monthly salary,USD,Income,💰`;
           {!importing && !progress && (
             <YStack gap={'$3'} mb={'$4'}>
               <XStack alignItems={'flex-start'} gap={'$3'} pr={'$3'}>
-                <Info size={18} color="$blue9" mt={'$1'} />
+                <YStack mt={'$1'}>
+                  <Info size={18} color="$blue9" />
+                </YStack>
                 <YStack flex={1} gap={'$2'}>
                   <Text fontSize={'$4'} fontWeight={'600'} color={'$gray12'}>
                     Ready to import your transactions?

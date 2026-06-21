@@ -547,12 +547,12 @@ export function calculateFinancialHealthScore(
 
 export function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
   return date.toLocaleDateString('en-US', { month: 'short' });
 }
 
 export function formatMonthLabelFull(monthKey: string): string {
   const [year, month] = monthKey.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
   return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 }

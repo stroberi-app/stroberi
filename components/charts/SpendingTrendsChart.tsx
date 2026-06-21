@@ -161,6 +161,7 @@ export const SpendingTrends = withObservables<
 
   return (
     <SpendLineChart
+      key={`spending-trends-${trendType}`}
       chartData={chartData}
       title={chartTitle}
       isEmpty={chartData.every((el) => el.total === 0)}
@@ -220,7 +221,9 @@ const FilterButton = styled(Button, {
       },
     },
   },
-});
+} as Record<string, unknown>) as React.ComponentType<
+  React.ComponentProps<typeof Button> & { active?: boolean }
+>;
 
 type WithFiltersProps = {
   database: Database;
