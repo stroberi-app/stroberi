@@ -1,7 +1,4 @@
-import {
-  getConversionStatusChip,
-  shouldShowConversionBlock,
-} from './transactionDetail';
+import { getConversionStatusChip, shouldShowConversionBlock } from './transactionDetail';
 
 describe('shouldShowConversionBlock', () => {
   it('shows the conversion block when currencies differ', () => {

@@ -65,9 +65,7 @@ export const HomeTransactionsSection = withObservables<
         renderItem={({ item: transaction }) => (
           <TransactionItem
             transaction={transaction}
-            onPress={(item: TransactionModel) =>
-              detailSheetRef.current?.present(item)
-            }
+            onPress={(item: TransactionModel) => detailSheetRef.current?.present(item)}
           />
         )}
       />

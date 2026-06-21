@@ -1,4 +1,3 @@
-
 jest.mock('@nozbe/watermelondb', () => ({
   Q: {
     where: (field: string, condition: unknown) => ({ field, condition }),

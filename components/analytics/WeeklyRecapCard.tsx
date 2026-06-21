@@ -37,28 +37,28 @@ export const WeeklyRecapCard = ({ recap, currency }: WeeklyRecapCardProps) => {
           </Text>
 
           <View flexDirection="row" gap="$3" marginTop="$4">
-        <MetricTile flex={1}>
-          <Text fontSize="$2" color="$gray10">
-            This week
-          </Text>
-          <Text fontSize="$5" fontWeight="bold" color="white" marginTop="$1">
-            {formatCurrency(recap.totalSpent, currency)}
-          </Text>
-        </MetricTile>
-        <MetricTile flex={1}>
-          <Text fontSize="$2" color="$gray10">
-            Vs previous
-          </Text>
-          <Text
-            fontSize="$5"
-            fontWeight="bold"
-            color={recap.changeAmount <= 0 ? '$green' : '$stroberi'}
-            marginTop="$1"
-          >
-            {recap.changeAmount <= 0 ? '-' : '+'}
-            {formatCurrency(Math.abs(recap.changeAmount), currency)}
-          </Text>
-        </MetricTile>
+            <MetricTile flex={1}>
+              <Text fontSize="$2" color="$gray10">
+                This week
+              </Text>
+              <Text fontSize="$5" fontWeight="bold" color="white" marginTop="$1">
+                {formatCurrency(recap.totalSpent, currency)}
+              </Text>
+            </MetricTile>
+            <MetricTile flex={1}>
+              <Text fontSize="$2" color="$gray10">
+                Vs previous
+              </Text>
+              <Text
+                fontSize="$5"
+                fontWeight="bold"
+                color={recap.changeAmount <= 0 ? '$green' : '$stroberi'}
+                marginTop="$1"
+              >
+                {recap.changeAmount <= 0 ? '-' : '+'}
+                {formatCurrency(Math.abs(recap.changeAmount), currency)}
+              </Text>
+            </MetricTile>
           </View>
 
           {recap.oneThingToWatch ? (

@@ -9,4 +9,3 @@ export const sanitizeChartPressNumber = (
 
   return value;
 };
-

@@ -67,10 +67,7 @@ export const SpendLineChart = <
   const amount = useDerivedValue(() => {
     const rawValue = state?.y.total.value.value;
     const safeValue = sanitizeChartPressNumber(rawValue, 0);
-    const formattedCurrency = formatCurrencyWorklet(
-      safeValue,
-      defaultCurrency ?? 'USD'
-    );
+    const formattedCurrency = formatCurrencyWorklet(safeValue, defaultCurrency ?? 'USD');
     const xValue = state?.x.value.value;
     const xLabel = xValue === undefined || xValue === null ? '' : String(xValue);
     return `${xLabel}: ${formattedCurrency}`;
