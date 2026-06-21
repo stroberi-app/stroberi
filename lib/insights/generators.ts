@@ -220,7 +220,7 @@ export const generateDataQualityInsights = (
       title: 'Some transactions need categories',
       body: `${dataQuality.uncategorizedCount} uncategorized transactions (${formatAmount(dataQuality.uncategorizedAmount, currency)}) are making insights less accurate.`,
       severity: 'neutral',
-      confidence: 'high',
+      confidence: dataQuality.confidence,
       priority: Math.min(85, 45 + dataQuality.uncategorizedCount * 4),
       amount: dataQuality.uncategorizedAmount,
       evidence: {

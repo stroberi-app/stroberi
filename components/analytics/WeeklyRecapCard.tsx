@@ -52,10 +52,16 @@ export const WeeklyRecapCard = ({ recap, currency }: WeeklyRecapCardProps) => {
               <Text
                 fontSize="$5"
                 fontWeight="bold"
-                color={recap.changeAmount <= 0 ? '$green' : '$stroberi'}
+                color={
+                  recap.changeAmount === 0
+                    ? '$gray10'
+                    : recap.changeAmount < 0
+                      ? '$green'
+                      : '$stroberi'
+                }
                 marginTop="$1"
               >
-                {recap.changeAmount <= 0 ? '-' : '+'}
+                {recap.changeAmount === 0 ? '' : recap.changeAmount < 0 ? '-' : '+'}
                 {formatCurrency(Math.abs(recap.changeAmount), currency)}
               </Text>
             </MetricTile>

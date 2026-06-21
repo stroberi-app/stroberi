@@ -71,7 +71,7 @@ export const buildInsightsOverview = ({
     today,
     dataConfidence: dataQuality.confidence,
   });
-  const weeklyRecap = buildWeeklyRecap({ transactions, categories, today });
+  const weeklyRecap = buildWeeklyRecap({ transactions, categories, today, currency });
   const spendingLeaks = buildSpendingLeaks(currentTransactions);
   const insights = rankInsights([
     ...generateCategoryPaceInsights({

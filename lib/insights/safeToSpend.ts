@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import type {
   InsightConfidence,
   InsightTransaction,
@@ -35,6 +34,9 @@ const utcDayNumber = (date: Date) =>
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / MS_PER_DAY
   );
 
+const utcMonthKey = (date: Date) =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+
 const sumExpenses = (transactions: InsightTransaction[]) =>
   transactions
     .filter((transaction) => transaction.type === 'expense')
@@ -59,7 +61,7 @@ export const getHistoricalMonthlyAverage = (
   transactions: InsightTransaction[],
   today: Date
 ) => {
-  const currentMonthKey = dayjs(today).format('YYYY-MM');
+  const currentMonthKey = utcMonthKey(today);
   const monthlyTotals = new Map<string, number>();
 
   for (const transaction of transactions) {
@@ -67,7 +69,7 @@ export const getHistoricalMonthlyAverage = (
       continue;
     }
 
-    const monthKey = dayjs(transaction.date).format('YYYY-MM');
+    const monthKey = utcMonthKey(transaction.date);
     if (monthKey === currentMonthKey) {
       continue;
     }
