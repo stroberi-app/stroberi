@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import type {
   InsightCategory,
   InsightTransaction,
@@ -6,7 +5,30 @@ import type {
   WeeklyRecap,
 } from './types';
 
-const money = (value: number) => `€${Math.round(Math.abs(value))}`;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const startOfUtcDay = (date: Date) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+const endOfUtcDay = (date: Date) =>
+  new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      23,
+      59,
+      59,
+      999
+    )
+  );
+
+const money = (value: number, currency: string) =>
+  new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Math.round(Math.abs(value)));
 
 const sumExpenses = (transactions: InsightTransaction[]) =>
   transactions
@@ -56,17 +78,19 @@ type BuildWeeklyRecapArgs = {
   transactions: InsightTransaction[];
   categories: InsightCategory[];
   today: Date;
+  currency: string;
 };
 
 export const buildWeeklyRecap = ({
   transactions,
   categories,
   today,
+  currency,
 }: BuildWeeklyRecapArgs): WeeklyRecap => {
-  const currentStart = dayjs(today).subtract(6, 'day').startOf('day').toDate();
-  const currentEnd = dayjs(today).endOf('day').toDate();
-  const previousStart = dayjs(currentStart).subtract(7, 'day').toDate();
-  const previousEnd = dayjs(currentStart).subtract(1, 'millisecond').toDate();
+  const currentEnd = endOfUtcDay(today);
+  const currentStart = new Date(startOfUtcDay(today).getTime() - 6 * MS_PER_DAY);
+  const previousStart = new Date(currentStart.getTime() - 7 * MS_PER_DAY);
+  const previousEnd = new Date(currentStart.getTime() - 1);
 
   const current = transactions.filter((transaction) =>
     inRange(transaction, currentStart, currentEnd)
@@ -113,6 +137,6 @@ export const buildWeeklyRecap = ({
     bestImprovement: improvements[0],
     biggestIncrease: increases[0],
     oneThingToWatch: increases[0],
-    summary: `You spent ${money(totalSpent)} this week, ${money(changeAmount)} ${direction} than the previous week.`,
+    summary: `You spent ${money(totalSpent, currency)} this week, ${money(changeAmount, currency)} ${direction} than the previous week.`,
   };
 };

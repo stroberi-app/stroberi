@@ -11,6 +11,7 @@ import { Text, View, XStack } from 'tamagui';
 import { deleteTransaction } from '../../database/actions/transactions';
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
+import useToast from '../../hooks/useToast';
 import { DateFormats } from '../../lib/date';
 import { formatCurrency } from '../../lib/format';
 import type { TripModel } from '../../database/trip-model';
@@ -231,6 +232,7 @@ export const TransactionDetailSheet = forwardRef<TransactionDetailSheetRef>(
     const sheetRef = useRef<BottomSheetModal>(null);
     const router = useRouter();
     const { showActionSheetWithOptions } = useActionSheet();
+    const toast = useToast();
     const [transaction, setTransaction] = useState<TransactionModel | null>(null);
 
     useImperativeHandle(ref, () => ({
@@ -267,8 +269,19 @@ export const TransactionDetailSheet = forwardRef<TransactionDetailSheetRef>(
         },
         async (buttonIndex) => {
           if (buttonIndex === 0) {
-            await deleteTransaction(transactionId);
-            sheetRef.current?.dismiss();
+            try {
+              await deleteTransaction(transactionId);
+              sheetRef.current?.dismiss();
+            } catch (error) {
+              toast.show({
+                title: 'Unable to delete transaction',
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to delete transaction.',
+                preset: 'error',
+              });
+            }
           }
         }
       );
