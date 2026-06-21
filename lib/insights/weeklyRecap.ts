@@ -1,5 +1,10 @@
 import dayjs from 'dayjs';
-import type { InsightCategory, InsightTransaction, RecapItem, WeeklyRecap } from './types';
+import type {
+  InsightCategory,
+  InsightTransaction,
+  RecapItem,
+  WeeklyRecap,
+} from './types';
 
 const money = (value: number) => `€${Math.round(Math.abs(value))}`;
 
@@ -18,10 +23,15 @@ const categoryName = (categories: InsightCategory[], categoryId: string | null) 
     return 'Uncategorized';
   }
 
-  return categories.find((category) => category.id === categoryId)?.name ?? 'Unknown category';
+  return (
+    categories.find((category) => category.id === categoryId)?.name ?? 'Unknown category'
+  );
 };
 
-const totalsByCategory = (transactions: InsightTransaction[], categories: InsightCategory[]) => {
+const totalsByCategory = (
+  transactions: InsightTransaction[],
+  categories: InsightCategory[]
+) => {
   const totals = new Map<string, RecapItem>();
 
   for (const transaction of transactions) {
@@ -58,7 +68,9 @@ export const buildWeeklyRecap = ({
   const previousStart = dayjs(currentStart).subtract(7, 'day').toDate();
   const previousEnd = dayjs(currentStart).subtract(1, 'millisecond').toDate();
 
-  const current = transactions.filter((transaction) => inRange(transaction, currentStart, currentEnd));
+  const current = transactions.filter((transaction) =>
+    inRange(transaction, currentStart, currentEnd)
+  );
   const previous = transactions.filter((transaction) =>
     inRange(transaction, previousStart, previousEnd)
   );
@@ -70,7 +82,10 @@ export const buildWeeklyRecap = ({
 
   const currentByCategory = totalsByCategory(current, categories);
   const previousByCategory = totalsByCategory(previous, categories);
-  const categoryIds = new Set([...currentByCategory.keys(), ...previousByCategory.keys()]);
+  const categoryIds = new Set([
+    ...currentByCategory.keys(),
+    ...previousByCategory.keys(),
+  ]);
   const changes = Array.from(categoryIds).map((categoryId) => {
     const currentItem = currentByCategory.get(categoryId);
     const previousItem = previousByCategory.get(categoryId);

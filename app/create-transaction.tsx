@@ -9,7 +9,12 @@ import {
   Plane,
   User,
 } from '@tamagui/lucide-icons';
-import { type ErrorBoundaryProps, useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  type ErrorBoundaryProps,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from 'expo-router';
 import {
   type ReactNode,
   type RefObject,
@@ -25,8 +30,10 @@ import {
   StyleSheet,
   View as RNView,
 } from 'react-native';
+import type { ParamListBase } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FullWindowOverlay } from 'react-native-screens';
-import { Input, Text, TextArea, View, YGroup } from 'tamagui';
+import { Input, type InputRef, Text, TextArea, View, YGroup } from 'tamagui';
 import { LinkButton } from '../components/button/LinkButton';
 import { CreateExpenseItem } from '../components/CreateExpenseItem';
 import { CurrencyInput } from '../components/CurrencyInput';
@@ -100,6 +107,8 @@ function CreateTransaction() {
   const tripSelectSheetRef = useRef<BottomSheetModal | null>(null);
   const params = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+  const amountInputRef = useRef<InputRef | null>(null);
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
   const { legacyCategory, legacyTransaction, transactionId, transactionType } =
@@ -400,6 +409,24 @@ function CreateTransaction() {
     }
   }, [defaultCurrency, isDefaultCurrencyLoaded, requestSheetOpen]);
 
+  // Autofocus the amount input once the modal present animation completes.
+  // `autoFocus` alone is unreliable on modally-presented native-stack screens,
+  // so we focus on `transitionEnd` (the open transition) instead.
+  useEffect(() => {
+    if (!shouldFocusTransactionAmountInput({ platform: Platform.OS, transaction })) {
+      return;
+    }
+
+    const unsubscribe = navigation.addListener('transitionEnd', (event) => {
+      if (event.data?.closing) {
+        return;
+      }
+      amountInputRef.current?.focus();
+    });
+
+    return unsubscribe;
+  }, [navigation, transaction]);
+
   return (
     <>
       <StyledScrollView keyboardShouldPersistTaps="always">
@@ -441,6 +468,7 @@ function CreateTransaction() {
         )}
         <View mt="$8">
           <CurrencyInput
+            ref={amountInputRef}
             onCurrencySelect={() => {
               requestSheetOpen('currency');
             }}
