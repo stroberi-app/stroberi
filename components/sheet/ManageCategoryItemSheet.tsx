@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmojiPicker from 'rn-emoji-keyboard';
-import type { OnEmojiSelected } from 'rn-emoji-keyboard/lib/typescript/contexts/KeyboardContext';
 import { ScrollView, Text, View } from 'tamagui';
 import { spendingCategories } from '../../data/emojis';
 import type { CategoryModel } from '../../database/category-model';
@@ -19,6 +18,10 @@ import {
 } from './categoryIconPicker';
 import { BottomSheetTextInput } from './BottomSheetTextInput';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
+
+type OnEmojiSelected = NonNullable<
+  React.ComponentProps<typeof EmojiPicker>['onEmojiSelected']
+>;
 
 type CreateCategorySheetProps = {
   sheetRef: React.RefObject<BottomSheetModal | null>;

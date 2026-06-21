@@ -31,6 +31,7 @@ describe('buildWeeklyRecap', () => {
       ],
       categories,
       today: new Date('2026-06-18T12:00:00.000Z'),
+      currency: 'EUR',
     });
 
     expect(recap.totalSpent).toBe(100);

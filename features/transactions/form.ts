@@ -1,3 +1,4 @@
+import type { PlatformOSType } from 'react-native';
 import type { CreateTransactionPayload } from '../../database/actions/transactions';
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
@@ -89,7 +90,7 @@ export const shouldFocusTransactionAmountInput = ({
   platform,
   transaction,
 }: {
-  platform: string;
+  platform: PlatformOSType;
   transaction: TransactionModel | null;
 }) => {
   return platform !== 'android' && !transaction;
