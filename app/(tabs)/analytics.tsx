@@ -22,8 +22,8 @@ import { UpcomingBillsCard } from '../../components/analytics/UpcomingBillsCard'
 import { WeeklyRecapCard } from '../../components/analytics/WeeklyRecapCard';
 import { INSIGHTS_CARD_GAP } from '../../components/analytics/emptyStates';
 import type { TransactionModel } from '../../database/transaction-model';
-import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
+import { useSavingsRateEnabled } from '../../hooks/useSavingsRateEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { DateFilter } from '../../lib/analyticsOverview';
 import { DATE_FILTER_OPTIONS } from '../../lib/analyticsOverview';
@@ -65,7 +65,7 @@ const AnalyticsContent = withObservables<
 }))(({ transactions, categories, budgets, budgetCategories }: AnalyticsContentProps) => {
   const { top } = useSafeAreaInsets();
   const { defaultCurrency } = useDefaultCurrency();
-  const { advancedAnalyticsEnabled } = useAdvancedAnalyticsEnabled();
+  const { savingsRateEnabled } = useSavingsRateEnabled();
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
   const {
     actionPlan,
@@ -177,7 +177,7 @@ const AnalyticsContent = withObservables<
 
             <WeeklyRecapCard recap={insightsOverview.weeklyRecap} currency={currency} />
 
-            {advancedAnalyticsEnabled ? (
+            {savingsRateEnabled ? (
               <SavingsRateCard analysis={savingsTrend} currency={currency} />
             ) : null}
           </View>
