@@ -1,7 +1,6 @@
 import {
   BottomSheetModal,
   BottomSheetScrollView,
-  BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
@@ -10,32 +9,25 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { combineLatest } from 'rxjs';
 import { Input, ScrollView, Text, View, XStack, YGroup } from 'tamagui';
 import type { BudgetModel, BudgetPeriod } from '../../database/budget-model';
 import type { CategoryModel } from '../../database/category-model';
 import { createBudget, updateBudget } from '../../database/actions/budgets';
-import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
 import '../../lib/date';
-import {
-  buildBudgetTransactionConditions,
-  calculateBudgetPeriodDates,
-  calculateRollover,
-  formatBudgetPeriod,
-  getBudgetProgressColor,
-  sumBudgetTransactions,
-} from '../../lib/budgetUtils';
+import { formatBudgetPeriod } from '../../lib/budgetUtils';
 import { formatCurrency } from '../../lib/format';
 import { BudgetProgress } from '../BudgetProgress';
 import { LinkButton } from '../button/LinkButton';
-import { CategoriesList } from '../CategoriesList';
 import { CreateExpenseItem } from '../CreateExpenseItem';
 import { CurrencyInput } from '../CurrencyInput';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { DatePicker } from '../DatePicker';
+import { BudgetCategoryPickerSheet } from './budget/BudgetCategoryPickerSheet';
+import { BudgetOptionPickerSheet } from './budget/BudgetOptionPickerSheet';
+import { useBudgetPreview } from './budget/useBudgetPreview';
 import {
   buildBudgetFormState,
   buildBudgetPayload,
@@ -88,8 +80,6 @@ export const BudgetFormSheet = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<CategoryModel[]>([]);
   const [categorySearch, setCategorySearch] = useState('');
-  const [currentSpent, setCurrentSpent] = useState(0);
-  const [previousSpent, setPreviousSpent] = useState(0);
 
   const applyFormState = useCallback(
     (state: Awaited<ReturnType<typeof buildBudgetFormState>>) => {
@@ -118,102 +108,18 @@ export const BudgetFormSheet = ({
     [selectedCategories]
   );
 
-  useEffect(() => {
-    const periodDates = calculateBudgetPeriodDates({ period, startDate });
-    const previousPeriodDates = calculateBudgetPeriodDates({ period, startDate }, -1);
-
-    const currentTransactionsObservable = database
-      .get<TransactionModel>('transactions')
-      .query(
-        ...buildBudgetTransactionConditions(
-          periodDates.start,
-          periodDates.end,
-          selectedCategoryIds
-        )
-      )
-      .observeWithColumns(['amountInBaseCurrency', 'categoryId', 'date']);
-
-    if (!rollover) {
-      const subscription = currentTransactionsObservable.subscribe((transactions) => {
-        setCurrentSpent(sumBudgetTransactions(transactions));
-        setPreviousSpent(0);
-      });
-
-      return () => subscription.unsubscribe();
-    }
-
-    const previousTransactionsObservable = database
-      .get<TransactionModel>('transactions')
-      .query(
-        ...buildBudgetTransactionConditions(
-          previousPeriodDates.start,
-          previousPeriodDates.end,
-          selectedCategoryIds
-        )
-      )
-      .observeWithColumns(['amountInBaseCurrency', 'categoryId', 'date']);
-
-    const subscription = combineLatest([
-      currentTransactionsObservable,
-      previousTransactionsObservable,
-    ]).subscribe(([transactions, previousTransactions]) => {
-      setCurrentSpent(sumBudgetTransactions(transactions));
-      setPreviousSpent(sumBudgetTransactions(previousTransactions));
-    });
-
-    return () => subscription.unsubscribe();
-  }, [database, period, rollover, selectedCategoryIds, startDate]);
-
   const parsedAmount = useMemo(() => parseBudgetAmount(amount), [amount]);
 
-  const budgetPreview = useMemo(() => {
-    if (!parsedAmount) {
-      return null;
-    }
-
-    const rolloverAmount = calculateRollover(
-      { amount: parsedAmount, rollover },
-      previousSpent
-    );
-    const budgetLimit = parsedAmount + rolloverAmount;
-    const percentage = budgetLimit > 0 ? (currentSpent / budgetLimit) * 100 : 0;
-    const remaining = budgetLimit - currentSpent;
-    const status =
-      percentage >= 100
-        ? ('exceeded' as const)
-        : percentage >= alertThreshold
-          ? ('warning' as const)
-          : ('ok' as const);
-
-    return {
-      spent: currentSpent,
-      remaining,
-      percentage,
-      budgetLimit,
-      rolloverAmount,
-      status,
-    };
-  }, [alertThreshold, currentSpent, parsedAmount, previousSpent, rollover]);
-
-  const previewColor = budgetPreview
-    ? getBudgetProgressColor(budgetPreview.percentage, alertThreshold)
-    : '$gray8';
-
-  const previewTitle = budgetPreview
-    ? budgetPreview.status === 'exceeded'
-      ? 'Budget exceeded'
-      : budgetPreview.status === 'warning'
-        ? 'Approaching limit'
-        : 'On track'
-    : 'Enter an amount';
-
-  const previewMessage = budgetPreview
-    ? budgetPreview.status === 'exceeded'
-      ? `${formatCurrency(budgetPreview.spent - budgetPreview.budgetLimit, defaultCurrency ?? 'USD')} over the current limit.`
-      : budgetPreview.status === 'warning'
-        ? `Current spending is close to the ${alertThreshold}% warning threshold.`
-        : `${formatCurrency(budgetPreview.remaining, defaultCurrency ?? 'USD')} still available in this period.`
-    : 'Add a valid budget amount to see the live status preview.';
+  const { budgetPreview, previewColor, previewTitle, previewMessage } = useBudgetPreview({
+    database,
+    period,
+    startDate,
+    rollover,
+    selectedCategoryIds,
+    parsedAmount,
+    alertThreshold,
+    currency: defaultCurrency ?? 'USD',
+  });
 
   const resetForm = () => {
     const nextState = getDefaultBudgetFormState();
@@ -536,139 +442,39 @@ export const BudgetFormSheet = ({
         </BottomSheetView>
       </BottomSheetModal>
 
-      <BottomSheetModal
-        ref={periodPickerRef}
-        snapPoints={['40%']}
-        enableDynamicSizing={false}
-        enablePanDownToClose={true}
-        handleIndicatorStyle={handleIndicatorStyle}
-        backdropComponent={CustomBackdrop}
-        backgroundStyle={backgroundStyle}
-        stackBehavior="push"
-      >
-        <BottomSheetView>
-          <View paddingHorizontal="$4" paddingVertical="$2">
-            <Text fontSize="$6" fontWeight="bold" marginBottom="$3">
-              Select Period
-            </Text>
-            <YGroup gap="$2">
-              {PERIOD_OPTIONS.map((option) => (
-                <YGroup.Item key={option.value}>
-                  <LinkButton
-                    width="100%"
-                    justifyContent="flex-start"
-                    backgroundColor={period === option.value ? '$gray4' : 'transparent'}
-                    onPress={() => {
-                      setPeriod(option.value);
-                      if (!budget) {
-                        setStartDate(getStartOfBudgetPeriod(option.value));
-                      }
-                      periodPickerRef.current?.close();
-                    }}
-                  >
-                    <Text fontSize="$4">{option.label}</Text>
-                  </LinkButton>
-                </YGroup.Item>
-              ))}
-            </YGroup>
-          </View>
-        </BottomSheetView>
-      </BottomSheetModal>
+      <BudgetOptionPickerSheet
+        sheetRef={periodPickerRef}
+        title="Select Period"
+        options={PERIOD_OPTIONS}
+        selectedValue={period}
+        onSelect={(value) => {
+          setPeriod(value);
+          if (!budget) {
+            setStartDate(getStartOfBudgetPeriod(value));
+          }
+          periodPickerRef.current?.close();
+        }}
+      />
 
-      <BottomSheetModal
-        ref={thresholdPickerRef}
-        snapPoints={['40%']}
-        enableDynamicSizing={false}
-        stackBehavior="push"
-        enablePanDownToClose={true}
-        handleIndicatorStyle={handleIndicatorStyle}
-        backdropComponent={CustomBackdrop}
-        backgroundStyle={backgroundStyle}
-      >
-        <BottomSheetView>
-          <View paddingHorizontal="$4" paddingVertical="$2">
-            <Text fontSize="$6" fontWeight="bold" marginBottom="$3">
-              Select Threshold
-            </Text>
-            <YGroup gap="$2">
-              {THRESHOLD_OPTIONS.map((option) => (
-                <YGroup.Item key={option.value}>
-                  <LinkButton
-                    width="100%"
-                    justifyContent="flex-start"
-                    backgroundColor={
-                      alertThreshold === option.value ? '$gray4' : 'transparent'
-                    }
-                    onPress={() => {
-                      setAlertThreshold(option.value);
-                      thresholdPickerRef.current?.close();
-                    }}
-                  >
-                    <Text fontSize="$4">{option.label}</Text>
-                  </LinkButton>
-                </YGroup.Item>
-              ))}
-            </YGroup>
-          </View>
-        </BottomSheetView>
-      </BottomSheetModal>
+      <BudgetOptionPickerSheet
+        sheetRef={thresholdPickerRef}
+        title="Select Threshold"
+        options={THRESHOLD_OPTIONS}
+        selectedValue={alertThreshold}
+        onSelect={(value) => {
+          setAlertThreshold(value);
+          thresholdPickerRef.current?.close();
+        }}
+      />
 
-      <BottomSheetModal
-        ref={categoryPickerRef}
-        snapPoints={['70%']}
-        enableDynamicSizing={false}
-        stackBehavior="push"
-        enablePanDownToClose={true}
-        handleIndicatorStyle={handleIndicatorStyle}
-        backdropComponent={CustomBackdrop}
-        backgroundStyle={backgroundStyle}
-      >
-        <BottomSheetView style={{ flex: 1 }}>
-          <View paddingHorizontal="$4" paddingTop="$2" flex={1}>
-            <View
-              flexDirection="row"
-              justifyContent="space-between"
-              alignItems="center"
-              marginBottom="$3"
-            >
-              <Text fontSize="$6" fontWeight="bold">
-                Select Categories
-              </Text>
-              <LinkButton
-                backgroundColor="$green"
-                onPress={() => categoryPickerRef.current?.close()}
-              >
-                <Text color="white">Done</Text>
-              </LinkButton>
-            </View>
-            <Text fontSize="$2" color="$gray9" marginBottom="$3">
-              Leave empty to track all expenses
-            </Text>
-            <BottomSheetTextInput
-              placeholder="Search categories..."
-              value={categorySearch}
-              onChangeText={setCategorySearch}
-              style={{
-                backgroundColor: '#2a2a2a',
-                borderRadius: 8,
-                paddingHorizontal: 12,
-                paddingVertical: 10,
-                marginBottom: 12,
-                color: 'white',
-                fontSize: 16,
-              }}
-              placeholderTextColor="#666"
-            />
-            <CategoriesList
-              database={database}
-              search={categorySearch}
-              onSelect={handleCategorySelect}
-              selectedCategories={selectedCategories}
-              preventClose
-            />
-          </View>
-        </BottomSheetView>
-      </BottomSheetModal>
+      <BudgetCategoryPickerSheet
+        sheetRef={categoryPickerRef}
+        database={database}
+        search={categorySearch}
+        onSearchChange={setCategorySearch}
+        selectedCategories={selectedCategories}
+        onSelectCategory={handleCategorySelect}
+      />
     </>
   );
 };

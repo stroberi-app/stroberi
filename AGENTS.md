@@ -4,7 +4,7 @@
 
 - Stroberi is a privacy-first personal expense tracker built with Expo + React Native.
 - Financial data is local-only (SQLite/WatermelonDB). Avoid changes that introduce cloud persistence for user transaction data.
-- Main runtime stack: Expo Router, React Native 0.76, TypeScript strict mode, Tamagui.
+- Main runtime stack: Expo Router, React Native 0.81, TypeScript strict mode, Tamagui.
 
 ## Project Structure
 

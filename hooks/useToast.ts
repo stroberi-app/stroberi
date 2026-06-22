@@ -82,7 +82,7 @@ const useToast = () => {
           width: 18,
         },
       },
-      // @ts-expect-error ignore
+      // @ts-expect-error Burnt's types omit the `icon` option, but it is supported at runtime on iOS.
       icon: {
         ios: {
           // SF Symbol. For a full list, see https://developer.apple.com/sf-symbols/.
