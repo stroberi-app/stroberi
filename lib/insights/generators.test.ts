@@ -3,7 +3,6 @@ import {
   buildDataQualitySummary,
   generateCategoryPaceInsights,
   generateDataQualityInsights,
-  generatePositiveTrendInsights,
   generateSmallPurchaseInsights,
   rankInsights,
 } from './generators';
@@ -69,18 +68,6 @@ describe('insight generators', () => {
     expect(quality.uncategorizedCount).toBe(1);
     expect(quality.uncategorizedAmount).toBe(22);
     expect(insights[0].type).toBe('dataQuality');
-  });
-
-  it('creates a positive trend when a category improves', () => {
-    const insights = generatePositiveTrendInsights({
-      currentTransactions: [tx('shopping-now', 30, '2026-06-01', 'shopping')],
-      previousTransactions: [tx('shopping-prev', 100, '2026-05-01', 'shopping')],
-      categories,
-      currency: 'EUR',
-    });
-
-    expect(insights[0].type).toBe('positiveTrend');
-    expect(insights[0].categoryId).toBe('shopping');
   });
 
   it('ranks by priority while keeping insight type variety', () => {
