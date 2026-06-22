@@ -171,38 +171,59 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
       </View>
 
       {/* Monthly Mini-Chart */}
-      {summary.chartData.length > 1 && (
-        <View marginTop="$3">
-          <Text fontSize="$2" color="$gray11" marginBottom="$2">
-            Monthly Trend
-          </Text>
-          <View flexDirection="row" gap="$1" justifyContent="space-between">
-            {summary.chartData.map((month) => (
-              <View key={month.month} alignItems="center" flex={1}>
-                <View
-                  height={40}
-                  width="80%"
-                  backgroundColor="$gray5"
-                  borderRadius="$1"
-                  justifyContent="flex-end"
-                  overflow="hidden"
-                >
-                  <View
-                    height={`${Math.min(100, Math.abs(month.rate) * 2)}%`}
-                    backgroundColor={
-                      month.rate >= savingsRateTarget ? '$green' : '$stroberi'
-                    }
-                    borderRadius="$1"
-                  />
-                </View>
-                <Text fontSize={10} color="$gray10" marginTop="$1">
-                  {formatMonthLabel(month.month)}
-                </Text>
+      {summary.chartData.length > 1 &&
+        (() => {
+          // Scale bars relative to the highest value in view (rates or target)
+          // so month-to-month variation is visible instead of saturating.
+          const maxRate = Math.max(
+            ...summary.chartData.map((month) => month.rate),
+            savingsRateTarget,
+            1
+          );
+
+          return (
+            <View marginTop="$3">
+              <Text fontSize="$2" color="$gray11" marginBottom="$2">
+                Monthly Trend
+              </Text>
+              <View flexDirection="row" gap="$1" justifyContent="space-between">
+                {summary.chartData.map((month) => {
+                  const fillPercent =
+                    month.rate > 0
+                      ? Math.max(6, Math.min(100, (month.rate / maxRate) * 100))
+                      : 0;
+
+                  return (
+                    <View key={month.month} alignItems="center" flex={1}>
+                      <Text fontSize={9} color="$gray10" marginBottom="$1">
+                        {Math.round(month.rate)}%
+                      </Text>
+                      <View
+                        height={48}
+                        width="80%"
+                        backgroundColor="$gray5"
+                        borderRadius="$1"
+                        justifyContent="flex-end"
+                        overflow="hidden"
+                      >
+                        <View
+                          height={`${fillPercent}%`}
+                          backgroundColor={
+                            month.rate >= savingsRateTarget ? '$green' : '$stroberi'
+                          }
+                          borderRadius="$1"
+                        />
+                      </View>
+                      <Text fontSize={10} color="$gray10" marginTop="$1">
+                        {formatMonthLabel(month.month)}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
-            ))}
-          </View>
-        </View>
-      )}
+            </View>
+          );
+        })()}
 
       {/* Actionable tip */}
       <Text fontSize="$3" color="$gray11" marginTop="$3">
