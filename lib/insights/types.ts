@@ -68,7 +68,6 @@ export type MoneyInsightType =
   | 'categorySpike'
   | 'smallPurchases'
   | 'budgetRisk'
-  | 'positiveTrend'
   | 'dataQuality'
   | 'forecastWarning';
 

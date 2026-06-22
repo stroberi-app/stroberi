@@ -97,51 +97,6 @@ export const generateCategoryPaceInsights = ({
   return insights;
 };
 
-export const generatePositiveTrendInsights = ({
-  currentTransactions,
-  previousTransactions,
-  categories,
-  currency,
-}: CategoryInsightArgs): MoneyInsight[] => {
-  const current = groupByCategory(currentTransactions);
-  const previous = groupByCategory(previousTransactions);
-  const insights: MoneyInsight[] = [];
-
-  for (const [categoryId, previousValue] of previous.entries()) {
-    if (categoryId === 'uncategorized' || previousValue.amount < 40) {
-      continue;
-    }
-
-    const currentAmount = current.get(categoryId)?.amount ?? 0;
-    if (currentAmount > previousValue.amount * 0.75) {
-      continue;
-    }
-
-    const saved = Math.round(previousValue.amount - currentAmount);
-    const label = categoryName(categories, categoryId);
-
-    insights.push({
-      id: `positive-trend-${categoryId}`,
-      type: 'positiveTrend',
-      title: `${label} improved`,
-      body: `${label} is ${formatAmount(saved, currency)} lower than the previous comparable period. Nice work.`,
-      severity: 'positive',
-      confidence: 'medium',
-      priority: Math.min(80, 35 + saved),
-      amount: saved,
-      categoryId,
-      evidence: {
-        current: Math.round(currentAmount),
-        baseline: Math.round(previousValue.amount),
-        transactionIds: current.get(categoryId)?.ids ?? [],
-      },
-      actions: [{ type: 'viewTransactions', label: 'See what changed', categoryId }],
-    });
-  }
-
-  return insights;
-};
-
 type SmallPurchaseArgs = {
   currentTransactions: InsightTransaction[];
   currency: string;
@@ -213,21 +168,24 @@ export const generateDataQualityInsights = (
     return [];
   }
 
+  const { uncategorizedCount } = dataQuality;
+  const transactionLabel = uncategorizedCount === 1 ? 'transaction needs' : 'transactions need';
+
   return [
     {
       id: 'data-quality-uncategorized',
       type: 'dataQuality',
-      title: 'Some transactions need categories',
-      body: `${dataQuality.uncategorizedCount} uncategorized transactions (${formatAmount(dataQuality.uncategorizedAmount, currency)}) are making insights less accurate.`,
+      title: `${uncategorizedCount} ${transactionLabel} a category`,
+      body: `${formatAmount(dataQuality.uncategorizedAmount, currency)} is unsorted. Categorize it to unlock accurate insights.`,
       severity: 'neutral',
       confidence: dataQuality.confidence,
-      priority: Math.min(85, 45 + dataQuality.uncategorizedCount * 4),
+      priority: Math.min(85, 45 + uncategorizedCount * 4),
       amount: dataQuality.uncategorizedAmount,
       evidence: {
-        current: dataQuality.uncategorizedCount,
+        current: uncategorizedCount,
         baseline: dataQuality.transactionCount,
       },
-      actions: [{ type: 'fixCategories', label: 'Fix categories' }],
+      actions: [{ type: 'fixCategories', label: 'Categorize now' }],
     },
   ];
 };

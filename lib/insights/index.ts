@@ -3,7 +3,6 @@ import {
   buildSpendingLeaks,
   generateCategoryPaceInsights,
   generateDataQualityInsights,
-  generatePositiveTrendInsights,
   generateSmallPurchaseInsights,
   rankInsights,
 } from './generators';
@@ -81,12 +80,6 @@ export const buildInsightsOverview = ({
       currency,
     }),
     ...generateSmallPurchaseInsights({ currentTransactions, currency }),
-    ...generatePositiveTrendInsights({
-      currentTransactions,
-      previousTransactions,
-      categories,
-      currency,
-    }),
     ...generateDataQualityInsights(dataQuality, currency),
   ]);
 

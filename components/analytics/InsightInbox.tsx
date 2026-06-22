@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, Lightbulb } from '@tamagui/lucide-icons';
+import { useRouter } from 'expo-router';
 import { Text, View, styled } from 'tamagui';
-import type { MoneyInsight } from '../../lib/insights';
+import type { InsightAction, MoneyInsight } from '../../lib/insights';
 import { getInsightInboxEmptyState } from './emptyStates';
 
 type InsightInboxProps = {
@@ -46,6 +47,23 @@ export const InsightInbox = ({ insights }: InsightInboxProps) => {
 };
 
 const InsightRow = ({ insight }: { insight: MoneyInsight }) => {
+  const router = useRouter();
+  const action = insight.actions[0];
+
+  const onActionPress = (target: InsightAction) => {
+    switch (target.type) {
+      case 'fixCategories':
+      case 'viewTransactions':
+        router.push('/transactions');
+        break;
+      case 'createBudget':
+        router.push('/budgets');
+        break;
+      default:
+        break;
+    }
+  };
+
   const Icon =
     insight.severity === 'positive'
       ? CheckCircle2
@@ -72,9 +90,16 @@ const InsightRow = ({ insight }: { insight: MoneyInsight }) => {
           <Text fontSize="$3" color="$gray10" marginTop="$1">
             {insight.body}
           </Text>
-          {insight.actions[0] ? (
-            <Text fontSize="$2" color="$stroberi" marginTop="$2">
-              {insight.actions[0].label}
+          {action && action.type !== 'none' ? (
+            <Text
+              fontSize="$2"
+              fontWeight="700"
+              color="$stroberi"
+              marginTop="$2"
+              hitSlop={8}
+              onPress={() => onActionPress(action)}
+            >
+              {action.label}
             </Text>
           ) : null}
         </View>
