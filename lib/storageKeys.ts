@@ -2,6 +2,7 @@ export const STORAGE_KEYS = {
   BUDGETING_ENABLED: 'budgeting_enabled',
   TRIPS_ENABLED: 'trips_enabled',
   ADVANCED_ANALYTICS_ENABLED: 'advanced_analytics_enabled',
+  SAVINGS_RATE_ENABLED: 'savings_rate_enabled',
   SAVINGS_RATE_TARGET: 'savings_rate_target',
   DISMISSED_BUDGET_ALERTS: 'dismissed_budget_alerts',
   DEFAULT_CURRENCY: 'defaultCurrency',

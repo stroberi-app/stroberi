@@ -34,6 +34,7 @@ import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';
 import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { useSavingsRateEnabled } from '../../hooks/useSavingsRateEnabled';
 import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
 
@@ -55,6 +56,7 @@ export default function SettingsScreen() {
   const { tripsEnabled, setTripsEnabled } = useTripsEnabled();
   const { advancedAnalyticsEnabled, setAdvancedAnalyticsEnabled } =
     useAdvancedAnalyticsEnabled();
+  const { savingsRateEnabled } = useSavingsRateEnabled();
   const { savingsRateTarget } = useSavingsRateTarget();
   const [isTogglingFeature, setIsTogglingFeature] = useState(false);
 
@@ -141,9 +143,9 @@ export default function SettingsScreen() {
             }}
           />
           <SettingsItem
-            label={'Savings Rate Target'}
+            label={'Savings Rate'}
             IconComponent={PiggyBank}
-            rightLabel={`${savingsRateTarget}%`}
+            rightLabel={savingsRateEnabled ? `${savingsRateTarget}%` : 'Off'}
             onPress={() => {
               savingsRateTargetSheetRef.current?.present();
             }}
