@@ -50,12 +50,7 @@ export const PriorityActionPlanCard = ({ actionPlan }: PriorityActionPlanCardPro
             <Text fontSize="$2" color="$gray11">
               {item.description}
             </Text>
-            <Text
-              fontSize="$2"
-              color={style.textColor}
-              marginTop="$1.5"
-              fontWeight="700"
-            >
+            <Text fontSize="$2" color={style.textColor} marginTop="$1.5" fontWeight="700">
               {item.impact}
             </Text>
           </View>

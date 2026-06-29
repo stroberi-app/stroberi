@@ -169,7 +169,8 @@ export const generateDataQualityInsights = (
   }
 
   const { uncategorizedCount } = dataQuality;
-  const transactionLabel = uncategorizedCount === 1 ? 'transaction needs' : 'transactions need';
+  const transactionLabel =
+    uncategorizedCount === 1 ? 'transaction needs' : 'transactions need';
 
   return [
     {
