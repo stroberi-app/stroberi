@@ -85,7 +85,8 @@ export const useTransactionFormSheets = () => {
       setPendingSheetToOpen(null);
     };
 
-    requestAnimationFrame(openSheet);
+    const handle = requestAnimationFrame(openSheet);
+    return () => cancelAnimationFrame(handle);
   }, [
     isCategoriesSheetMounted,
     isCurrencySheetMounted,
