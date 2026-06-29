@@ -22,7 +22,8 @@ export const SpendingHotspotsCard = ({
     .filter((item) => item.currentSpend > 0)
     .slice(0, 6);
   const colorMap = buildCategoryColorMap(donutSource.map((item) => item.categoryId));
-  const donutData: DonutDatum[] = donutSource.map((item) => ({
+  const donutData: Array<DonutDatum & { id: string }> = donutSource.map((item) => ({
+    id: item.categoryId,
     label: item.categoryName,
     value: item.currentSpend,
     color: colorMap[item.categoryId],
@@ -71,7 +72,7 @@ export const SpendingHotspotsCard = ({
               const pct =
                 donutTotal > 0 ? Math.round((item.value / donutTotal) * 100) : 0;
               return (
-                <View key={item.label} flexDirection="row" alignItems="center" gap="$2">
+                <View key={item.id} flexDirection="row" alignItems="center" gap="$2">
                   <View
                     width={10}
                     height={10}

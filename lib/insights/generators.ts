@@ -171,13 +171,14 @@ export const generateDataQualityInsights = (
   const { uncategorizedCount } = dataQuality;
   const transactionLabel =
     uncategorizedCount === 1 ? 'transaction needs' : 'transactions need';
+  const categorizeLabel = uncategorizedCount === 1 ? 'Categorize it' : 'Categorize them';
 
   return [
     {
       id: 'data-quality-uncategorized',
       type: 'dataQuality',
       title: `${uncategorizedCount} ${transactionLabel} a category`,
-      body: `${formatAmount(dataQuality.uncategorizedAmount, currency)} is unsorted. Categorize it to unlock accurate insights.`,
+      body: `${formatAmount(dataQuality.uncategorizedAmount, currency)} is unsorted. ${categorizeLabel} to unlock accurate insights.`,
       severity: 'neutral',
       confidence: dataQuality.confidence,
       priority: Math.min(85, 45 + uncategorizedCount * 4),

@@ -3,16 +3,38 @@ import * as React from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { View } from 'react-native';
 
+type HexColor = `#${string}`;
+
 type SparklineProps = {
   values: number[];
   /** Fixed width. Omit to stretch to the parent's width. */
   width?: number;
   height?: number;
-  color?: string;
+  color?: HexColor;
   strokeWidth?: number;
   /** Render a soft gradient fill under the line. */
   filled?: boolean;
 };
+
+function hexWithAlpha(color: HexColor, alpha: number): string {
+  const hex = color.replace('#', '');
+  const fullHex =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map((part) => part + part)
+          .join('')
+      : hex;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(fullHex)) {
+    return color;
+  }
+
+  const r = parseInt(fullHex.slice(0, 2), 16);
+  const g = parseInt(fullHex.slice(2, 4), 16);
+  const b = parseInt(fullHex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 /**
  * Minimal, axis-less trend line for inline use inside cards. Self-contained
@@ -54,11 +76,12 @@ const SparklineCanvas = ({
     const max = Math.max(...values);
     const range = max - min || 1;
     const inset = strokeWidth; // keep the stroke from clipping at the edges
+    const usableW = width - inset * 2;
     const usableH = height - inset * 2;
-    const stepX = width / Math.max(1, values.length - 1);
+    const stepX = usableW / Math.max(1, values.length - 1);
 
     const coords = values.map((value, index) => ({
-      x: index * stepX,
+      x: inset + index * stepX,
       y: inset + usableH - ((value - min) / range) * usableH,
     }));
 
@@ -89,7 +112,7 @@ const SparklineCanvas = ({
           <LinearGradient
             start={vec(0, 0)}
             end={vec(0, height)}
-            colors={[`${color}59`, `${color}00`]}
+            colors={[hexWithAlpha(color, 0.35), hexWithAlpha(color, 0)]}
           />
         </Path>
       )}

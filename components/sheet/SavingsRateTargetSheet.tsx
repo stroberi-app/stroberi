@@ -25,6 +25,7 @@ export const SavingsRateTargetSheet = ({ sheetRef }: SavingsRateTargetSheetProps
   const { savingsRateTarget, setSavingsRateTarget } = useSavingsRateTarget();
   const { savingsRateEnabled, setSavingsRateEnabled } = useSavingsRateEnabled();
   const [draft, setDraft] = useState(String(savingsRateTarget));
+  const [isTogglingEnabled, setIsTogglingEnabled] = useState(false);
 
   useEffect(() => {
     setDraft(String(savingsRateTarget));
@@ -35,6 +36,16 @@ export const SavingsRateTargetSheet = ({ sheetRef }: SavingsRateTargetSheetProps
     const next = Number.isFinite(parsed) ? clampTarget(parsed) : savingsRateTarget;
     await setSavingsRateTarget(next);
     sheetRef.current?.dismiss();
+  };
+
+  const handleSavingsRateToggle = async (next: boolean) => {
+    if (isTogglingEnabled) return;
+    setIsTogglingEnabled(true);
+    try {
+      await setSavingsRateEnabled(next);
+    } finally {
+      setIsTogglingEnabled(false);
+    }
   };
 
   return (
@@ -74,7 +85,10 @@ export const SavingsRateTargetSheet = ({ sheetRef }: SavingsRateTargetSheetProps
                 Show the savings rate card in Analytics.
               </Text>
             </View>
-            <Switch checked={savingsRateEnabled} onCheckedChange={setSavingsRateEnabled}>
+            <Switch
+              checked={savingsRateEnabled}
+              onCheckedChange={handleSavingsRateToggle}
+            >
               <Switch.Thumb />
             </Switch>
           </View>
