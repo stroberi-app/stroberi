@@ -1,10 +1,17 @@
-import { Award, PiggyBank, Target, TrendingDown, TrendingUp } from '@tamagui/lucide-icons';
+import {
+  Award,
+  PiggyBank,
+  Target,
+  TrendingDown,
+  TrendingUp,
+} from '@tamagui/lucide-icons';
 import { Text, View } from 'tamagui';
 import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { SavingsRateAnalysis } from '../../lib/advancedAnalytics';
 import { formatMonthLabel } from '../../lib/advancedAnalytics';
 import { formatCurrency } from '../../lib/format';
 import { buildSavingsRateSummary } from '../../lib/savingsRate';
+import { Sparkline } from '../charts/Sparkline';
 import { AnalyticsCard, ProgressBar, TrendBadge } from './AnalyticsCard';
 
 type SavingsRateCardProps = {
@@ -102,6 +109,39 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
         </View>
         <ProgressBar value={progressTowardTarget} color={rateColor} />
       </View>
+
+      {/* Savings rate trend */}
+      {analysis.monthlyRates.length >= 2 && (
+        <View backgroundColor="$gray4" padding="$3" borderRadius="$3" marginBottom="$3">
+          <View
+            flexDirection="row"
+            justifyContent="space-between"
+            alignItems="center"
+            marginBottom="$2"
+          >
+            <Text fontSize="$2" color="$gray11">
+              Savings rate trend
+            </Text>
+            <Text fontSize="$2" color="$gray10">
+              {formatMonthLabel(analysis.monthlyRates[0].month)} –{' '}
+              {formatMonthLabel(
+                analysis.monthlyRates[analysis.monthlyRates.length - 1].month
+              )}
+            </Text>
+          </View>
+          <Sparkline
+            values={analysis.monthlyRates.map((entry) => entry.rate)}
+            height={44}
+            color={
+              analysis.trend === 'down'
+                ? '#E54B4B'
+                : analysis.trend === 'up'
+                  ? '#6BCB77'
+                  : '#9CA3AF'
+            }
+          />
+        </View>
+      )}
 
       {/* Target stats */}
       <View flexDirection="row" gap="$2" marginBottom="$3">

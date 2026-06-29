@@ -28,9 +28,7 @@ export const useSavingsRateTarget = () => {
 
   const loadValue = useCallback(async () => {
     try {
-      const stored = await database.localStorage.get(
-        STORAGE_KEYS.SAVINGS_RATE_TARGET
-      );
+      const stored = await database.localStorage.get(STORAGE_KEYS.SAVINGS_RATE_TARGET);
       setValue(parseTarget(stored));
     } finally {
       setIsLoading(false);

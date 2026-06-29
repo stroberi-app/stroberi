@@ -1,5 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
+import { CircleSlash } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { map, type Observable } from 'rxjs';
@@ -8,8 +9,13 @@ import { Button, styled, Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { buildCategoryColorMap } from '../../lib/chartColors';
+import { formatYAxisLabel } from '../../lib/chartUtils';
 import { calculateCategorySpending } from '../../lib/transactionAnalytics';
-import { SpendBarChart } from './SpendBarChart';
+import { CarouselItemChart } from '../carousel/CarouselItemChart';
+import { CarouselItemText } from '../carousel/CarouselItemText';
+import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
+import { HorizontalBarChart } from './HorizontalBarChart';
 
 type SpendByCategoryProps = {
   chartData: SpendByCategoryChartData;
@@ -91,101 +97,117 @@ export const SpendByCategory = withObservables<
     return nonZeroData.slice(0, maxCategories);
   }, [chartData, categories, maxCategories]);
 
+  // Horizontal bars give category labels their own (vertical) axis, so they can
+  // be far longer than the old rotated vertical-bar labels.
   const formatCategoryLabel = React.useCallback(
     (categoryName: string) => {
       const str = categoryName?.toString() || '';
       if (!str) return '';
-
-      const numCategories = processedData.length;
-      const screenWidth = dimensions.width;
-
-      let maxLength: number;
-      if (numCategories <= 3) {
-        maxLength = screenWidth < 350 ? 12 : 15;
-      } else if (numCategories <= 5) {
-        maxLength = screenWidth < 350 ? 8 : 10;
-      } else {
-        maxLength = screenWidth < 350 ? 6 : 8;
-      }
-
-      if (str.length <= maxLength) return str;
-
-      if (maxLength >= 8) {
-        const words = str.split(' ');
-        if (words.length > 1 && words[0].length <= maxLength - 1) {
-          return `${words[0]}...`;
-        }
-      }
-
-      return `${str.substring(0, maxLength - 3)}...`;
+      const maxLength = dimensions.width < 350 ? 12 : 16;
+      return str.length > maxLength ? `${str.substring(0, maxLength - 1)}…` : str;
     },
-    [processedData.length, dimensions.width]
+    [dimensions.width]
   );
+
+  const barColors = React.useMemo(() => {
+    const colorMap = buildCategoryColorMap(processedData.map((item) => item.category));
+    return processedData.map((item) => colorMap[item.category]);
+  }, [processedData]);
 
   const totalCategories = chartData.filter((item) => item.total > 0).length;
   const hiddenCategories = Math.max(0, totalCategories - maxCategories);
+  const isEmpty = processedData.length === 0;
 
-  return (
-    <SpendBarChart
-      chartData={processedData}
-      title={`Top spend by category (${defaultCurrency})`}
-      xKey={'categoryName'}
-      yKeys={['total']}
-      isEmpty={processedData.length === 0}
-      formatXLabel={formatCategoryLabel}
-      footer={
-        <View gap="$2" alignItems="center">
-          {hiddenCategories > 0 && (
-            <View paddingHorizontal="$2" marginBottom="$1">
-              <View
-                backgroundColor="rgba(255, 255, 255, 0.1)"
-                paddingHorizontal="$2"
-                paddingVertical="$1"
-                borderRadius="$3"
-              >
-                <Text fontSize={11} color="rgba(255, 255, 255, 0.7)">
-                  +{hiddenCategories} more categories
-                </Text>
-              </View>
-            </View>
-          )}
-
+  const filters = (
+    <View gap="$2" alignItems="center">
+      {hiddenCategories > 0 && (
+        <View paddingHorizontal="$2" marginBottom="$1">
           <View
-            flexDirection={'row'}
-            gap={'$2'}
-            justifyContent={'center'}
-            paddingHorizontal={'$2'}
-            flexWrap={'wrap'}
-            alignItems={'center'}
+            backgroundColor="rgba(255, 255, 255, 0.1)"
+            paddingHorizontal="$2"
+            paddingVertical="$1"
+            borderRadius="$3"
           >
-            <FilterButton
-              active={dateFilter === 'thisMonth'}
-              onPress={() => {
-                setDateFilter('thisMonth');
-              }}
-            >
-              This month
-            </FilterButton>
-            <FilterButton
-              active={dateFilter === 'lastMonth'}
-              onPress={() => {
-                setDateFilter('lastMonth');
-              }}
-            >
-              Last month
-            </FilterButton>
-            <FilterButton
-              active={dateFilter === 'thisYear'}
-              onPress={() => {
-                setDateFilter('thisYear');
-              }}
-            >
-              This year
-            </FilterButton>
+            <Text fontSize={11} color="rgba(255, 255, 255, 0.7)">
+              +{hiddenCategories} more categories
+            </Text>
           </View>
         </View>
-      }
-    />
+      )}
+
+      <View
+        flexDirection={'row'}
+        gap={'$2'}
+        justifyContent={'center'}
+        paddingHorizontal={'$2'}
+        flexWrap={'wrap'}
+        alignItems={'center'}
+      >
+        <FilterButton
+          active={dateFilter === 'thisMonth'}
+          onPress={() => {
+            setDateFilter('thisMonth');
+          }}
+        >
+          This month
+        </FilterButton>
+        <FilterButton
+          active={dateFilter === 'lastMonth'}
+          onPress={() => {
+            setDateFilter('lastMonth');
+          }}
+        >
+          Last month
+        </FilterButton>
+        <FilterButton
+          active={dateFilter === 'thisYear'}
+          onPress={() => {
+            setDateFilter('thisYear');
+          }}
+        >
+          This year
+        </FilterButton>
+      </View>
+    </View>
+  );
+
+  return (
+    <CarouselItemWrapper>
+      <View paddingHorizontal="$2" marginBottom="$2">
+        <Text color="white" fontSize={14} fontWeight="bold" fontFamily="Inter">
+          Top spend by category ({defaultCurrency})
+        </Text>
+      </View>
+      <CarouselItemChart>
+        {isEmpty ? (
+          <View
+            width="100%"
+            height="100%"
+            alignItems="center"
+            justifyContent="center"
+            gap="$3"
+          >
+            <CarouselItemText color="darkgray">No data available</CarouselItemText>
+            <CircleSlash size={64} color="darkgray" />
+            <View position="absolute" bottom={0}>
+              {filters}
+            </View>
+          </View>
+        ) : (
+          <>
+            <HorizontalBarChart
+              data={processedData}
+              xKey={'categoryName'}
+              yKey={'total'}
+              colors={barColors}
+              formatXLabel={formatCategoryLabel}
+              formatValueLabel={(value) => formatYAxisLabel(value)}
+            />
+            {filters}
+          </>
+        )}
+      </CarouselItemChart>
+    </CarouselItemWrapper>
   );
 });
 

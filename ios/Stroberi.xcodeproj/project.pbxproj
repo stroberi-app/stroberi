@@ -52,6 +52,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		06A8C56C241642F9AF14CCC4 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Intents;
+			path = Stroberi/Intents;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Stroberi */ = {
 			isa = PBXGroup;
 			children = (
@@ -151,14 +159,6 @@
 				C3727A19F76B57CB5B46A543 /* ExpoModulesProvider.swift */,
 			);
 			name = Stroberi;
-			sourceTree = "<group>";
-		};
-		06A8C56C241642F9AF14CCC4 /* Intents */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Intents;
-			path = Stroberi/Intents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -404,7 +404,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stroberi;
-				PRODUCT_NAME = "Stroberi";
+				PRODUCT_NAME = Stroberi;
 				SWIFT_OBJC_BRIDGING_HEADER = "Stroberi/Stroberi-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -436,7 +436,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stroberi;
-				PRODUCT_NAME = "Stroberi";
+				PRODUCT_NAME = Stroberi;
 				SWIFT_OBJC_BRIDGING_HEADER = "Stroberi/Stroberi-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

@@ -79,7 +79,7 @@
     "rn-emoji-keyboard": "^1.7.0",
     "tamagui": "^2.3.1",
     "typescript": "~5.9.2",
-    "victory-native": "^41.12.5",
+    "victory-native": "41.26.0",
     "zeego": "^1.10.0"
   },
   "devDependencies": {
