@@ -3,7 +3,12 @@ import { Text, View } from 'tamagui';
 import type { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 import { formatSignedCurrency } from '../../lib/analyticsOverview';
 import { formatCurrency } from '../../lib/format';
+import { PeriodComparisonChart } from '../charts/PeriodComparisonChart';
 import { MetricTile, SectionCard } from './SectionCard';
+
+const LegendDot = ({ color }: { color: string }) => (
+  <View width={10} height={10} borderRadius={3} backgroundColor={color} />
+);
 
 type Overview = ReturnType<typeof useAnalyticsOverview>;
 
@@ -108,6 +113,40 @@ export const MoneyPulseCard = ({
         </Text>
       </MetricTile>
     </View>
+
+    {periodTotals.income +
+      periodTotals.expenses +
+      previousPeriodTotals.income +
+      previousPeriodTotals.expenses >
+      0 && (
+      <View marginTop="$4">
+        <View
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="space-between"
+          marginBottom="$2"
+        >
+          <Text fontSize="$2" color="$gray10">
+            This period vs previous
+          </Text>
+          <View flexDirection="row" alignItems="center" gap="$3">
+            <View flexDirection="row" alignItems="center" gap="$1.5">
+              <LegendDot color="rgba(255, 255, 255, 0.92)" />
+              <Text fontSize="$1" color="$gray10">
+                Current
+              </Text>
+            </View>
+            <View flexDirection="row" alignItems="center" gap="$1.5">
+              <LegendDot color="rgba(255, 255, 255, 0.32)" />
+              <Text fontSize="$1" color="$gray10">
+                Previous
+              </Text>
+            </View>
+          </View>
+        </View>
+        <PeriodComparisonChart current={periodTotals} previous={previousPeriodTotals} />
+      </View>
+    )}
 
     <View marginTop="$3">
       <View
