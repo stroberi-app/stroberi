@@ -1,16 +1,16 @@
 import type { Database } from '@nozbe/watermelondb';
 import { useEffect, useMemo, useState } from 'react';
 import { combineLatest } from 'rxjs';
-import type { BudgetPeriod } from '../../../database/budget-model';
-import type { TransactionModel } from '../../../database/transaction-model';
+import type { BudgetPeriod } from '../../database/budget-model';
+import type { TransactionModel } from '../../database/transaction-model';
 import {
   buildBudgetTransactionConditions,
   calculateBudgetPeriodDates,
   calculateRollover,
   getBudgetProgressColor,
   sumBudgetTransactions,
-} from '../../../lib/budgetUtils';
-import { formatCurrency } from '../../../lib/format';
+} from '../../lib/budgetUtils';
+import { formatCurrency } from '../../lib/format';
 
 type UseBudgetPreviewParams = {
   database: Database;
