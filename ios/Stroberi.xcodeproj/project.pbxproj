@@ -52,14 +52,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		06A8C56C241642F9AF14CCC4 /* Intents */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Intents;
-			path = Stroberi/Intents;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* Stroberi */ = {
 			isa = PBXGroup;
 			children = (
@@ -71,7 +63,6 @@
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				3E1FD4E2F5FD44F1B54E75D0 /* Intents */,
 				EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */,
-				06A8C56C241642F9AF14CCC4 /* Intents */,
 			);
 			name = Stroberi;
 			sourceTree = "<group>";

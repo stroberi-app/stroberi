@@ -216,8 +216,8 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
           // Scale bars relative to the highest value in view (rates or target)
           // so month-to-month variation is visible instead of saturating.
           const maxRate = Math.max(
-            ...summary.chartData.map((month) => month.rate),
-            savingsRateTarget,
+            ...summary.chartData.map((month) => Math.abs(month.rate)),
+            Math.abs(savingsRateTarget),
             1
           );
 
@@ -229,8 +229,11 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
               <View flexDirection="row" gap="$1" justifyContent="space-between">
                 {summary.chartData.map((month) => {
                   const fillPercent =
-                    month.rate > 0
-                      ? Math.max(6, Math.min(100, (month.rate / maxRate) * 100))
+                    month.rate !== 0
+                      ? Math.max(
+                          6,
+                          Math.min(100, (Math.abs(month.rate) / maxRate) * 100)
+                        )
                       : 0;
 
                   return (
