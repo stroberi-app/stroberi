@@ -48,10 +48,14 @@ export const getDefaultBudgetFormState = (): BudgetFormState => {
 };
 
 export const buildBudgetFormState = async (
-  budget: BudgetModel | null | undefined
+  budget: BudgetModel | null | undefined,
+  initialCategories: CategoryModel[] = []
 ): Promise<BudgetFormState> => {
   if (!budget) {
-    return getDefaultBudgetFormState();
+    return {
+      ...getDefaultBudgetFormState(),
+      selectedCategories: [...initialCategories],
+    };
   }
 
   const budgetCategories = await budget.budgetCategories.fetch();

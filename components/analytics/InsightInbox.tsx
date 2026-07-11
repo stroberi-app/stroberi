@@ -2,6 +2,8 @@ import { AlertTriangle, CheckCircle2, Info, Lightbulb } from '@tamagui/lucide-ic
 import { useRouter } from 'expo-router';
 import { Text, View, styled } from 'tamagui';
 import type { InsightAction, MoneyInsight } from '../../lib/insights';
+import { buildInsightActionRoute } from '../../lib/insights/actionRoutes';
+import { LinkButton } from '../button/LinkButton';
 import { getInsightInboxEmptyState } from './emptyStates';
 
 type InsightInboxProps = {
@@ -51,16 +53,9 @@ const InsightRow = ({ insight }: { insight: MoneyInsight }) => {
   const action = insight.actions[0];
 
   const onActionPress = (target: InsightAction) => {
-    switch (target.type) {
-      case 'fixCategories':
-      case 'viewTransactions':
-        router.push('/transactions');
-        break;
-      case 'createBudget':
-        router.push('/budgets');
-        break;
-      default:
-        break;
+    const route = buildInsightActionRoute(target);
+    if (route) {
+      router.push(route);
     }
   };
 
@@ -91,16 +86,18 @@ const InsightRow = ({ insight }: { insight: MoneyInsight }) => {
             {insight.body}
           </Text>
           {action && action.type !== 'none' ? (
-            <Text
+            <LinkButton
+              spacing="small"
+              backgroundColor="transparent"
+              color="$stroberi"
               fontSize="$2"
               fontWeight="700"
-              color="$stroberi"
               marginTop="$2"
-              hitSlop={8}
+              accessibilityLabel={action.label}
               onPress={() => onActionPress(action)}
             >
               {action.label}
-            </Text>
+            </LinkButton>
           ) : null}
         </View>
       </View>
