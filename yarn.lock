@@ -5054,15 +5054,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shopify/react-native-skia@npm:2.6.9":
-  version: 2.6.9
-  resolution: "@shopify/react-native-skia@npm:2.6.9"
+"@shopify/react-native-skia@npm:2.2.12":
+  version: 2.2.12
+  resolution: "@shopify/react-native-skia@npm:2.2.12"
   dependencies:
-    canvaskit-wasm: "npm:0.41.0"
-    react-native-skia-android: "npm:150.0.0"
-    react-native-skia-apple-ios: "npm:150.0.0"
-    react-native-skia-apple-macos: "npm:150.0.0"
-    react-native-skia-apple-tvos: "npm:150.0.0"
+    canvaskit-wasm: "npm:0.40.0"
     react-reconciler: "npm:0.31.0"
   peerDependencies:
     react: ">=19.0"
@@ -5075,7 +5071,7 @@ __metadata:
       optional: true
   bin:
     setup-skia-web: scripts/setup-canvaskit.js
-  checksum: 9650707e53467740490112cb15504fe7f575f499e1b0d129014d5bbec2cf45bd9e28a93865cebd677491945bd56b578d5293c73a77e4904cc7b2ee0682d2d170
+  checksum: 2543664085470267a9a6491ee90760f01d258cdd97cda5955d0c9f980ad57d647dffa5670f9d5d5f8cd6180ff46fe1df6f4281ae2e0b5c3632c703479b6a7608
   languageName: node
   linkType: hard
 
@@ -8076,12 +8072,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"canvaskit-wasm@npm:0.41.0":
-  version: 0.41.0
-  resolution: "canvaskit-wasm@npm:0.41.0"
+"canvaskit-wasm@npm:0.40.0":
+  version: 0.40.0
+  resolution: "canvaskit-wasm@npm:0.40.0"
   dependencies:
     "@webgpu/types": "npm:0.1.21"
-  checksum: 3c24e892da8046aa17ba5f47aae8d855c9277aba849ee983e0562c70e9f50178d9dcd16f9420a8b6278adf9dd815f5c4dac09346e88fbcf4d968f959c93eb560
+  checksum: 2bdd0607a0e8e55a40e53be1693e59ee39cc99191dc53a265fdd12842d0f77b20f87862bfe9ecc432ad7f0079dc275505d2d5a828451bccd4f597fc12f14ebb7
   languageName: node
   linkType: hard
 
@@ -14660,34 +14656,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-skia-android@npm:150.0.0":
-  version: 150.0.0
-  resolution: "react-native-skia-android@npm:150.0.0"
-  checksum: 5649a76858ba4beb476f169dc67302ef249ea93e53e64bd330e23a64e68b79b074acd0d451eb81d85d84a79f59deeaebde2d73fbf611748442ad06e88ba77895
-  languageName: node
-  linkType: hard
-
-"react-native-skia-apple-ios@npm:150.0.0":
-  version: 150.0.0
-  resolution: "react-native-skia-apple-ios@npm:150.0.0"
-  checksum: 4171eefc5ddda80dbe41962b87bf3bba5c847f92311bcf8fd953b9cece37a48126a621e89e5a05b00ddb2e787dc2541530ddf994b33d0b835e35579f5ae8a20b
-  languageName: node
-  linkType: hard
-
-"react-native-skia-apple-macos@npm:150.0.0":
-  version: 150.0.0
-  resolution: "react-native-skia-apple-macos@npm:150.0.0"
-  checksum: 6aa2c02abbc08e0a6808e6a1359ec3eee027d9290fb303e33f605341bbda7b6d7c2234340a5e6ded9581b6b0c0edb7cce1fa7e6eb70f9414d0e037ca25e7be91
-  languageName: node
-  linkType: hard
-
-"react-native-skia-apple-tvos@npm:150.0.0":
-  version: 150.0.0
-  resolution: "react-native-skia-apple-tvos@npm:150.0.0"
-  checksum: abfecd5a8b0cc8eeb923560d2ad9f1c5536f8077453aaaedb98a9549b17c71d16b0ed1b601511b1e5fab89b411cd52aba73f9205299e00747db9bb08d8ae62af
-  languageName: node
-  linkType: hard
-
 "react-native-svg@npm:15.12.1":
   version: 15.12.1
   resolution: "react-native-svg@npm:15.12.1"
@@ -16202,7 +16170,7 @@ __metadata:
     "@react-navigation/bottom-tabs": "npm:^7.2.0"
     "@react-navigation/native": "npm:^7.0.14"
     "@shopify/flash-list": "npm:2.0.2"
-    "@shopify/react-native-skia": "npm:2.6.9"
+    "@shopify/react-native-skia": "npm:2.2.12"
     "@tamagui/config": "npm:^2.3.1"
     "@tamagui/lucide-icons": "npm:2.0.0-rc.26"
     "@tamagui/metro-plugin": "npm:^2.3.1"

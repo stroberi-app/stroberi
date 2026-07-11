@@ -12,6 +12,26 @@ export type InsightActionRoute =
 
 const optionalParam = (value: string | undefined) => value?.trim() || undefined;
 
+const optionalPositiveNumber = (value: number | undefined) =>
+  value !== undefined && Number.isFinite(value) && value > 0 ? String(value) : undefined;
+
+const optionalDateRange = (fromDate: Date | undefined, toDate: Date | undefined) => {
+  const fromTime = fromDate?.getTime();
+  const toTime = toDate?.getTime();
+
+  if (
+    fromTime === undefined ||
+    toTime === undefined ||
+    !Number.isFinite(fromTime) ||
+    !Number.isFinite(toTime) ||
+    fromTime > toTime
+  ) {
+    return undefined;
+  }
+
+  return { fromDate: String(fromTime), toDate: String(toTime) };
+};
+
 export const buildInsightActionRoute = (
   action: InsightAction
 ): InsightActionRoute | null => {
@@ -19,6 +39,8 @@ export const buildInsightActionRoute = (
     case 'viewTransactions': {
       const categoryId = optionalParam(action.categoryId);
       const merchant = optionalParam(action.merchant);
+      const maxExpenseAmount = optionalPositiveNumber(action.maxExpenseAmount);
+      const dateRange = optionalDateRange(action.fromDate, action.toDate);
 
       return {
         pathname: '/transactions',
@@ -26,6 +48,8 @@ export const buildInsightActionRoute = (
           insightAction: '1',
           ...(categoryId ? { categoryId } : {}),
           ...(merchant ? { merchant } : {}),
+          ...(maxExpenseAmount ? { maxExpenseAmount } : {}),
+          ...dateRange,
         },
       };
     }

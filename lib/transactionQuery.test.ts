@@ -88,6 +88,26 @@ describe('buildTransactionFilterClauses', () => {
     expect(firstClause.comparison.operator).toBe('gte');
   });
 
+  it('builds a bounded expense filter for small purchases', () => {
+    const clauses = buildTransactionFilterClauses({ maxExpenseAmount: 8 });
+    const lowerBound = clauses[0] as {
+      left: string;
+      comparison: { operator: string; right: { value: number } };
+    };
+    const expenseOnly = clauses[1] as {
+      left: string;
+      comparison: { operator: string; right: { value: number } };
+    };
+
+    expect(clauses.length).toBe(2);
+    expect(lowerBound.left).toBe('amountInBaseCurrency');
+    expect(lowerBound.comparison.operator).toBe('gte');
+    expect(lowerBound.comparison.right.value).toBe(-8);
+    expect(expenseOnly.left).toBe('amountInBaseCurrency');
+    expect(expenseOnly.comparison.operator).toBe('lt');
+    expect(expenseOnly.comparison.right.value).toBe(0);
+  });
+
   it('builds an exact merchant filter', () => {
     const clauses = buildTransactionFilterClauses({ merchant: 'Corner Shop' });
     const clause = clauses[0] as {
