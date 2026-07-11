@@ -3,7 +3,7 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { map, type Observable } from 'rxjs';
-import { Button, styled, View } from 'tamagui';
+import { Button, styled, Text, View } from 'tamagui';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { SpendLineChart } from './SpendLineChart';
@@ -185,19 +185,19 @@ export const SpendingTrends = withObservables<
             active={trendType === 'daily'}
             onPress={() => setTrendType('daily')}
           >
-            This Month
+            <FilterButtonText>This Month</FilterButtonText>
           </FilterButton>
           <FilterButton
             active={trendType === 'last30days'}
             onPress={() => setTrendType('last30days')}
           >
-            Last 30 Days
+            <FilterButtonText>Last 30 Days</FilterButtonText>
           </FilterButton>
           <FilterButton
             active={trendType === 'weekly'}
             onPress={() => setTrendType('weekly')}
           >
-            Weekly
+            <FilterButtonText>Weekly</FilterButtonText>
           </FilterButton>
         </View>
       }
@@ -205,15 +205,19 @@ export const SpendingTrends = withObservables<
   );
 });
 
+const FilterButtonText = styled(Text, {
+  fontSize: 10,
+  color: 'white',
+  marginTop: -2,
+});
+
 const FilterButton = styled(Button, {
   alignSelf: 'flex-start',
   backgroundColor: '$gray',
-  color: 'white',
   borderRadius: '$5',
-  paddingVertical: '$1',
-  paddingHorizontal: '$3',
-  height: 'fit-content',
-  fontSize: '$2',
+  height: 22,
+  paddingVertical: 0,
+  paddingHorizontal: 10,
   variants: {
     active: {
       true: {

@@ -1772,7 +1772,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-skia (2.2.12):
+  - react-native-skia (2.6.9):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2879,7 +2879,7 @@ SPEC CHECKSUMS:
   react-native-keyboard-controller: 1ad78688f744e0ebdf3b04007b91089a254b80f9
   react-native-menu: 2de122c54dc10056932c0c0f73b82adfa4231faf
   react-native-safe-area-context: 37e680fc4cace3c0030ee46e8987d24f5d3bdab2
-  react-native-skia: 05327e7acee05e7c27b68a5da0bc80d65f5d790c
+  react-native-skia: e1b11279d1498807b52cf8106531d1eb70477d1d
   react-native-webview: b29007f4723bca10872028067b07abacfa1cb35a
   React-NativeModulesApple: 8969913947d5b576de4ed371a939455a8daf28aa
   React-oscompat: ce47230ed20185e91de62d8c6d139ae61763d09c

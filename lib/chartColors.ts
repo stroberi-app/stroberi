@@ -47,6 +47,19 @@ export function getCategoryColor(key: string | null | undefined): string {
  * adjacent items across the palette so neighbouring bars/slices stay distinct
  * even when their hashes would otherwise collide.
  */
+/**
+ * Returns the given `#RRGGBB` colour as an `rgba(...)` string at `alpha`
+ * opacity. Used to dim unselected slices/legend entries without changing hue.
+ */
+export function withAlpha(hexColor: string, alpha: number): string {
+  const hex = hexColor.replace('#', '');
+  const value = Number.parseInt(hex, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function buildCategoryColorMap(keys: string[]): Record<string, string> {
   const map: Record<string, string> = {};
   const used = new Set<string>();
