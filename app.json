@@ -13,7 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stroberi",
-      "buildNumber": "54",
+      "buildNumber": "55",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -21,7 +21,7 @@
     "android": {
       "package": "com.stroberi",
       "icon": "./assets/images/logo-round.png",
-      "versionCode": 45,
+      "versionCode": 46,
       "backgroundColor": "#000000"
     },
     "web": {
