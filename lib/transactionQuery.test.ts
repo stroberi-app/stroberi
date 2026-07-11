@@ -87,4 +87,28 @@ describe('buildTransactionFilterClauses', () => {
     expect(firstClause.left).toBe('amountInBaseCurrency');
     expect(firstClause.comparison.operator).toBe('gte');
   });
+
+  it('builds an exact merchant filter', () => {
+    const clauses = buildTransactionFilterClauses({ merchant: 'Corner Shop' });
+    const clause = clauses[0] as {
+      left: string;
+      comparison: { operator: string; right: { value: string } };
+    };
+
+    expect(clause.left).toBe('merchant');
+    expect(clause.comparison.operator).toBe('eq');
+    expect(clause.comparison.right.value).toBe('Corner Shop');
+  });
+
+  it('builds an uncategorized filter without a category list', () => {
+    const clauses = buildTransactionFilterClauses({ uncategorized: true });
+    const clause = clauses[0] as {
+      left: string;
+      comparison: { operator: string; right: { value: null } };
+    };
+
+    expect(clause.left).toBe('categoryId');
+    expect(clause.comparison.operator).toBe('eq');
+    expect(clause.comparison.right.value).toBe(null);
+  });
 });

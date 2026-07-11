@@ -34,6 +34,8 @@ type TransactionsListDataProps = {
   customRange?: [Date, Date];
   categories: CategoryModel[];
   transactionType?: TransactionTypeFilter;
+  merchant?: string;
+  uncategorized?: boolean;
 };
 
 type ListItem = string | TransactionModel;
@@ -160,19 +162,37 @@ const withData = withObservables<
   TransactionsListDataProps,
   { transactions: Observable<TransactionModel[]> }
 >(
-  ['dateFilter', 'customRange', 'categories', 'transactionType'],
-  ({ database, dateFilter, customRange, categories, transactionType }) => {
+  [
+    'dateFilter',
+    'customRange',
+    'categories',
+    'transactionType',
+    'merchant',
+    'uncategorized',
+  ],
+  ({
+    database,
+    dateFilter,
+    customRange,
+    categories,
+    transactionType,
+    merchant,
+    uncategorized,
+  }) => {
     const query = buildTransactionsBaseQuery(database, {
       dateFilter,
       customRange,
       categories,
       transactionType,
+      merchant,
+      uncategorized,
     });
 
     return {
       transactions: query.observeWithColumns([
         'date',
         'categoryId',
+        'merchant',
         'amountInBaseCurrency',
       ]),
     };
