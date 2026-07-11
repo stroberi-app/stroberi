@@ -100,6 +100,8 @@ export const generateCategoryPaceInsights = ({
 type SmallPurchaseArgs = {
   currentTransactions: InsightTransaction[];
   currency: string;
+  fromDate: Date;
+  toDate: Date;
   threshold?: number;
   minimumCount?: number;
 };
@@ -107,6 +109,8 @@ type SmallPurchaseArgs = {
 export const generateSmallPurchaseInsights = ({
   currentTransactions,
   currency,
+  fromDate,
+  toDate,
   threshold = 8,
   minimumCount = 5,
 }: SmallPurchaseArgs): MoneyInsight[] => {
@@ -136,7 +140,15 @@ export const generateSmallPurchaseInsights = ({
         current: amount,
         transactionIds: smallPurchases.map((transaction) => transaction.id),
       },
-      actions: [{ type: 'viewTransactions', label: 'Review small purchases' }],
+      actions: [
+        {
+          type: 'viewTransactions',
+          label: 'Review small purchases',
+          maxExpenseAmount: threshold,
+          fromDate,
+          toDate,
+        },
+      ],
     },
   ];
 };

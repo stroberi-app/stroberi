@@ -27,6 +27,9 @@ export default function TransactionsScreen() {
     categoryId?: string | string[];
     merchant?: string | string[];
     uncategorized?: string | string[];
+    maxExpenseAmount?: string | string[];
+    fromDate?: string | string[];
+    toDate?: string | string[];
   }>();
   const router = useRouter();
   const { top } = useSafeAreaInsets();
@@ -35,6 +38,7 @@ export default function TransactionsScreen() {
   const [transactionType, setTransactionType] = useState<TransactionTypeFilter>('all');
   const [merchantFilter, setMerchantFilter] = useState<string | undefined>();
   const [uncategorizedOnly, setUncategorizedOnly] = useState(false);
+  const [maxExpenseAmount, setMaxExpenseAmount] = useState<number | undefined>();
   const sheetRef = React.useRef<BottomSheetModal>(null);
   const dateSheetRef = React.useRef<BottomSheetModal>(null);
   const database = useDatabase();
@@ -54,8 +58,19 @@ export default function TransactionsScreen() {
         categoryId: params.categoryId,
         merchant: params.merchant,
         uncategorized: params.uncategorized,
+        maxExpenseAmount: params.maxExpenseAmount,
+        fromDate: params.fromDate,
+        toDate: params.toDate,
       }),
-    [params.categoryId, params.insightAction, params.merchant, params.uncategorized]
+    [
+      params.categoryId,
+      params.fromDate,
+      params.insightAction,
+      params.maxExpenseAmount,
+      params.merchant,
+      params.toDate,
+      params.uncategorized,
+    ]
   );
 
   React.useEffect(() => {
@@ -63,10 +78,17 @@ export default function TransactionsScreen() {
 
     let cancelled = false;
 
-    setDateFilter(null);
+    if (insightRoute.dateRange) {
+      setFromDate(insightRoute.dateRange[0]);
+      setToDate(insightRoute.dateRange[1]);
+      setDateFilter('Custom');
+    } else {
+      setDateFilter(null);
+    }
     setTransactionType('all');
     setMerchantFilter(insightRoute.merchant);
     setUncategorizedOnly(insightRoute.uncategorized);
+    setMaxExpenseAmount(insightRoute.maxExpenseAmount);
 
     const applyCategory = async () => {
       if (!insightRoute.categoryId) {
@@ -87,6 +109,9 @@ export default function TransactionsScreen() {
           categoryId: undefined,
           merchant: undefined,
           uncategorized: undefined,
+          maxExpenseAmount: undefined,
+          fromDate: undefined,
+          toDate: undefined,
         });
       }
     };
@@ -106,6 +131,7 @@ export default function TransactionsScreen() {
     setTransactionType('all');
     setMerchantFilter(undefined);
     setUncategorizedOnly(false);
+    setMaxExpenseAmount(undefined);
     setFromDate(new Date());
     setToDate(new Date());
   }, []);
@@ -116,6 +142,7 @@ export default function TransactionsScreen() {
     transactionType,
     merchant: merchantFilter,
     uncategorized: uncategorizedOnly,
+    maxExpenseAmount,
   });
   return (
     <>
@@ -146,6 +173,7 @@ export default function TransactionsScreen() {
           transactionType={transactionType}
           merchant={merchantFilter}
           uncategorized={uncategorizedOnly}
+          maxExpenseAmount={maxExpenseAmount}
           appliedNumberOfFilters={appliedNumberOfFilters}
           onClearFilters={clearFilters}
           scrollRef={scrollRef}
@@ -161,7 +189,10 @@ export default function TransactionsScreen() {
         />
         <TransactionTypeFilterSection
           transactionType={transactionType}
-          setTransactionType={setTransactionType}
+          setTransactionType={(nextType) => {
+            setTransactionType(nextType);
+            setMaxExpenseAmount(undefined);
+          }}
         />
         <CategoryFilterSection
           selectedCategories={selectedCategories}

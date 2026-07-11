@@ -54,11 +54,22 @@ describe('insight generators', () => {
         tx('e', 7, '2026-06-05'),
       ],
       currency: 'EUR',
+      fromDate: new Date('2026-06-01T00:00:00.000Z'),
+      toDate: new Date('2026-06-30T23:59:59.999Z'),
     });
 
     expect(insights.length).toBe(1);
     expect(insights[0].amount).toBe(31);
     expect(insights[0].evidence.transactionIds).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(insights[0].actions).toEqual([
+      {
+        type: 'viewTransactions',
+        label: 'Review small purchases',
+        maxExpenseAmount: 8,
+        fromDate: new Date('2026-06-01T00:00:00.000Z'),
+        toDate: new Date('2026-06-30T23:59:59.999Z'),
+      },
+    ]);
   });
 
   it('creates a data quality insight for uncategorized spending', () => {
