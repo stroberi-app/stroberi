@@ -3,19 +3,18 @@ import { withObservables } from '@nozbe/watermelondb/react';
 import { CircleSlash } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import * as React from 'react';
+import { Pressable } from 'react-native';
 import { map, type Observable } from 'rxjs';
-import { useWindowDimensions } from 'react-native';
 import { Button, styled, Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
-import { buildCategoryColorMap } from '../../lib/chartColors';
-import { formatYAxisLabel } from '../../lib/chartUtils';
+import { buildCategoryColorMap, withAlpha } from '../../lib/chartColors';
+import { formatCurrency } from '../../lib/format';
 import { calculateCategorySpending } from '../../lib/transactionAnalytics';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
 import { CarouselItemText } from '../carousel/CarouselItemText';
 import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
-import { HorizontalBarChart } from './HorizontalBarChart';
 
 type SpendByCategoryProps = {
   chartData: SpendByCategoryChartData;
@@ -72,47 +71,54 @@ export const SpendByCategory = withObservables<
       .pipe(map((transactions) => calculateCategorySpending(transactions))),
   };
 })(({ chartData, categories, dateFilter, setDateFilter }: SpendByCategoryProps) => {
-  const dimensions = useWindowDimensions();
   const { defaultCurrency } = useDefaultCurrency();
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
-  const maxCategories = React.useMemo(() => {
-    const screenWidth = dimensions.width;
-    if (screenWidth < 350) return 4;
-    if (screenWidth < 400) return 5;
-    if (screenWidth < 500) return 6;
-    return 7;
-  }, [dimensions.width]);
+  const maxCategories = 6;
+
+  const overallTotal = React.useMemo(
+    () => chartData.reduce((sum, item) => sum + item.total, 0),
+    [chartData]
+  );
 
   const processedData = React.useMemo(() => {
     const dataWithNames = chartData
-      .map(({ category, total }) => ({
-        category,
-        total,
-        categoryName: categories.find((c) => c.id === category)?.name || 'Uncategorized',
-      }))
-      .sort((a, b) => b.total - a.total);
+      .map(({ category, total }) => {
+        const categoryModel = categories.find((c) => c.id === category);
+        return {
+          id: category,
+          total,
+          name: categoryModel?.name || 'Uncategorized',
+          icon: categoryModel?.icon || '📦',
+        };
+      })
+      .sort((a, b) => b.total - a.total)
+      .filter((item) => item.total > 0);
 
-    const nonZeroData = dataWithNames.filter((item) => item.total > 0);
+    return dataWithNames.slice(0, maxCategories);
+  }, [chartData, categories]);
 
-    return nonZeroData.slice(0, maxCategories);
-  }, [chartData, categories, maxCategories]);
-
-  // Horizontal bars give category labels their own (vertical) axis, so they can
-  // be far longer than the old rotated vertical-bar labels.
-  const formatCategoryLabel = React.useCallback(
-    (categoryName: string) => {
-      const str = categoryName?.toString() || '';
-      if (!str) return '';
-      const maxLength = dimensions.width < 350 ? 12 : 16;
-      return str.length > maxLength ? `${str.substring(0, maxLength - 1)}…` : str;
-    },
-    [dimensions.width]
+  const colorMap = React.useMemo(
+    () => buildCategoryColorMap(processedData.map((item) => item.id)),
+    [processedData]
   );
 
-  const barColors = React.useMemo(() => {
-    const colorMap = buildCategoryColorMap(processedData.map((item) => item.category));
-    return processedData.map((item) => colorMap[item.category]);
-  }, [processedData]);
+  // Reset the selection whenever the underlying category data changes (e.g.
+  // switching date filters) so a stale selection can't linger on screen.
+  // Adjusting state during render (React's recommended pattern for this)
+  // avoids the extra render an equivalent useEffect would cost.
+  const [prevChartData, setPrevChartData] = React.useState(chartData);
+  if (chartData !== prevChartData) {
+    setPrevChartData(chartData);
+    setSelectedId(null);
+  }
+
+  const shownTotal = React.useMemo(
+    () => processedData.reduce((sum, item) => sum + item.total, 0),
+    [processedData]
+  );
+
+  const selectedItem = processedData.find((item) => item.id === selectedId) ?? null;
 
   const totalCategories = chartData.filter((item) => item.total > 0).length;
   const hiddenCategories = Math.max(0, totalCategories - maxCategories);
@@ -120,21 +126,6 @@ export const SpendByCategory = withObservables<
 
   const filters = (
     <View gap="$2" alignItems="center">
-      {hiddenCategories > 0 && (
-        <View paddingHorizontal="$2" marginBottom="$1">
-          <View
-            backgroundColor="rgba(255, 255, 255, 0.1)"
-            paddingHorizontal="$2"
-            paddingVertical="$1"
-            borderRadius="$3"
-          >
-            <Text fontSize={11} color="rgba(255, 255, 255, 0.7)">
-              +{hiddenCategories} more categories
-            </Text>
-          </View>
-        </View>
-      )}
-
       <View
         flexDirection={'row'}
         gap={'$2'}
@@ -149,7 +140,7 @@ export const SpendByCategory = withObservables<
             setDateFilter('thisMonth');
           }}
         >
-          This month
+          <FilterButtonText>This month</FilterButtonText>
         </FilterButton>
         <FilterButton
           active={dateFilter === 'lastMonth'}
@@ -157,7 +148,7 @@ export const SpendByCategory = withObservables<
             setDateFilter('lastMonth');
           }}
         >
-          Last month
+          <FilterButtonText>Last month</FilterButtonText>
         </FilterButton>
         <FilterButton
           active={dateFilter === 'thisYear'}
@@ -165,7 +156,7 @@ export const SpendByCategory = withObservables<
             setDateFilter('thisYear');
           }}
         >
-          This year
+          <FilterButtonText>This year</FilterButtonText>
         </FilterButton>
       </View>
     </View>
@@ -194,32 +185,102 @@ export const SpendByCategory = withObservables<
             </View>
           </View>
         ) : (
-          <>
-            <HorizontalBarChart
-              data={processedData}
-              xKey={'categoryName'}
-              yKey={'total'}
-              colors={barColors}
-              formatXLabel={formatCategoryLabel}
-              formatValueLabel={(value) => formatYAxisLabel(value)}
-            />
+          <View flex={1} justifyContent="space-between">
+            <View paddingHorizontal="$2" gap="$2">
+              <View flexDirection="row" justifyContent="space-between" alignItems="baseline">
+                <Text fontSize="$1" color="$gray10">
+                  Top {processedData.length}
+                </Text>
+                <Text fontSize="$3" fontWeight="bold" color="white">
+                  {formatCurrency(shownTotal, defaultCurrency ?? 'USD')}
+                </Text>
+              </View>
+              <View flexDirection="row" height={10} borderRadius={5} overflow="hidden">
+                {processedData.map((item) => {
+                  const share = shownTotal > 0 ? item.total / shownTotal : 0;
+                  const isDimmed = selectedId !== null && selectedId !== item.id;
+                  return (
+                    <View
+                      key={item.id}
+                      flex={share}
+                      backgroundColor={
+                        isDimmed ? withAlpha(colorMap[item.id], 0.25) : colorMap[item.id]
+                      }
+                    />
+                  );
+                })}
+              </View>
+              <View gap="$1.5">
+                {processedData.map((item) => {
+                  const pct =
+                    overallTotal > 0 ? Math.round((item.total / overallTotal) * 100) : 0;
+                  const isSelected = selectedId === item.id;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() =>
+                        setSelectedId((current) => (current === item.id ? null : item.id))
+                      }
+                    >
+                      <View
+                        flexDirection="row"
+                        alignItems="center"
+                        gap="$2"
+                        opacity={selectedId !== null && !isSelected ? 0.4 : 1}
+                      >
+                        <View
+                          width={8}
+                          height={8}
+                          borderRadius={4}
+                          backgroundColor={colorMap[item.id]}
+                        />
+                        <Text fontSize={11} color="white" flex={1} numberOfLines={1}>
+                          {item.icon} {item.name}
+                        </Text>
+                        <Text fontSize={11} color="$gray10" fontWeight="600">
+                          {pct}%
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+                {hiddenCategories > 0 && (
+                  <Text fontSize={10} color="$gray10">
+                    +{hiddenCategories} more {hiddenCategories === 1 ? 'category' : 'categories'}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View height={16} justifyContent="center" paddingHorizontal="$3">
+              <Text fontSize={11} color={selectedItem ? 'white' : '$gray10'} numberOfLines={1}>
+                {selectedItem
+                  ? `${selectedItem.icon} ${selectedItem.name} — ${formatCurrency(selectedItem.total, defaultCurrency ?? 'USD')}`
+                  : 'Tap a category for details'}
+              </Text>
+            </View>
             {filters}
-          </>
+          </View>
         )}
       </CarouselItemChart>
     </CarouselItemWrapper>
   );
 });
 
+const FilterButtonText = styled(Text, {
+  fontSize: 10,
+  color: 'white',
+  marginTop: -2,
+});
+
 const FilterButton = styled(Button, {
   alignSelf: 'flex-start',
   backgroundColor: '$gray',
-  color: 'white',
   borderRadius: '$5',
-  paddingVertical: '$1',
-  paddingHorizontal: '$3',
-  height: 'fit-content',
-  fontSize: '$2',
+  height: 22,
+  paddingVertical: 0,
+  paddingHorizontal: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
   variants: {
     active: {
       true: {

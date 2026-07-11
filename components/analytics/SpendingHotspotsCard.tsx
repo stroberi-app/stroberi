@@ -92,7 +92,7 @@ export const SpendingHotspotsCard = ({
         </View>
       )}
 
-      {categoryHotspots.slice(0, 5).map((item, index) => (
+      {categoryHotspots.slice(0, 6).map((item, index) => (
         <View key={item.categoryId}>
           {index > 0 && <Separator marginVertical="$3" borderColor="$gray5" />}
           <View
