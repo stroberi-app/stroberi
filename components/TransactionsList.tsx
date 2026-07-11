@@ -36,6 +36,7 @@ type TransactionsListDataProps = {
   transactionType?: TransactionTypeFilter;
   merchant?: string;
   uncategorized?: boolean;
+  maxExpenseAmount?: number;
 };
 
 type ListItem = string | TransactionModel;
@@ -169,6 +170,7 @@ const withData = withObservables<
     'transactionType',
     'merchant',
     'uncategorized',
+    'maxExpenseAmount',
   ],
   ({
     database,
@@ -178,6 +180,7 @@ const withData = withObservables<
     transactionType,
     merchant,
     uncategorized,
+    maxExpenseAmount,
   }) => {
     const query = buildTransactionsBaseQuery(database, {
       dateFilter,
@@ -186,6 +189,7 @@ const withData = withObservables<
       transactionType,
       merchant,
       uncategorized,
+      maxExpenseAmount,
     });
 
     return {

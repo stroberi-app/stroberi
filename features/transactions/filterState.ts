@@ -7,6 +7,7 @@ type ActiveTransactionFilters = {
   transactionType: TransactionTypeFilter;
   merchant?: string;
   uncategorized?: boolean;
+  maxExpenseAmount?: number;
 };
 
 export const countActiveTransactionFilters = ({
@@ -15,6 +16,7 @@ export const countActiveTransactionFilters = ({
   transactionType,
   merchant,
   uncategorized = false,
+  maxExpenseAmount,
 }: ActiveTransactionFilters) =>
   [
     dateFilter,
@@ -22,4 +24,5 @@ export const countActiveTransactionFilters = ({
     transactionType !== 'all' ? transactionType : null,
     merchant ? 'merchant' : null,
     uncategorized ? 'uncategorized' : null,
+    maxExpenseAmount ? 'maxExpenseAmount' : null,
   ].filter(Boolean).length;

@@ -1,7 +1,7 @@
 {
   "name": "stroberi",
   "main": "expo-router/entry",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "scripts": {
     "upgrade:tamagui": "yarn up '*tamagui*'@latest '@tamagui/*'@latest",
     "upgrade:tamagui:canary": "yarn up '*tamagui*'@canary '@tamagui/*'@canary",
@@ -31,7 +31,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@shopify/flash-list": "2.0.2",
-    "@shopify/react-native-skia": "2.6.9",
+    "@shopify/react-native-skia": "2.2.12",
     "@tamagui/config": "^2.3.1",
     "@tamagui/lucide-icons": "2.0.0-rc.26",
     "@tamagui/metro-plugin": "^2.3.1",

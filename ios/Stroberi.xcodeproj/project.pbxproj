@@ -64,6 +64,7 @@
 				3E1FD4E2F5FD44F1B54E75D0 /* Intents */,
 				EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */,
 				A30DF21BD39F46528CB00421 /* Intents */,
+				2AC1AA615EE04DA8B0D6C0FC /* Intents */,
 			);
 			name = Stroberi;
 			sourceTree = "<group>";
@@ -154,6 +155,14 @@
 			sourceTree = "<group>";
 		};
 		A30DF21BD39F46528CB00421 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Intents;
+			path = Stroberi/Intents;
+			sourceTree = "<group>";
+		};
+		2AC1AA615EE04DA8B0D6C0FC /* Intents */ = {
 			isa = PBXGroup;
 			children = (
 			);

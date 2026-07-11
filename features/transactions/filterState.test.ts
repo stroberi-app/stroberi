@@ -8,8 +8,9 @@ describe('countActiveTransactionFilters', () => {
         transactionType: 'all',
         merchant: 'Corner Shop',
         uncategorized: true,
+        maxExpenseAmount: 8,
       })
-    ).toBe(2);
+    ).toBe(3);
   });
 
   it('returns zero when every filter is cleared', () => {

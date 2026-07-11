@@ -79,7 +79,12 @@ export const buildInsightsOverview = ({
       categories,
       currency,
     }),
-    ...generateSmallPurchaseInsights({ currentTransactions, currency }),
+    ...generateSmallPurchaseInsights({
+      currentTransactions,
+      currency,
+      fromDate,
+      toDate: comparisonToDate,
+    }),
     ...generateDataQualityInsights(dataQuality, currency),
   ]);
 
