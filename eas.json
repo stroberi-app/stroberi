@@ -23,6 +23,16 @@
       "channel": "development-simulator"
     }
   },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6740559308"
+      },
+      "android": {
+        "track": "internal"
+      }
+    }
+  },
   "cli": {
     "appVersionSource": "local"
   }
