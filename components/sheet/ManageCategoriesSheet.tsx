@@ -59,7 +59,7 @@ export const ManageCategoriesSheet = ({
         backdropComponent={CustomBackdrop}
         backgroundStyle={backgroundStyle}
       >
-        <BottomSheetView>
+        <BottomSheetView style={{ flex: 1 }}>
           <View
             flexDirection="row"
             alignItems="center"
