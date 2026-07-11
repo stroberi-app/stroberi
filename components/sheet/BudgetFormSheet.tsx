@@ -55,12 +55,14 @@ const THRESHOLD_OPTIONS = [
 type BudgetFormSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal | null>;
   budget?: BudgetModel | null;
+  initialCategories?: CategoryModel[];
   onSuccess: () => void;
 };
 
 export const BudgetFormSheet = ({
   sheetRef,
   budget,
+  initialCategories,
   onSuccess,
 }: BudgetFormSheetProps) => {
   const database = useDatabase();
@@ -96,12 +98,12 @@ export const BudgetFormSheet = ({
 
   useEffect(() => {
     const loadBudgetData = async () => {
-      const nextState = await buildBudgetFormState(budget);
+      const nextState = await buildBudgetFormState(budget, initialCategories);
       applyFormState(nextState);
     };
 
     loadBudgetData();
-  }, [applyFormState, budget]);
+  }, [applyFormState, budget, initialCategories]);
 
   const selectedCategoryIds = useMemo(
     () => selectedCategories.map((category) => category.id).sort(),

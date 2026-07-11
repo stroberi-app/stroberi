@@ -2,8 +2,9 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useScrollToTop } from '@react-navigation/native';
 import { Filter } from '@tamagui/lucide-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from 'tamagui';
 import { Button } from '../../components/button/Button';
@@ -15,14 +16,25 @@ import DateFilterSection from '../../components/filtering/DateFilterSection';
 import TransactionTypeFilterSection from '../../components/filtering/TransactionTypeFilterSection';
 import TransactionsList from '../../components/TransactionsList';
 import type { CategoryModel } from '../../database/category-model';
+import { countActiveTransactionFilters } from '../../features/transactions/filterState';
+import { parseTransactionInsightRoute } from '../../features/transactions/insightRoute';
 import type { DateFilters } from '../../lib/date';
 import type { TransactionTypeFilter } from '../../lib/transactionQuery';
 
 export default function TransactionsScreen() {
+  const params = useLocalSearchParams<{
+    insightAction?: string | string[];
+    categoryId?: string | string[];
+    merchant?: string | string[];
+    uncategorized?: string | string[];
+  }>();
+  const router = useRouter();
   const { top } = useSafeAreaInsets();
   const [dateFilter, setDateFilter] = useState<DateFilters | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<CategoryModel[]>([]);
   const [transactionType, setTransactionType] = useState<TransactionTypeFilter>('all');
+  const [merchantFilter, setMerchantFilter] = useState<string | undefined>();
+  const [uncategorizedOnly, setUncategorizedOnly] = useState(false);
   const sheetRef = React.useRef<BottomSheetModal>(null);
   const dateSheetRef = React.useRef<BottomSheetModal>(null);
   const database = useDatabase();
@@ -35,14 +47,76 @@ export default function TransactionsScreen() {
     }
     return [fromDate, toDate];
   }, [dateFilter, fromDate, toDate]);
+  const insightRoute = useMemo(
+    () =>
+      parseTransactionInsightRoute({
+        insightAction: params.insightAction,
+        categoryId: params.categoryId,
+        merchant: params.merchant,
+        uncategorized: params.uncategorized,
+      }),
+    [params.categoryId, params.insightAction, params.merchant, params.uncategorized]
+  );
+
+  React.useEffect(() => {
+    if (!insightRoute) return;
+
+    let cancelled = false;
+
+    setDateFilter(null);
+    setTransactionType('all');
+    setMerchantFilter(insightRoute.merchant);
+    setUncategorizedOnly(insightRoute.uncategorized);
+
+    const applyCategory = async () => {
+      if (!insightRoute.categoryId) {
+        setSelectedCategories([]);
+      } else {
+        const category = await database
+          .get<CategoryModel>('categories')
+          .find(insightRoute.categoryId)
+          .catch(() => null);
+
+        if (cancelled) return;
+        setSelectedCategories(category ? [category] : []);
+      }
+
+      if (!cancelled) {
+        router.setParams({
+          insightAction: undefined,
+          categoryId: undefined,
+          merchant: undefined,
+          uncategorized: undefined,
+        });
+      }
+    };
+
+    applyCategory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [database, insightRoute, router]);
 
   useScrollToTop(scrollRef);
 
-  const appliedNumberOfFilters = [
+  const clearFilters = useCallback(() => {
+    setDateFilter(null);
+    setSelectedCategories([]);
+    setTransactionType('all');
+    setMerchantFilter(undefined);
+    setUncategorizedOnly(false);
+    setFromDate(new Date());
+    setToDate(new Date());
+  }, []);
+
+  const appliedNumberOfFilters = countActiveTransactionFilters({
     dateFilter,
-    selectedCategories.length > 0 ? 'categories' : null,
-    transactionType !== 'all' ? transactionType : null,
-  ].filter(Boolean).length;
+    categoryCount: selectedCategories.length,
+    transactionType,
+    merchant: merchantFilter,
+    uncategorized: uncategorizedOnly,
+  });
   return (
     <>
       <View
@@ -70,14 +144,10 @@ export default function TransactionsScreen() {
           customRange={customRange}
           categories={selectedCategories}
           transactionType={transactionType}
+          merchant={merchantFilter}
+          uncategorized={uncategorizedOnly}
           appliedNumberOfFilters={appliedNumberOfFilters}
-          onClearFilters={() => {
-            setDateFilter(null);
-            setSelectedCategories([]);
-            setTransactionType('all');
-            setFromDate(new Date());
-            setToDate(new Date());
-          }}
+          onClearFilters={clearFilters}
           scrollRef={scrollRef}
         />
       </View>
@@ -95,8 +165,29 @@ export default function TransactionsScreen() {
         />
         <CategoryFilterSection
           selectedCategories={selectedCategories}
-          setSelectedCategory={setSelectedCategories}
+          setSelectedCategory={(categories) => {
+            setSelectedCategories(categories);
+            if (categories.length > 0) {
+              setUncategorizedOnly(false);
+            }
+          }}
         />
+        {appliedNumberOfFilters > 0 && (
+          <View paddingHorizontal="$4" paddingTop="$3">
+            <LinkButton
+              spacing="small"
+              backgroundColor="$gray4"
+              color="$stroberi"
+              accessibilityLabel="Clear all transaction filters"
+              onPress={() => {
+                clearFilters();
+                sheetRef.current?.close();
+              }}
+            >
+              Clear all filters
+            </LinkButton>
+          </View>
+        )}
       </BottomSheetDynamicSize>
       <BottomSheetDynamicSize sheetRef={dateSheetRef}>
         <View paddingHorizontal="$4" paddingVertical="$2" gap="$5">
