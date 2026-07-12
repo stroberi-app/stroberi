@@ -1,14 +1,15 @@
 import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useActionSheet } from '@expo/react-native-action-sheet';
-import { ArrowLeft, PlusCircle, Search } from '@tamagui/lucide-icons';
+import { ArrowLeft, PlusCircle, Search, Trash2 } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Text, View } from 'tamagui';
 import { LinkButton } from '../components/button/LinkButton';
-import { ListItem } from '../components/ListItem';
+import { CategoryRow } from '../components/CategoryRow';
+import { backgroundStyle } from '../components/sheet/constants';
 import type { CategoryModel } from '../database/category-model';
 import { deleteCategory } from '../database/actions/categories';
 import { selectCategoryForHandler } from '../lib/categorySelectionBridge';
@@ -28,7 +29,7 @@ export default function SelectCategoryScreen() {
   const database = useDatabase();
   const router = useRouter();
   const params = useLocalSearchParams<CategoryRouteParams>();
-  const { top, bottom } = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
   const [search, setSearch] = useState('');
@@ -156,41 +157,31 @@ export default function SelectCategoryScreen() {
 
       if (isManageMode) {
         return (
-          <View
-            flexDirection="row"
-            alignItems="center"
-            borderWidth="$0.5"
-            borderColor="$borderColor"
-            paddingLeft="$4"
-          >
-            <Pressable style={styles.manageRowMain} onPress={() => handleEdit(item)}>
-              <Text fontSize="$5" fontWeight="bold" flex={1}>
-                {item.name}
-              </Text>
-              <Text fontSize="$5" marginRight="$4">
-                {item.icon}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={styles.deleteButton}
-              onPress={() => handleDelete(item)}
-              accessibilityLabel={`Delete ${item.name}`}
-              accessibilityRole="button"
-            >
-              <Text color="$stroberi" fontSize="$3" fontWeight="700">
-                Delete
-              </Text>
-            </Pressable>
-          </View>
+          <CategoryRow
+            name={item.name}
+            icon={item.icon}
+            onPress={() => handleEdit(item)}
+            right={
+              <Pressable
+                hitSlop={10}
+                onPress={() => handleDelete(item)}
+                accessibilityLabel={`Delete ${item.name}`}
+                accessibilityRole="button"
+              >
+                <Trash2 size={18} color="$stroberi" />
+              </Pressable>
+            }
+          />
         );
       }
 
       return (
-        <View flexDirection="row" alignItems="center">
-          <Pressable style={{ flex: 1 }} onPress={() => handleSelect(item)}>
-            <ListItem name={item.name} extra={item.icon} selected={selected} />
-          </Pressable>
-        </View>
+        <CategoryRow
+          name={item.name}
+          icon={item.icon}
+          selected={selected}
+          onPress={() => handleSelect(item)}
+        />
       );
     },
     [
@@ -205,12 +196,13 @@ export default function SelectCategoryScreen() {
   );
 
   return (
-    <View flex={1} backgroundColor="$background" paddingTop={top + 8}>
+    <View flex={1} backgroundColor={backgroundStyle.backgroundColor}>
       <View
         flexDirection="row"
         alignItems="center"
         justifyContent="space-between"
         paddingHorizontal="$3"
+        paddingTop="$5"
         marginBottom="$3"
       >
         <LinkButton
@@ -229,6 +221,19 @@ export default function SelectCategoryScreen() {
           <LinkButton backgroundColor="$green" color="white" onPress={handleDone}>
             Done
           </LinkButton>
+        ) : isManageMode ? (
+          <View width={72} alignItems="flex-end">
+            <LinkButton
+              alignSelf="flex-end"
+              backgroundColor="transparent"
+              paddingHorizontal="$2"
+              onPress={() => handleEdit(null)}
+              accessibilityLabel="Create category"
+              accessibilityRole="button"
+            >
+              <PlusCircle size={22} color="$green" />
+            </LinkButton>
+          </View>
         ) : (
           <View width={72} />
         )}
@@ -240,8 +245,9 @@ export default function SelectCategoryScreen() {
           alignItems="center"
           gap="$2"
           backgroundColor="$gray3"
-          borderRadius="$3"
-          paddingHorizontal="$3"
+          borderRadius="$6"
+          paddingHorizontal="$4"
+          paddingVertical="$1"
         >
           <Search size={18} color="gray" />
           <Input
@@ -260,50 +266,24 @@ export default function SelectCategoryScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderCategory}
         keyboardShouldPersistTaps="handled"
+        ItemSeparatorComponent={() => <View height={10} />}
         ListHeaderComponent={
-          isManageMode ? (
-            <Pressable style={styles.createRow} onPress={() => handleEdit(null)}>
-              <PlusCircle size={20} color="white" />
-              <Text color="white" fontSize="$5" fontWeight="700">
-                Create category
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable onPress={() => handleSelect(null)}>
-              <ListItem
+          isManageMode ? null : (
+            <View marginBottom="$2.5">
+              <CategoryRow
                 name={isMultiMode ? 'All categories' : 'Uncategorized'}
-                extra="📦"
+                icon="📦"
                 selected={isMultiMode ? selectedIds.size === 0 : !selectedCategoryId}
+                onPress={() => handleSelect(null)}
               />
-            </Pressable>
+            </View>
           )
         }
-        contentContainerStyle={{ paddingBottom: bottom + 16 }}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          paddingBottom: bottom + 16,
+        }}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  createRow: {
-    alignItems: 'center',
-    borderColor: '#2f2f35',
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  deleteButton: {
-    alignItems: 'center',
-    height: 48,
-    justifyContent: 'center',
-    width: 72,
-  },
-  manageRowMain: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    minHeight: 48,
-  },
-});
