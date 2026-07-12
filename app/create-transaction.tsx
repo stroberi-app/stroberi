@@ -26,7 +26,6 @@ import { CurrencyInput } from '../components/CurrencyInput';
 import { CurrencySelect } from '../components/CurrencySelect';
 import { DatePicker } from '../components/DatePicker';
 import { StyledScrollView } from '../components/StyledScrollView';
-import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
 import { TripSelect } from '../components/TripSelect';
 import type { CategoryModel } from '../database/category-model';
 import { createTransaction, updateTransaction } from '../database/actions/transactions';
@@ -48,6 +47,7 @@ import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../hooks/useTripsEnabled';
 import useToast from '../hooks/useToast';
 import { useTransactionFormSheets } from '../hooks/useTransactionFormSheets';
+import { registerCategorySelectionHandler } from '../lib/categorySelectionBridge';
 
 const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
   <FullWindowOverlay>
@@ -90,10 +90,8 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 function CreateTransaction() {
   const {
     currencySheetRef,
-    categoriesSheetRef,
     tripSheetRef,
     isCurrencySheetMounted,
-    isCategoriesSheetMounted,
     isTripSheetMounted,
     requestSheetOpen,
   } = useTransactionFormSheets();
@@ -101,6 +99,9 @@ function CreateTransaction() {
   const router = useRouter();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const amountInputRef = useRef<InputRef | null>(null);
+  const categorySelectionIdRef = useRef(
+    `create-transaction-${Date.now()}-${Math.random()}`
+  );
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
   const { legacyCategory, legacyTransaction, transactionId, transactionType } =
@@ -129,6 +130,16 @@ function CreateTransaction() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [amountValidationError, setAmountValidationError] = useState<string | null>(null);
+
+  useEffect(
+    () =>
+      registerCategorySelectionHandler(categorySelectionIdRef.current, (category) => {
+        if (!Array.isArray(category)) {
+          setSelectedCategory(category);
+        }
+      }),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -418,7 +429,13 @@ function CreateTransaction() {
             <LinkButton
               color="white"
               onPress={() => {
-                requestSheetOpen('categories');
+                router.push({
+                  pathname: '/select-category',
+                  params: {
+                    selectionId: categorySelectionIdRef.current,
+                    selectedCategoryId: selectedCategory?.id,
+                  },
+                });
               }}
             >
               {selectedCategory ? (
@@ -477,14 +494,6 @@ function CreateTransaction() {
             currencySheetRef.current?.close();
           }}
           selectedCurrency={selectedCurrency}
-        />
-      )}
-      {isCategoriesSheetMounted && (
-        <ManageCategoriesSheet
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          sheetRef={categoriesSheetRef}
-          containerComponent={modalContainerComponent}
         />
       )}
       {tripsEnabled && isTripSheetMounted && (
