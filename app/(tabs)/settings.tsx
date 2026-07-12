@@ -22,7 +22,6 @@ import { Switch } from '../../components/Switch';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
-import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
 import { ShortcutsSetupSheet } from '../../components/sheet/ShortcutsSetupSheet';
 import { ManageRecurringTransactionsSheet } from '../../components/sheet/ManageRecurringTransactionsSheet';
 import { SavingsRateTargetSheet } from '../../components/sheet/SavingsRateTargetSheet';
@@ -34,12 +33,12 @@ import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';
 import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { useSavingsRateEnabled } from '../../hooks/useSavingsRateEnabled';
 import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
-  const manageCategoriesSheetRef = React.useRef<BottomSheetModal | null>(null);
   const manageRecurringSheetRef = React.useRef<BottomSheetModal | null>(null);
   const currencySheetRef = React.useRef<BottomSheetModal | null>(null);
   const exportDataSheetRef = React.useRef<BottomSheetModal | null>(null);
@@ -55,6 +54,7 @@ export default function SettingsScreen() {
   const { tripsEnabled, setTripsEnabled } = useTripsEnabled();
   const { advancedAnalyticsEnabled, setAdvancedAnalyticsEnabled } =
     useAdvancedAnalyticsEnabled();
+  const { savingsRateEnabled } = useSavingsRateEnabled();
   const { savingsRateTarget } = useSavingsRateTarget();
   const [isTogglingFeature, setIsTogglingFeature] = useState(false);
 
@@ -129,7 +129,7 @@ export default function SettingsScreen() {
             IconComponent={Tags}
             rightLabel={''}
             onPress={() => {
-              manageCategoriesSheetRef.current?.present();
+              router.push({ pathname: '/select-category', params: { mode: 'manage' } });
             }}
           />
           <SettingsItem
@@ -141,9 +141,9 @@ export default function SettingsScreen() {
             }}
           />
           <SettingsItem
-            label={'Savings Rate Target'}
+            label={'Savings Rate'}
             IconComponent={PiggyBank}
-            rightLabel={`${savingsRateTarget}%`}
+            rightLabel={savingsRateEnabled ? `${savingsRateTarget}%` : 'Off'}
             onPress={() => {
               savingsRateTargetSheetRef.current?.present();
             }}
@@ -349,7 +349,6 @@ export default function SettingsScreen() {
         </YGroup>
         <View height={140} />
       </ScrollView>
-      <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />
       <ManageRecurringTransactionsSheet sheetRef={manageRecurringSheetRef} />
       <SavingsRateTargetSheet sheetRef={savingsRateTargetSheetRef} />
       <CurrencySelect
