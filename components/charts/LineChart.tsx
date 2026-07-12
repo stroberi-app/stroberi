@@ -1,20 +1,15 @@
-import { Circle, useFont } from '@shopify/react-native-skia';
+import { LinearGradient, useFont, vec } from '@shopify/react-native-skia';
 import React from 'react';
 import type { SharedValue } from 'react-native-reanimated';
-import { CartesianChart, type ChartPressState, Line } from 'victory-native';
-type InputFields<T> = {
-  [K in keyof T as T[K] extends string | number ? K : never]: T[K];
-};
-
-type NumericalFields<T> = {
-  [K in keyof T as T[K] extends number ? K : never]: T[K];
-};
-
-// biome-ignore lint/suspicious/noExplicitAny: Victory 41's public generics are stricter than this reusable wrapper can express.
-type VictoryCompatKey = any;
-// biome-ignore lint/suspicious/noExplicitAny: Victory 41 does not export compatible generic helper types for wrapper state.
-type VictoryCompatPressState = ChartPressState<any>;
+import { Area, CartesianChart, Line } from 'victory-native';
 import inter from '../../assets/fonts/Inter-Medium.ttf';
+import { ChartTooltip } from './ChartTooltip';
+import type {
+  InputFields,
+  NumericalFields,
+  VictoryCompatKey,
+  VictoryCompatPressState,
+} from '../../lib/chartTypes';
 import { calculateChartDomain, formatYAxisLabel } from '../../lib/chartUtils';
 
 type CartesianChartProps<
@@ -36,6 +31,7 @@ type CartesianChartProps<
   tooltip?: {
     ttX: SharedValue<number>;
     ttY: SharedValue<number>;
+    ttLabel: SharedValue<string>;
   };
   formatXLabel?: (value: InputFields<RawData>[XK]) => string;
   strokeWidth?: number;
@@ -110,8 +106,20 @@ export const LineChart = <
         tickCount: Math.min(yTickValues.length, 8),
       }}
     >
-      {({ points }) => (
+      {({ points, chartBounds }) => (
         <>
+          <Area
+            points={points[yKeys[0]]}
+            y0={chartBounds.bottom}
+            curveType={curveType}
+            animate={{ type: 'timing', duration: 300 }}
+          >
+            <LinearGradient
+              start={vec(0, chartBounds.top)}
+              end={vec(0, chartBounds.bottom)}
+              colors={['rgba(255, 255, 255, 0.22)', 'rgba(255, 255, 255, 0.02)']}
+            />
+          </Area>
           <Line
             points={points[yKeys[0]]}
             color="rgba(255, 255, 255, 0.9)"
@@ -119,13 +127,17 @@ export const LineChart = <
             curveType={curveType}
             animate={{ type: 'timing', duration: 300 }}
           />
-          {isActive && tooltip && <ToolTip x={tooltip.ttX} y={tooltip.ttY} />}
+          {isActive && tooltip && (
+            <ChartTooltip
+              x={tooltip.ttX}
+              y={tooltip.ttY}
+              label={tooltip.ttLabel}
+              font={font}
+              chartBounds={chartBounds}
+            />
+          )}
         </>
       )}
     </CartesianChart>
   );
 };
-
-function ToolTip({ x, y }: { x: SharedValue<number>; y: SharedValue<number> }) {
-  return <Circle cx={x} cy={y} r={6} color="rgba(255, 255, 255, 0.9)" style="fill" />;
-}

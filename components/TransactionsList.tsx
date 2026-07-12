@@ -34,9 +34,14 @@ type TransactionsListDataProps = {
   customRange?: [Date, Date];
   categories: CategoryModel[];
   transactionType?: TransactionTypeFilter;
+  merchant?: string;
+  uncategorized?: boolean;
+  maxExpenseAmount?: number;
 };
 
 type ListItem = string | TransactionModel;
+
+type GroupPosition = { isFirst: boolean; isLast: boolean };
 
 const TRANSACTIONS_DRAW_DISTANCE = 900;
 
@@ -64,43 +69,61 @@ const TransactionsList = ({
   const { bottom } = useSafeAreaInsets();
   const detailSheetRef = useRef<TransactionDetailSheetRef>(null);
 
-  const data = useMemo(() => {
+  const { data, groupPositions } = useMemo(() => {
     const result: ListItem[] = [];
+    const positions = new Map<string, GroupPosition>();
 
     let currentKey: string | null = null;
 
     for (const transaction of transactions) {
       const key = getDateKey(transaction.date);
+      const isFirst = key !== currentKey;
 
-      if (key !== currentKey) {
+      if (isFirst) {
         result.push(key);
         currentKey = key;
       }
 
       result.push(transaction);
+      positions.set(transaction.id, { isFirst, isLast: false });
     }
 
-    return result;
+    for (let i = 0; i < transactions.length; i++) {
+      const transaction = transactions[i];
+      const next = transactions[i + 1];
+      if (!next || getDateKey(next.date) !== getDateKey(transaction.date)) {
+        const existing = positions.get(transaction.id);
+        positions.set(transaction.id, { isFirst: existing?.isFirst ?? false, isLast: true });
+      }
+    }
+
+    return { data: result, groupPositions: positions };
   }, [transactions]);
 
-  const renderItem = useCallback(({ item }: { item: ListItem }) => {
-    if (typeof item === 'string') {
-      return (
-        <Text fontSize="$5" fontWeight="bold" marginTop="$4" marginBottom="$2">
-          {item}
-        </Text>
-      );
-    } else {
-      return (
-        <TransactionItem
-          transaction={item}
-          onPress={(transaction: TransactionModel) =>
-            detailSheetRef.current?.present(transaction)
-          }
-        />
-      );
-    }
-  }, []);
+  const renderItem = useCallback(
+    ({ item }: { item: ListItem }) => {
+      if (typeof item === 'string') {
+        return (
+          <Text fontSize="$5" fontWeight="bold" marginTop="$4" marginBottom="$2">
+            {item}
+          </Text>
+        );
+      } else {
+        const position = groupPositions.get(item.id);
+        return (
+          <TransactionItem
+            transaction={item}
+            onPress={(transaction: TransactionModel) =>
+              detailSheetRef.current?.present(transaction)
+            }
+            isFirst={position?.isFirst}
+            isLast={position?.isLast}
+          />
+        );
+      }
+    },
+    [groupPositions]
+  );
 
   const contentInset = useMemo(() => {
     return {
@@ -160,19 +183,40 @@ const withData = withObservables<
   TransactionsListDataProps,
   { transactions: Observable<TransactionModel[]> }
 >(
-  ['dateFilter', 'customRange', 'categories', 'transactionType'],
-  ({ database, dateFilter, customRange, categories, transactionType }) => {
+  [
+    'dateFilter',
+    'customRange',
+    'categories',
+    'transactionType',
+    'merchant',
+    'uncategorized',
+    'maxExpenseAmount',
+  ],
+  ({
+    database,
+    dateFilter,
+    customRange,
+    categories,
+    transactionType,
+    merchant,
+    uncategorized,
+    maxExpenseAmount,
+  }) => {
     const query = buildTransactionsBaseQuery(database, {
       dateFilter,
       customRange,
       categories,
       transactionType,
+      merchant,
+      uncategorized,
+      maxExpenseAmount,
     });
 
     return {
       transactions: query.observeWithColumns([
         'date',
         'categoryId',
+        'merchant',
         'amountInBaseCurrency',
       ]),
     };

@@ -58,7 +58,15 @@ export type MonthForecast = {
 };
 
 export type InsightAction =
-  | { type: 'viewTransactions'; label: string; categoryId?: string; merchant?: string }
+  | {
+      type: 'viewTransactions';
+      label: string;
+      categoryId?: string;
+      merchant?: string;
+      maxExpenseAmount?: number;
+      fromDate?: Date;
+      toDate?: Date;
+    }
   | { type: 'createBudget'; label: string; categoryId?: string }
   | { type: 'fixCategories'; label: string }
   | { type: 'none'; label: string };
@@ -68,7 +76,6 @@ export type MoneyInsightType =
   | 'categorySpike'
   | 'smallPurchases'
   | 'budgetRisk'
-  | 'positiveTrend'
   | 'dataQuality'
   | 'forecastWarning';
 

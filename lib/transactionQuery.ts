@@ -10,6 +10,9 @@ export type TransactionQueryFilters = {
   customRange?: [Date, Date];
   categories?: CategoryModel[];
   transactionType?: TransactionTypeFilter;
+  merchant?: string;
+  uncategorized?: boolean;
+  maxExpenseAmount?: number;
 };
 
 export const buildTransactionFilterClauses = ({
@@ -17,6 +20,9 @@ export const buildTransactionFilterClauses = ({
   customRange,
   categories = [],
   transactionType = 'all',
+  merchant,
+  uncategorized = false,
+  maxExpenseAmount,
 }: TransactionQueryFilters) => {
   const now = new Date();
   const clauses: ReturnType<typeof Q.where>[] = [];
@@ -44,10 +50,25 @@ export const buildTransactionFilterClauses = ({
     clauses.push(Q.where('date', Q.lte(customRange[1].getTime())));
   }
 
-  if (categories.length > 0) {
+  if (uncategorized) {
+    clauses.push(Q.where('categoryId', null));
+  } else if (categories.length > 0) {
     clauses.push(
       Q.where('categoryId', Q.oneOf(categories.map((category) => category.id)))
     );
+  }
+
+  if (merchant) {
+    clauses.push(Q.where('merchant', merchant));
+  }
+
+  if (
+    maxExpenseAmount !== undefined &&
+    Number.isFinite(maxExpenseAmount) &&
+    maxExpenseAmount > 0
+  ) {
+    clauses.push(Q.where('amountInBaseCurrency', Q.gte(-maxExpenseAmount)));
+    clauses.push(Q.where('amountInBaseCurrency', Q.lt(0)));
   }
 
   if (transactionType === 'expense') {

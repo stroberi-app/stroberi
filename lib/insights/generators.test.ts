@@ -3,7 +3,6 @@ import {
   buildDataQualitySummary,
   generateCategoryPaceInsights,
   generateDataQualityInsights,
-  generatePositiveTrendInsights,
   generateSmallPurchaseInsights,
   rankInsights,
 } from './generators';
@@ -55,11 +54,22 @@ describe('insight generators', () => {
         tx('e', 7, '2026-06-05'),
       ],
       currency: 'EUR',
+      fromDate: new Date('2026-06-01T00:00:00.000Z'),
+      toDate: new Date('2026-06-30T23:59:59.999Z'),
     });
 
     expect(insights.length).toBe(1);
     expect(insights[0].amount).toBe(31);
     expect(insights[0].evidence.transactionIds).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(insights[0].actions).toEqual([
+      {
+        type: 'viewTransactions',
+        label: 'Review small purchases',
+        maxExpenseAmount: 8,
+        fromDate: new Date('2026-06-01T00:00:00.000Z'),
+        toDate: new Date('2026-06-30T23:59:59.999Z'),
+      },
+    ]);
   });
 
   it('creates a data quality insight for uncategorized spending', () => {
@@ -69,18 +79,6 @@ describe('insight generators', () => {
     expect(quality.uncategorizedCount).toBe(1);
     expect(quality.uncategorizedAmount).toBe(22);
     expect(insights[0].type).toBe('dataQuality');
-  });
-
-  it('creates a positive trend when a category improves', () => {
-    const insights = generatePositiveTrendInsights({
-      currentTransactions: [tx('shopping-now', 30, '2026-06-01', 'shopping')],
-      previousTransactions: [tx('shopping-prev', 100, '2026-05-01', 'shopping')],
-      categories,
-      currency: 'EUR',
-    });
-
-    expect(insights[0].type).toBe('positiveTrend');
-    expect(insights[0].categoryId).toBe('shopping');
   });
 
   it('ranks by priority while keeping insight type variety', () => {

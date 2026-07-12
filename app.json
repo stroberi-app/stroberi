@@ -2,7 +2,7 @@
   "expo": {
     "name": "Stroberi",
     "slug": "stroberi",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "stroberi",
@@ -13,7 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stroberi",
-      "buildNumber": "52",
+      "buildNumber": "57",
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -21,7 +21,7 @@
     "android": {
       "package": "com.stroberi",
       "icon": "./assets/images/logo-round.png",
-      "versionCode": 43,
+      "versionCode": 48,
       "backgroundColor": "#000000"
     },
     "web": {
@@ -93,7 +93,7 @@
       }
     },
     "owner": "gacevicdanilo18",
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": "1.3.0",
     "updates": {
       "url": "https://u.expo.dev/f50955a8-0565-4300-8310-031161d5a861"
     }
