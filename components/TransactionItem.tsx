@@ -22,10 +22,17 @@ type TransactionItemProps = {
   category?: CategoryModel | null;
   transaction: TransactionModel;
   onPress?: (transaction: TransactionModel) => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 };
 
 export const TransactionItem = withObservables<
-  { transaction: TransactionModel; onPress?: (transaction: TransactionModel) => void },
+  {
+    transaction: TransactionModel;
+    onPress?: (transaction: TransactionModel) => void;
+    isFirst?: boolean;
+    isLast?: boolean;
+  },
   {
     transaction: Observable<TransactionModel>;
     category?: Observable<CategoryModel | null>;
@@ -35,7 +42,7 @@ export const TransactionItem = withObservables<
     category: transaction.category?.observe(),
     transaction: transaction.observe(),
   };
-})(({ category, transaction, onPress }: TransactionItemProps) => {
+})(({ category, transaction, onPress, isFirst, isLast }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const router = useRouter();
@@ -133,6 +140,10 @@ export const TransactionItem = withObservables<
           gap="$4"
           borderWidth="$0.5"
           borderColor="$borderColor"
+          borderTopLeftRadius={isFirst ? '$6' : 0}
+          borderTopRightRadius={isFirst ? '$6' : 0}
+          borderBottomLeftRadius={isLast ? '$6' : 0}
+          borderBottomRightRadius={isLast ? '$6' : 0}
         >
           <Text fontSize="$5">{category?.icon ?? '📦'}</Text>
           <View flexDirection="column" justifyContent="center">

@@ -21,7 +21,14 @@ export const SettingsItem = ({
   const Component = onPress ? TouchableOpacity : View;
   return (
     <YGroup.Item>
-      <View backgroundColor="$gray1" gap="$4" borderWidth={1} borderColor="$borderColor">
+      <View
+        backgroundColor="$gray1"
+        gap="$4"
+        borderWidth={1}
+        borderColor="$borderColor"
+        borderRadius="$6"
+        overflow="hidden"
+      >
         <Component onPress={onPress}>
           <View
             paddingVertical="$2.5"

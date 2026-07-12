@@ -62,10 +62,12 @@ export const HomeTransactionsSection = withObservables<
         itemLayoutAnimation={LinearTransition}
         data={transactions}
         keyExtractor={(transaction) => transaction.id}
-        renderItem={({ item: transaction }) => (
+        renderItem={({ item: transaction, index }) => (
           <TransactionItem
             transaction={transaction}
             onPress={(item: TransactionModel) => detailSheetRef.current?.present(item)}
+            isFirst={index === 0}
+            isLast={index === transactions.length - 1}
           />
         )}
       />
