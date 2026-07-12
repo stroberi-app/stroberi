@@ -22,7 +22,6 @@ import { Switch } from '../../components/Switch';
 import { SettingsItem } from '../../components/settings/SettingsItem';
 import { ExportDataSheet } from '../../components/sheet/ExportDataSheet';
 import { ImportCSVSheet } from '../../components/sheet/ImportCSVSheet';
-import { ManageCategoriesSheet } from '../../components/sheet/ManageCategoriesSheet';
 import { ShortcutsSetupSheet } from '../../components/sheet/ShortcutsSetupSheet';
 import { ManageRecurringTransactionsSheet } from '../../components/sheet/ManageRecurringTransactionsSheet';
 import { SavingsRateTargetSheet } from '../../components/sheet/SavingsRateTargetSheet';
@@ -40,7 +39,6 @@ import type { ExportDateRange } from '../../hooks/useTransactionExport';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
-  const manageCategoriesSheetRef = React.useRef<BottomSheetModal | null>(null);
   const manageRecurringSheetRef = React.useRef<BottomSheetModal | null>(null);
   const currencySheetRef = React.useRef<BottomSheetModal | null>(null);
   const exportDataSheetRef = React.useRef<BottomSheetModal | null>(null);
@@ -131,7 +129,7 @@ export default function SettingsScreen() {
             IconComponent={Tags}
             rightLabel={''}
             onPress={() => {
-              manageCategoriesSheetRef.current?.present();
+              router.push({ pathname: '/select-category', params: { mode: 'manage' } });
             }}
           />
           <SettingsItem
@@ -351,7 +349,6 @@ export default function SettingsScreen() {
         </YGroup>
         <View height={140} />
       </ScrollView>
-      <ManageCategoriesSheet sheetRef={manageCategoriesSheetRef} noSearch swipeable />
       <ManageRecurringTransactionsSheet sheetRef={manageRecurringSheetRef} />
       <SavingsRateTargetSheet sheetRef={savingsRateTargetSheetRef} />
       <CurrencySelect
