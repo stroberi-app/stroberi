@@ -7,37 +7,37 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01C5EE88F10A9563C1227411 /* libPods-Stroberi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0548F3AA725C40E6416B1CC /* libPods-Stroberi.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2DA241615B524F22A62CACC2 /* ShortcutsModule.m in Sources */ = {isa = PBXBuildFile; fileRef = AC8086EA4916455D955AF407 /* ShortcutsModule.m */; };
+		39F77DCDEF674DD6ABB6EED0 /* ShortcutsModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040717C85F7B47259CDDDDDE /* ShortcutsModule.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		5972E5C49790414DAD24F1AD /* LogTransactionIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1BCBFAE43BC409E9638C26E /* LogTransactionIntent.swift */; };
-		6CC2CDB39C25487CBF678DD3 /* ShortcutsModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2365B8DA85243719ECAF198 /* ShortcutsModule.swift */; };
-		98DDA135AAA9E574F416BC0F /* libPods-Stroberi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6048B7F33B5F1024C6452D6 /* libPods-Stroberi.a */; };
-		AFCDF5333E1281D2AFA9D4D4 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3727A19F76B57CB5B46A543 /* ExpoModulesProvider.swift */; };
+		40053BABB44CB96A8575ED07 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18DFC67B9A7D27BB53D6658 /* ExpoModulesProvider.swift */; };
+		54BFB62288A04A43993E9FAC /* IntentDatabaseHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C5CCC46B27648A9B0DA4030 /* IntentDatabaseHelper.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		BBE9FF8BFC024BEA81AE5C4D /* IntentDatabaseHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F8061A9E374E3993F09BFD /* IntentDatabaseHelper.swift */; };
-		EDA0FCC8C7CD42F3A1D6DDD5 /* ShortcutsModule.m in Sources */ = {isa = PBXBuildFile; fileRef = BD88ECA269424D2486ACC41E /* ShortcutsModule.m */; };
+		E82ED1EE91B0460B8EA7D145 /* LogTransactionIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E0609EB8904B10BC783650 /* LogTransactionIntent.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		FBC6847F8D3532126318142C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */; };
+		FB2AD381B2E88ED3050E0B82 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 39CF542172FEC4296EAF7DDA /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		040717C85F7B47259CDDDDDE /* ShortcutsModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ShortcutsModule.swift; path = ShortcutsModule.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Stroberi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stroberi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Stroberi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Stroberi/Info.plist; sourceTree = "<group>"; };
-		19F8061A9E374E3993F09BFD /* IntentDatabaseHelper.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = IntentDatabaseHelper.swift; sourceTree = "<group>"; };
-		9B7866192B3ECB9F8150041B /* Pods-Stroberi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Stroberi.debug.xcconfig"; path = "Target Support Files/Pods-Stroberi/Pods-Stroberi.debug.xcconfig"; sourceTree = "<group>"; };
+		39CF542172FEC4296EAF7DDA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Stroberi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4EBC17C30519DDD0A4AAD35A /* Pods-Stroberi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Stroberi.release.xcconfig"; path = "Target Support Files/Pods-Stroberi/Pods-Stroberi.release.xcconfig"; sourceTree = "<group>"; };
+		7634BDD7845B0FCE122B6E9C /* Pods-Stroberi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Stroberi.debug.xcconfig"; path = "Target Support Files/Pods-Stroberi/Pods-Stroberi.debug.xcconfig"; sourceTree = "<group>"; };
+		84E0609EB8904B10BC783650 /* LogTransactionIntent.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = LogTransactionIntent.swift; path = LogTransactionIntent.swift; sourceTree = "<group>"; };
+		9C5CCC46B27648A9B0DA4030 /* IntentDatabaseHelper.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = IntentDatabaseHelper.swift; path = IntentDatabaseHelper.swift; sourceTree = "<group>"; };
+		A0548F3AA725C40E6416B1CC /* libPods-Stroberi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Stroberi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Stroberi/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B2365B8DA85243719ECAF198 /* ShortcutsModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = ShortcutsModule.swift; sourceTree = "<group>"; };
+		AC8086EA4916455D955AF407 /* ShortcutsModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = ShortcutsModule.m; path = ShortcutsModule.m; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BD88ECA269424D2486ACC41E /* ShortcutsModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; path = ShortcutsModule.m; sourceTree = "<group>"; };
-		C3727A19F76B57CB5B46A543 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Stroberi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		C6048B7F33B5F1024C6452D6 /* libPods-Stroberi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Stroberi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DA26DFE4EDCC1F34300E1D1A /* Pods-Stroberi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Stroberi.release.xcconfig"; path = "Target Support Files/Pods-Stroberi/Pods-Stroberi.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Stroberi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Stroberi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Stroberi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Stroberi-Bridging-Header.h"; path = "Stroberi/Stroberi-Bridging-Header.h"; sourceTree = "<group>"; };
-		F1BCBFAE43BC409E9638C26E /* LogTransactionIntent.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = LogTransactionIntent.swift; sourceTree = "<group>"; };
+		F18DFC67B9A7D27BB53D6658 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Stroberi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,13 +45,23 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				98DDA135AAA9E574F416BC0F /* libPods-Stroberi.a in Frameworks */,
+				01C5EE88F10A9563C1227411 /* libPods-Stroberi.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		09044DD3471F3720FCD6B1F9 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				7634BDD7845B0FCE122B6E9C /* Pods-Stroberi.debug.xcconfig */,
+				4EBC17C30519DDD0A4AAD35A /* Pods-Stroberi.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Stroberi */ = {
 			isa = PBXGroup;
 			children = (
@@ -61,42 +71,39 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				3E1FD4E2F5FD44F1B54E75D0 /* Intents */,
-				EDE54FED068670F3B95EA865 /* PrivacyInfo.xcprivacy */,
-				A30DF21BD39F46528CB00421 /* Intents */,
-				2AC1AA615EE04DA8B0D6C0FC /* Intents */,
+				19B1757FE53B452DA9F7625E /* Intents */,
+				39CF542172FEC4296EAF7DDA /* PrivacyInfo.xcprivacy */,
 			);
 			name = Stroberi;
+			sourceTree = "<group>";
+		};
+		19B1757FE53B452DA9F7625E /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				9C5CCC46B27648A9B0DA4030 /* IntentDatabaseHelper.swift */,
+				84E0609EB8904B10BC783650 /* LogTransactionIntent.swift */,
+				040717C85F7B47259CDDDDDE /* ShortcutsModule.swift */,
+				AC8086EA4916455D955AF407 /* ShortcutsModule.m */,
+			);
+			name = Intents;
+			path = Stroberi/Intents;
+			sourceTree = "<group>";
+		};
+		28743DC6CDB12EEC00A4AB21 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				85ACF56BD66B382C0CA236BF /* Stroberi */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				C6048B7F33B5F1024C6452D6 /* libPods-Stroberi.a */,
+				A0548F3AA725C40E6416B1CC /* libPods-Stroberi.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		3E1FD4E2F5FD44F1B54E75D0 /* Intents */ = {
-			isa = PBXGroup;
-			children = (
-				19F8061A9E374E3993F09BFD /* IntentDatabaseHelper.swift */,
-				F1BCBFAE43BC409E9638C26E /* LogTransactionIntent.swift */,
-				B2365B8DA85243719ECAF198 /* ShortcutsModule.swift */,
-				BD88ECA269424D2486ACC41E /* ShortcutsModule.m */,
-			);
-			name = Intents;
-			path = Stroberi/Intents;
-			sourceTree = "<group>";
-		};
-		50FAA126FDCA125E5B7DC3CB /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				9B7866192B3ECB9F8150041B /* Pods-Stroberi.debug.xcconfig */,
-				DA26DFE4EDCC1F34300E1D1A /* Pods-Stroberi.release.xcconfig */,
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -113,8 +120,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				50FAA126FDCA125E5B7DC3CB /* Pods */,
-				A23F413A6F80BA1FDCCA35C9 /* ExpoModulesProviders */,
+				09044DD3471F3720FCD6B1F9 /* Pods */,
+				28743DC6CDB12EEC00A4AB21 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -129,12 +136,12 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A23F413A6F80BA1FDCCA35C9 /* ExpoModulesProviders */ = {
+		85ACF56BD66B382C0CA236BF /* Stroberi */ = {
 			isa = PBXGroup;
 			children = (
-				F720BECCA5B4328C88090086 /* Stroberi */,
+				F18DFC67B9A7D27BB53D6658 /* ExpoModulesProvider.swift */,
 			);
-			name = ExpoModulesProviders;
+			name = Stroberi;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -146,30 +153,6 @@
 			path = Stroberi/Supporting;
 			sourceTree = "<group>";
 		};
-		F720BECCA5B4328C88090086 /* Stroberi */ = {
-			isa = PBXGroup;
-			children = (
-				C3727A19F76B57CB5B46A543 /* ExpoModulesProvider.swift */,
-			);
-			name = Stroberi;
-			sourceTree = "<group>";
-		};
-		A30DF21BD39F46528CB00421 /* Intents */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Intents;
-			path = Stroberi/Intents;
-			sourceTree = "<group>";
-		};
-		2AC1AA615EE04DA8B0D6C0FC /* Intents */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Intents;
-			path = Stroberi/Intents;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -178,13 +161,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Stroberi" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				09F1C5B2CFD66A00C2BC8ED1 /* [Expo] Configure project */,
+				3B1D8217029021CA1F00DDCC /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				55B967DA6E169FE3091AE091 /* [CP] Embed Pods Frameworks */,
+				0C97F21D803C8D74F03DAD12 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -234,7 +217,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				FBC6847F8D3532126318142C /* PrivacyInfo.xcprivacy in Resources */,
+				FB2AD381B2E88ED3050E0B82 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -280,7 +263,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		09F1C5B2CFD66A00C2BC8ED1 /* [Expo] Configure project */ = {
+		0C97F21D803C8D74F03DAD12 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Stroberi/Pods-Stroberi-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Stroberi/Pods-Stroberi-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		3B1D8217029021CA1F00DDCC /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -303,28 +308,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Stroberi/expo-configure-project.sh\"\n";
-		};
-		55B967DA6E169FE3091AE091 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Stroberi/Pods-Stroberi-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Stroberi/Pods-Stroberi-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -374,11 +357,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				BBE9FF8BFC024BEA81AE5C4D /* IntentDatabaseHelper.swift in Sources */,
-				5972E5C49790414DAD24F1AD /* LogTransactionIntent.swift in Sources */,
-				6CC2CDB39C25487CBF678DD3 /* ShortcutsModule.swift in Sources */,
-				EDA0FCC8C7CD42F3A1D6DDD5 /* ShortcutsModule.m in Sources */,
-				AFCDF5333E1281D2AFA9D4D4 /* ExpoModulesProvider.swift in Sources */,
+				54BFB62288A04A43993E9FAC /* IntentDatabaseHelper.swift in Sources */,
+				E82ED1EE91B0460B8EA7D145 /* LogTransactionIntent.swift in Sources */,
+				39F77DCDEF674DD6ABB6EED0 /* ShortcutsModule.swift in Sources */,
+				2DA241615B524F22A62CACC2 /* ShortcutsModule.m in Sources */,
+				40053BABB44CB96A8575ED07 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,13 +370,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9B7866192B3ECB9F8150041B /* Pods-Stroberi.debug.xcconfig */;
+			baseConfigurationReference = 7634BDD7845B0FCE122B6E9C /* Pods-Stroberi.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Stroberi/Stroberi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = R5HU4U6K38;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -413,7 +395,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stroberi;
-				PRODUCT_NAME = "Stroberi";
+				PRODUCT_NAME = Stroberi;
 				SWIFT_OBJC_BRIDGING_HEADER = "Stroberi/Stroberi-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -424,13 +406,12 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DA26DFE4EDCC1F34300E1D1A /* Pods-Stroberi.release.xcconfig */;
+			baseConfigurationReference = 4EBC17C30519DDD0A4AAD35A /* Pods-Stroberi.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Stroberi/Stroberi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = R5HU4U6K38;
 				INFOPLIST_FILE = Stroberi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -445,7 +426,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.stroberi;
-				PRODUCT_NAME = "Stroberi";
+				PRODUCT_NAME = Stroberi;
 				SWIFT_OBJC_BRIDGING_HEADER = "Stroberi/Stroberi-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

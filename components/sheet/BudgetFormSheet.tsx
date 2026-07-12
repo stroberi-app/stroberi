@@ -5,6 +5,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Calendar, FolderOpen, TrendingUp, X } from '@tamagui/lucide-icons';
+import { useRouter } from 'expo-router';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Pressable } from 'react-native';
@@ -25,9 +26,9 @@ import { CurrencyInput } from '../CurrencyInput';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { DatePicker } from '../DatePicker';
-import { BudgetCategoryPickerSheet } from './budget/BudgetCategoryPickerSheet';
 import { BudgetOptionPickerSheet } from './budget/BudgetOptionPickerSheet';
 import { useBudgetPreview } from '../../features/budget/useBudgetPreview';
+import { registerCategorySelectionHandler } from '../../lib/categorySelectionBridge';
 import {
   buildBudgetFormState,
   buildBudgetPayload,
@@ -66,12 +67,13 @@ export const BudgetFormSheet = ({
   onSuccess,
 }: BudgetFormSheetProps) => {
   const database = useDatabase();
+  const router = useRouter();
   const { defaultCurrency } = useDefaultCurrency();
   const toast = useToast();
   const { bottom } = useSafeAreaInsets();
   const periodPickerRef = useRef<BottomSheetModal>(null);
   const thresholdPickerRef = useRef<BottomSheetModal>(null);
-  const categoryPickerRef = useRef<BottomSheetModal>(null);
+  const categorySelectionIdRef = useRef(`budget-${Date.now()}-${Math.random()}`);
 
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -81,7 +83,6 @@ export const BudgetFormSheet = ({
   const [alertThreshold, setAlertThreshold] = useState(90);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<CategoryModel[]>([]);
-  const [categorySearch, setCategorySearch] = useState('');
 
   const applyFormState = useCallback(
     (state: Awaited<ReturnType<typeof buildBudgetFormState>>) => {
@@ -105,6 +106,16 @@ export const BudgetFormSheet = ({
     loadBudgetData();
   }, [applyFormState, budget, initialCategories]);
 
+  useEffect(
+    () =>
+      registerCategorySelectionHandler(categorySelectionIdRef.current, (categories) => {
+        if (Array.isArray(categories)) {
+          setSelectedCategories(categories);
+        }
+      }),
+    []
+  );
+
   const selectedCategoryIds = useMemo(
     () => selectedCategories.map((category) => category.id).sort(),
     [selectedCategories]
@@ -126,18 +137,7 @@ export const BudgetFormSheet = ({
   const resetForm = () => {
     const nextState = getDefaultBudgetFormState();
     applyFormState(nextState);
-    setCategorySearch('');
   };
-
-  const handleCategorySelect = useCallback((category: CategoryModel) => {
-    setSelectedCategories((prev) => {
-      const isSelected = prev.some((c) => c.id === category.id);
-      if (isSelected) {
-        return prev.filter((c) => c.id !== category.id);
-      }
-      return [...prev, category];
-    });
-  }, []);
 
   const handleRemoveCategory = useCallback((categoryId: string) => {
     setSelectedCategories((prev) => prev.filter((c) => c.id !== categoryId));
@@ -353,7 +353,16 @@ export const BudgetFormSheet = ({
                     color="white"
                     onPress={() => {
                       Keyboard.dismiss();
-                      categoryPickerRef.current?.present();
+                      router.push({
+                        pathname: '/select-category',
+                        params: {
+                          mode: 'multi',
+                          selectionId: categorySelectionIdRef.current,
+                          selectedCategoryIds: selectedCategories
+                            .map((category) => category.id)
+                            .join(','),
+                        },
+                      });
                     }}
                     disabled={isSaving}
                   >
@@ -469,14 +478,6 @@ export const BudgetFormSheet = ({
         }}
       />
 
-      <BudgetCategoryPickerSheet
-        sheetRef={categoryPickerRef}
-        database={database}
-        search={categorySearch}
-        onSearchChange={setCategorySearch}
-        selectedCategories={selectedCategories}
-        onSelectCategory={handleCategorySelect}
-      />
     </>
   );
 };

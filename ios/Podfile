@@ -54,6 +54,7 @@ target 'Stroberi' do
 
   
 
+  # WatermelonDB autolinking already declares simdjson; a second source breaks CocoaPods.
   # pod 'simdjson', path: File.join(File.dirname(`node --print "require.resolve('@nozbe/simdjson/package.json')"`)), :modular_headers => true 
 
   post_install do |installer|

@@ -1,148 +1,129 @@
 # Release Guide (Expo + EAS)
 
-This guide covers how to bump app versioning and deploy a new build to Apple App Store and Google Play using Expo + EAS for this repo.
+This guide covers versioning, native project synchronization, production builds, and submission to Apple App Store and Google Play.
 
-## Current project config
+## Source of truth
 
-- App config: `app.json`
-- EAS config: `eas.json`
-- NPM app version: `package.json`
-
-Current release-relevant values in this repo:
-
-- `expo.version`: `1.0.14`
-- `ios.buildNumber`: `33`
-- `android.versionCode`: `37`
-- `runtimeVersion`: `1.0.0`
-- `eas.json -> build.production.autoIncrement`: `true`
+- App and native release versions: `app.json`
+- Package version: `package.json`
+- EAS profiles: `eas.json`
 - `eas.json -> cli.appVersionSource`: `local`
+- `eas.json -> build.production.autoIncrement`: `false`
 
-Because `appVersionSource` is `local`, version changes live in git-tracked files (`app.json`/`package.json`).
+Versions are bumped explicitly before prebuild so the generated iOS and Android projects contain the exact store versions being released.
 
-## 1. Prerequisites (one-time)
+## 1. Prerequisites
 
-1. Install and authenticate:
-   - `npm i -g eas-cli`
-   - `eas login`
-2. Ensure app is configured for EAS:
-   - `eas build:configure`
-3. Ensure store credentials are configured:
-   - iOS (App Store Connect): `eas credentials`
-   - Android (Play Console service account): `eas credentials`
+```bash
+yarn dlx eas-cli@latest login
+yarn dlx eas-cli@latest whoami
+```
 
-## 2. Upgrade app version
+Ensure store credentials are configured when required:
 
-### 2.1 Update semantic version
+```bash
+yarn dlx eas-cli@latest credentials
+```
 
-Bump both:
+## 2. Bump release versions
 
-- `app.json` -> `expo.version`
-- `package.json` -> `version`
+Update all of the following before every store release:
 
-Example: `1.0.14` -> `1.0.15`
+- `app.json -> expo.version`
+- `package.json -> version`
+- `app.json -> expo.ios.buildNumber` (increment)
+- `app.json -> expo.android.versionCode` (increment)
 
-### 2.2 Build numbers
+For a native release, also update `app.json -> expo.runtimeVersion` to the new app version. This prevents OTA updates built for a new native runtime from reaching incompatible binaries.
 
-- `ios.buildNumber` and `android.versionCode` must always increase for store releases.
-- In this repo, `build.production.autoIncrement` is `true`, so EAS increments them for production builds.
-- After build, check and commit any version changes written locally.
+Example values for release `1.3.0`:
 
-### 2.3 Runtime version (important for OTA compatibility)
+- `expo.version`: `1.3.0`
+- `package.json -> version`: `1.3.0`
+- `ios.buildNumber`: `56`
+- `android.versionCode`: `47`
+- `runtimeVersion`: `1.3.0`
 
-`runtimeVersion` controls which binaries can receive OTA updates.
+Because production `autoIncrement` is disabled, these explicit values are used unchanged by EAS and remain reproducible in git.
 
-- If release includes native changes (new Expo SDK/native modules/prebuild changes), bump `runtimeVersion`.
-- If release is JS-only and you want existing installs to receive OTA updates, keep compatible runtime policy.
+## 3. Synchronize native projects
 
-## 3. Pre-release checks
+After changing `app.json`, regenerate the checked-in native projects:
 
-Run quality checks before building:
+```bash
+yarn expo prebuild --clean
+```
+
+`--clean` recreates `ios/` and `android/` from Expo config and config plugins. Review the resulting native diff before building. Do not hand-edit generated native version fields; change `app.json` and run prebuild again.
+
+The WatermelonDB prebuild plugin may uncomment an explicit `simdjson` pod even though React Native autolinking already declares it. If CocoaPods reports multiple `simdjson` sources, comment out the explicit `pod 'simdjson'` line in `ios/Podfile`, retain the explanatory comment, and rerun:
+
+```bash
+cd ios && pod install --repo-update
+```
+
+Confirm the resolved Expo config and generated native versions:
+
+```bash
+yarn expo config --type public
+rg 'MARKETING_VERSION|CURRENT_PROJECT_VERSION' ios/Stroberi.xcodeproj/project.pbxproj
+rg 'versionCode|versionName' android/app/build.gradle
+```
+
+## 4. Pre-release checks
 
 ```bash
 yarn lint
 yarn check:types
 ```
 
-Optional local sanity:
+Review all release changes:
 
 ```bash
-yarn start
+git diff -- app.json package.json eas.json ios android RELEASE_GUIDE.md
+git status --short
 ```
 
-Commit release prep changes before building:
+Commit release preparation before starting remote builds so the EAS build has a traceable source revision.
+
+## 5. Build production binaries
+
+Build both store binaries with the production profile:
 
 ```bash
-git add app.json package.json
-git commit -m "chore: bump app version to 1.0.15"
+yarn dlx eas-cli@latest build --platform all --profile production
 ```
 
-## 4. Build production binaries
+The outputs are an iOS `.ipa` and Android `.aab`. Record both EAS build URLs/IDs and verify both builds finish successfully before submission.
 
-Build both platforms:
+## 6. Submit production builds
+
+Submit each latest successful production build with the production submit profile:
 
 ```bash
-eas build --platform all --profile production
+yarn dlx eas-cli@latest submit --platform ios --latest --profile production
+yarn dlx eas-cli@latest submit --platform android --latest --profile production
 ```
 
-Or per platform:
+The Android submit profile currently targets the Play Console `internal` track. Promotion to production is performed in Play Console after validation. The iOS profile uses the configured App Store Connect app ID.
+
+## 7. Store console steps
+
+1. App Store Connect: select the uploaded build for the app version, complete metadata/release notes, and submit for review.
+2. Google Play Console: validate the internal-track upload, promote it to production (or a staged rollout), add release notes, and start rollout.
+
+## 8. Post-release
+
+1. Verify the live store versions.
+2. Tag the exact release commit, for example `v1.3.0`, and push the tag.
+3. Keep `app.json`, `package.json`, generated native projects, `eas.json`, and this guide committed together.
+
+## OTA updates without store submission
+
+For a JS-only update compatible with the current native runtime:
 
 ```bash
-eas build --platform ios --profile production
-eas build --platform android --profile production
+yarn dlx eas-cli@latest update --branch production --message "fix: <short description>"
 ```
 
-Notes:
-
-- iOS output is an `.ipa`.
-- Android store output is an `.aab`.
-- With `autoIncrement: true`, EAS should bump `ios.buildNumber` / `android.versionCode`.
-
-## 5. Submit to stores
-
-Submit latest successful builds:
-
-```bash
-eas submit --platform ios --latest
-eas submit --platform android --latest
-```
-
-If you want build + submit in one step:
-
-```bash
-eas build --platform all --profile production --auto-submit
-```
-
-If you prefer fully scripted submits, add a `submit` section in `eas.json` and then pass `--profile <name>`.
-
-## 6. Store console release steps
-
-After submission:
-
-1. App Store Connect:
-   - Open the new build under your app version.
-   - Fill release notes/metadata.
-   - Submit for review.
-2. Google Play Console:
-   - Promote uploaded AAB in production track (or staged rollout).
-   - Fill release notes.
-   - Start rollout.
-
-## 7. Post-release checklist
-
-1. Verify live store versions.
-2. Tag release in git:
-   - `git tag v1.0.15`
-   - `git push origin v1.0.15`
-3. If EAS auto-increment changed local files, commit and push:
-   - `git add app.json`
-   - `git commit -m "chore: sync build numbers after release"`
-
-## OTA update flow (without store submission)
-
-For JS-only hotfixes compatible with current runtime:
-
-```bash
-eas update --branch production --message "fix: <short description>"
-```
-
-This does not create a new store binary.
+Do not use OTA for changes requiring a new Expo SDK, native module, config plugin output, permissions, entitlements, or other native project changes.

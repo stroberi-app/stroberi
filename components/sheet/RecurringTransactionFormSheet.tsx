@@ -11,6 +11,7 @@ import {
   User,
 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
+import { useRouter } from 'expo-router';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard } from 'react-native';
@@ -35,6 +36,7 @@ import { CurrencySelect } from '../CurrencySelect';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { CheckboxWithLabel } from '../checkbox/CheckBoxWithLabel';
 import { DatePicker } from '../DatePicker';
+import { registerCategorySelectionHandler } from '../../lib/categorySelectionBridge';
 import {
   buildRecurringTransactionFormState,
   buildRecurringTransactionPayload,
@@ -43,7 +45,6 @@ import {
   validateRecurringTransactionForm,
 } from './recurringTransactionFormUtils';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
-import { ManageCategoriesSheet } from './ManageCategoriesSheet';
 
 const SNAP_POINTS = ['90%'];
 
@@ -67,10 +68,13 @@ export const RecurringTransactionFormSheet = ({
 }: RecurringTransactionFormSheetProps) => {
   const { defaultCurrency } = useDefaultCurrency();
   const toast = useToast();
+  const router = useRouter();
   const { bottom } = useSafeAreaInsets();
-  const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
   const currencySheetRef = useRef<BottomSheetModal | null>(null);
   const frequencySheetRef = useRef<BottomSheetModal | null>(null);
+  const categorySelectionIdRef = useRef(
+    `recurring-transaction-${Date.now()}-${Math.random()}`
+  );
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency ?? 'USD');
@@ -82,6 +86,16 @@ export const RecurringTransactionFormSheet = ({
   const [endDate, setEndDate] = useState(dayjs().add(1, 'year').toDate());
   const [isSaving, setIsSaving] = useState(false);
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
+
+  useEffect(
+    () =>
+      registerCategorySelectionHandler(categorySelectionIdRef.current, (category) => {
+        if (!Array.isArray(category)) {
+          setSelectedCategory(category);
+        }
+      }),
+    []
+  );
 
   const applyFormState = useCallback(
     (state: Awaited<ReturnType<typeof buildRecurringTransactionFormState>>) => {
@@ -300,7 +314,13 @@ export const RecurringTransactionFormSheet = ({
                 color="white"
                 onPress={() => {
                   Keyboard.dismiss();
-                  manageCategoriesSheetRef.current?.present();
+                  router.push({
+                    pathname: '/select-category',
+                    params: {
+                      selectionId: categorySelectionIdRef.current,
+                      selectedCategoryId: selectedCategory?.id,
+                    },
+                  });
                 }}
               >
                 {selectedCategory ? (
@@ -393,11 +413,6 @@ export const RecurringTransactionFormSheet = ({
           currencySheetRef.current?.close();
         }}
         selectedCurrency={selectedCurrency}
-      />
-      <ManageCategoriesSheet
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        sheetRef={manageCategoriesSheetRef}
       />
       <BottomSheetModal
         ref={frequencySheetRef}

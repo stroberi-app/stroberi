@@ -1,10 +1,10 @@
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { PlusCircle, XCircle } from '@tamagui/lucide-icons';
-import { useRef } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import { Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
+import { registerCategorySelectionHandler } from '../../lib/categorySelectionBridge';
 import { LinkButton } from '../button/LinkButton';
-import { ManageCategoriesSheet } from '../sheet/ManageCategoriesSheet';
 import FilterOption from './FilterOptions';
 
 type CategoryFilterSectionProps = {
@@ -16,7 +16,21 @@ const CategoryFilterSection = ({
   selectedCategories,
   setSelectedCategory,
 }: CategoryFilterSectionProps) => {
-  const manageCategoriesSheetRef = useRef<BottomSheetModal>(null);
+  const router = useRouter();
+  const categorySelectionIdRef = useRef(
+    `category-filter-${Date.now()}-${Math.random()}`
+  );
+
+  useEffect(
+    () =>
+      registerCategorySelectionHandler(categorySelectionIdRef.current, (categories) => {
+        if (Array.isArray(categories)) {
+          setSelectedCategory(categories);
+        }
+      }),
+    [setSelectedCategory]
+  );
+
   const handleCategoryPress = (category: CategoryModel) => {
     if (selectedCategories.some((c) => c.id === category.id)) {
       setSelectedCategory(selectedCategories.filter((cat) => cat.id !== category.id));
@@ -54,21 +68,23 @@ const CategoryFilterSection = ({
         ))}
         <LinkButton
           paddingHorizontal="$4"
-          onPress={() => manageCategoriesSheetRef.current?.present()}
+          onPress={() =>
+            router.push({
+              pathname: '/select-category',
+              params: {
+                mode: 'multi',
+                selectionId: categorySelectionIdRef.current,
+                selectedCategoryIds: selectedCategories
+                  .map((category) => category.id)
+                  .join(','),
+              },
+            })
+          }
         >
           <PlusCircle size={18} color="white" />
           <Text>Add Category</Text>
         </LinkButton>
       </View>
-
-      <ManageCategoriesSheet
-        preventClose
-        selectedCategories={selectedCategories}
-        sheetRef={manageCategoriesSheetRef}
-        setSelectedCategory={(category) => {
-          handleCategoryPress(category);
-        }}
-      />
     </View>
   );
 };
