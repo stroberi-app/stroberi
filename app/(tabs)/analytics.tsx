@@ -1,39 +1,32 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import {
-  AlertTriangle,
-  BarChart3,
-  CalendarClock,
-  Flame,
-  Lightbulb,
-  TrendingUp,
-} from '@tamagui/lucide-icons';
+import { AlertTriangle, BarChart3 } from '@tamagui/lucide-icons';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
-import { Button, ScrollView, Separator, Text, View, styled } from 'tamagui';
+import { Button, ScrollView, Text, View, styled } from 'tamagui';
 import type { BudgetModel } from '../../database/budget-model';
 import type { BudgetCategoryModel } from '../../database/budget-category-model';
 import type { CategoryModel } from '../../database/category-model';
 import { database } from '../../database/index';
 import { InsightInbox } from '../../components/analytics/InsightInbox';
+import { MoneyPulseCard } from '../../components/analytics/MoneyPulseCard';
+import { PriorityActionPlanCard } from '../../components/analytics/PriorityActionPlanCard';
 import { SafeToSpendCard } from '../../components/analytics/SafeToSpendCard';
 import { SavingsRateCard } from '../../components/analytics/SavingsRateCard';
+import { SectionCard } from '../../components/analytics/SectionCard';
+import { SpendingHotspotsCard } from '../../components/analytics/SpendingHotspotsCard';
+import { UpcomingBillsCard } from '../../components/analytics/UpcomingBillsCard';
 import { WeeklyRecapCard } from '../../components/analytics/WeeklyRecapCard';
 import { INSIGHTS_CARD_GAP } from '../../components/analytics/emptyStates';
 import type { TransactionModel } from '../../database/transaction-model';
-import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEnabled';
 import { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
+import { useSavingsRateEnabled } from '../../hooks/useSavingsRateEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import type { DateFilter } from '../../lib/analyticsOverview';
-import {
-  DATE_FILTER_OPTIONS,
-  formatSignedCurrency,
-  getPriorityStyles,
-} from '../../lib/analyticsOverview';
-import { formatCurrency } from '../../lib/format';
+import { DATE_FILTER_OPTIONS } from '../../lib/analyticsOverview';
 
 type AnalyticsContentProps = {
   transactions: TransactionModel[];
@@ -72,7 +65,7 @@ const AnalyticsContent = withObservables<
 }))(({ transactions, categories, budgets, budgetCategories }: AnalyticsContentProps) => {
   const { top } = useSafeAreaInsets();
   const { defaultCurrency } = useDefaultCurrency();
-  const { advancedAnalyticsEnabled } = useAdvancedAnalyticsEnabled();
+  const { savingsRateEnabled } = useSavingsRateEnabled();
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
   const {
     actionPlan,
@@ -184,351 +177,39 @@ const AnalyticsContent = withObservables<
 
             <WeeklyRecapCard recap={insightsOverview.weeklyRecap} currency={currency} />
 
-            {advancedAnalyticsEnabled ? (
+            {savingsRateEnabled ? (
               <SavingsRateCard analysis={savingsTrend} currency={currency} />
             ) : null}
           </View>
 
-          <SectionCard borderWidth={1} borderColor="$gray5">
-            <View
-              flexDirection="row"
-              justifyContent="space-between"
-              alignItems="flex-start"
-              gap="$3"
-            >
-              <View flex={1}>
-                <View flexDirection="row" alignItems="center" gap="$2" marginBottom="$2">
-                  <Flame size={18} color={pulseState.color} />
-                  <Text fontSize="$5" fontWeight="bold" color="white">
-                    Money Pulse
-                  </Text>
-                </View>
-                <View
-                  backgroundColor={pulseState.bg}
-                  paddingHorizontal="$3"
-                  paddingVertical="$1.5"
-                  borderRadius="$3"
-                  alignSelf="flex-start"
-                >
-                  <Text fontSize="$3" fontWeight="700" color={pulseState.color}>
-                    {pulseState.label}
-                  </Text>
-                </View>
-                <Text fontSize="$3" color="$gray10" marginTop="$2">
-                  {pulseState.description}
-                </Text>
-              </View>
-              <View alignItems="center">
-                <Text fontSize="$9" fontWeight="bold" color={pulseState.color}>
-                  {healthScore.overallScore}
-                </Text>
-                <Text fontSize="$2" color="$gray10">
-                  Health Score
-                </Text>
-              </View>
-            </View>
+          <MoneyPulseCard
+            pulseState={pulseState}
+            healthScore={healthScore}
+            periodTotals={periodTotals}
+            previousPeriodTotals={previousPeriodTotals}
+            previousRange={previousRange}
+            expenseChangePercent={expenseChangePercent}
+            forecast={forecast}
+            forecastState={forecastState}
+            monthBudgetLimit={monthBudgetLimit}
+            currency={currency}
+          />
 
-            <View flexDirection="row" gap="$3" marginTop="$4">
-              <MetricTile flex={1}>
-                <Text fontSize="$2" color="$gray10">
-                  Net cashflow
-                </Text>
-                <Text
-                  fontSize="$5"
-                  fontWeight="bold"
-                  color={periodTotals.net >= 0 ? '$green' : '$stroberi'}
-                  marginTop="$1"
-                >
-                  {formatSignedCurrency(periodTotals.net, currency)}
-                </Text>
-                <Text fontSize="$2" color="$gray10" marginTop="$1">
-                  vs prev:{' '}
-                  {formatSignedCurrency(
-                    periodTotals.net - previousPeriodTotals.net,
-                    currency
-                  )}
-                </Text>
-              </MetricTile>
+          <PriorityActionPlanCard actionPlan={actionPlan} />
 
-              <MetricTile flex={1}>
-                <Text fontSize="$2" color="$gray10">
-                  Avg daily spend
-                </Text>
-                <Text fontSize="$5" fontWeight="bold" color="white" marginTop="$1">
-                  {formatCurrency(
-                    periodTotals.expenses / previousRange.daysInRange,
-                    currency
-                  )}
-                </Text>
-                <Text
-                  fontSize="$2"
-                  color={expenseChangePercent > 0 ? '$stroberi' : '$green'}
-                  marginTop="$1"
-                >
-                  {expenseChangePercent >= 0 ? '+' : ''}
-                  {Math.round(expenseChangePercent)}% vs prev
-                </Text>
-              </MetricTile>
-            </View>
+          <SpendingHotspotsCard
+            categoryHotspots={categoryHotspots}
+            potentialMonthlySavings={potentialMonthlySavings}
+            currency={currency}
+          />
 
-            <View marginTop="$3">
-              <View
-                flexDirection="row"
-                alignItems="center"
-                justifyContent="space-between"
-                marginBottom="$1"
-              >
-                <Text fontSize="$2" color="$gray10">
-                  Monthly projection
-                </Text>
-                <Text fontSize="$2" color={forecastState.color}>
-                  {forecastState.label}
-                </Text>
-              </View>
-              <View
-                height={8}
-                backgroundColor="$gray5"
-                borderRadius={4}
-                overflow="hidden"
-              >
-                <View
-                  height="100%"
-                  width={`${
-                    monthBudgetLimit
-                      ? Math.min(100, (forecast.projectedSpend / monthBudgetLimit) * 100)
-                      : Math.min(
-                          100,
-                          (forecast.currentSpend / Math.max(forecast.projectedSpend, 1)) *
-                            100
-                        )
-                  }%`}
-                  backgroundColor={
-                    forecast.status === 'critical' ? '$stroberi' : '$green'
-                  }
-                />
-              </View>
-            </View>
-          </SectionCard>
-
-          <SectionCard>
-            <View flexDirection="row" alignItems="center" justifyContent="space-between">
-              <View flexDirection="row" alignItems="center" gap="$2">
-                <Lightbulb size={16} color="$yellow" />
-                <Text fontSize="$5" fontWeight="bold" color="white">
-                  Priority Action Plan
-                </Text>
-              </View>
-              <Text fontSize="$2" color="$gray10">
-                Focus on these first
-              </Text>
-            </View>
-
-            <View marginTop="$3" gap="$2">
-              {actionPlan.map((item) => {
-                const style = getPriorityStyles(item.priority);
-                return (
-                  <View
-                    key={item.id}
-                    borderRadius="$3"
-                    borderWidth={1}
-                    borderColor={style.borderColor}
-                    backgroundColor={style.backgroundColor}
-                    padding="$3"
-                  >
-                    <View
-                      flexDirection="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      marginBottom="$1"
-                    >
-                      <Text fontSize="$4" fontWeight="700" color="white" flex={1}>
-                        {item.title}
-                      </Text>
-                      <Text fontSize="$1" color={style.textColor}>
-                        {style.label}
-                      </Text>
-                    </View>
-                    <Text fontSize="$2" color="$gray11">
-                      {item.description}
-                    </Text>
-                    <Text
-                      fontSize="$2"
-                      color={style.textColor}
-                      marginTop="$1.5"
-                      fontWeight="700"
-                    >
-                      {item.impact}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </SectionCard>
-
-          <SectionCard>
-            <View
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-              marginBottom="$3"
-            >
-              <View flexDirection="row" alignItems="center" gap="$2">
-                <TrendingUp size={16} color="$stroberi" />
-                <Text fontSize="$5" fontWeight="bold" color="white">
-                  Spending Hotspots
-                </Text>
-              </View>
-              <Text fontSize="$2" color="$gray10">
-                Save up to {formatCurrency(potentialMonthlySavings, currency)}
-              </Text>
-            </View>
-
-            {categoryHotspots.slice(0, 5).map((item, index) => (
-              <View key={item.categoryId}>
-                {index > 0 && <Separator marginVertical="$3" borderColor="$gray5" />}
-                <View
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  marginBottom="$1.5"
-                >
-                  <Text
-                    fontSize="$3"
-                    color="white"
-                    fontWeight="600"
-                    flex={1}
-                    numberOfLines={1}
-                  >
-                    {item.categoryIcon} {item.categoryName}
-                  </Text>
-                  <Text fontSize="$3" color="white" fontWeight="700">
-                    {formatCurrency(item.currentSpend, currency)}
-                  </Text>
-                </View>
-                <View
-                  height={7}
-                  backgroundColor="$gray5"
-                  borderRadius={4}
-                  overflow="hidden"
-                >
-                  <View
-                    height="100%"
-                    width={`${Math.max(8, Math.min(100, item.share))}%`}
-                    backgroundColor={item.changePercent > 0 ? '$stroberi' : '$green'}
-                  />
-                </View>
-                <View
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  marginTop="$1.5"
-                >
-                  <Text
-                    fontSize="$2"
-                    color={item.changePercent > 0 ? '$stroberi' : '$green'}
-                  >
-                    {item.changePercent >= 0 ? '+' : ''}
-                    {Math.round(item.changePercent)}% vs previous
-                  </Text>
-                  {item.potentialSavings > 0 && (
-                    <Text fontSize="$2" color="$yellow">
-                      Opportunity: {formatCurrency(item.potentialSavings, currency)}
-                    </Text>
-                  )}
-                </View>
-              </View>
-            ))}
-          </SectionCard>
-
-          <SectionCard>
-            <View
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-              marginBottom="$3"
-            >
-              <View flexDirection="row" alignItems="center" gap="$2">
-                <CalendarClock size={16} color="$blue10" />
-                <Text fontSize="$5" fontWeight="bold" color="white">
-                  Upcoming Bills
-                </Text>
-              </View>
-              <Text fontSize="$2" color="$gray10">
-                Next 30 days
-              </Text>
-            </View>
-
-            {upcomingRecurring.length === 0 ? (
-              <View
-                borderRadius="$3"
-                backgroundColor="$gray4"
-                padding="$3"
-                borderWidth={1}
-                borderColor="$gray5"
-              >
-                <Text fontSize="$3" color="$gray11">
-                  No recurring expenses detected yet. Add merchant names to improve bill
-                  predictions.
-                </Text>
-              </View>
-            ) : (
-              upcomingRecurring.map((item, index) => {
-                const daysUntil = dayjs(item.predictedDate).diff(dayjs(), 'day');
-                return (
-                  <View key={`${item.merchant}-${item.predictedDate.toISOString()}`}>
-                    {index > 0 && (
-                      <Separator marginVertical="$2.5" borderColor="$gray5" />
-                    )}
-                    <View
-                      flexDirection="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
-                      <View flex={1}>
-                        <Text fontSize="$3" color="white" fontWeight="600">
-                          {item.merchant}
-                        </Text>
-                        <Text fontSize="$2" color="$gray10">
-                          {daysUntil === 0
-                            ? 'Due today'
-                            : `Due in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`}
-                        </Text>
-                      </View>
-                      <View alignItems="flex-end">
-                        <Text fontSize="$3" color="white" fontWeight="700">
-                          {formatCurrency(item.amount, currency)}
-                        </Text>
-                        <Text fontSize="$1" color="$gray10">
-                          {Math.round(item.confidence * 100)}% confidence
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </SectionCard>
+          <UpcomingBillsCard upcomingRecurring={upcomingRecurring} currency={currency} />
         </>
       )}
 
       <View height={140} />
     </ScrollView>
   );
-});
-
-const SectionCard = styled(View, {
-  backgroundColor: '$gray3',
-  borderRadius: '$4',
-  padding: '$4',
-  marginBottom: '$3',
-});
-
-const MetricTile = styled(View, {
-  backgroundColor: '$gray4',
-  borderRadius: '$3',
-  padding: '$3',
-  borderWidth: 1,
-  borderColor: '$gray5',
 });
 
 const FilterPill = styled(Button, {

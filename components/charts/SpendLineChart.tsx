@@ -1,22 +1,14 @@
 import { CircleSlash } from '@tamagui/lucide-icons';
 import * as React from 'react';
-import { TextInput } from 'react-native';
 import {
-  runOnJS,
   useAnimatedReaction,
   useDerivedValue,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { View } from 'tamagui';
+import { Text, View } from 'tamagui';
 import { useChartPressState } from 'victory-native';
-type InputFields<T> = {
-  [K in keyof T as T[K] extends string | number ? K : never]: T[K];
-};
-
-type NumericalFields<T> = {
-  [K in keyof T as T[K] extends number ? K : never]: T[K];
-};
+import type { InputFields, NumericalFields } from '../../lib/chartTypes';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { sanitizeChartPressNumber } from '../../lib/chartPressState';
 import { formatCurrencyWorklet } from '../../lib/format';
@@ -89,28 +81,6 @@ export const SpendLineChart = <
     }
   );
 
-  const titleRef = React.useRef<TextInput>(null);
-
-  const updateText = (value: string) => {
-    if (!isActive) {
-      titleRef.current?.setNativeProps({
-        text: title,
-      });
-      return;
-    }
-    if (!titleRef.current) return;
-    titleRef.current.setNativeProps({
-      text: value,
-    });
-  };
-
-  useAnimatedReaction(
-    () => amount.value,
-    (val) => {
-      runOnJS(updateText)(val);
-    }
-  );
-
   return (
     <CarouselItemWrapper>
       <View
@@ -120,16 +90,9 @@ export const SpendLineChart = <
         paddingHorizontal="$2"
         marginBottom="$2"
       >
-        <TextInput
-          ref={titleRef}
-          defaultValue=""
-          style={{
-            color: 'white',
-            fontSize: 14,
-            fontWeight: 'bold',
-            fontFamily: 'Inter',
-          }}
-        />
+        <Text color="white" fontSize={14} fontWeight="bold" fontFamily="Inter">
+          {title}
+        </Text>
       </View>
       <CarouselItemChart>
         {isEmpty ? (
@@ -157,6 +120,7 @@ export const SpendLineChart = <
               tooltip={{
                 ttX,
                 ttY,
+                ttLabel: amount,
               }}
               formatXLabel={formatXLabel}
               strokeWidth={strokeWidth}

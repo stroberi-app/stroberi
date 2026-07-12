@@ -14606,22 +14606,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated-carousel@npm:v4.0.0-alpha.12":
-  version: 4.0.0-alpha.12
-  resolution: "react-native-reanimated-carousel@npm:4.0.0-alpha.12"
+"react-native-reanimated-carousel@npm:4.0.3":
+  version: 4.0.3
+  resolution: "react-native-reanimated-carousel@npm:4.0.3"
   peerDependencies:
-    "@types/react": "*"
-    "@types/react-native": "*"
     react: ">=18.0.0"
     react-native: ">=0.70.3"
     react-native-gesture-handler: ">=2.9.0"
     react-native-reanimated: ">=3.0.0"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-    "@types/react-native":
-      optional: true
-  checksum: 4f0e620b1a200e795d7264e4e6da978cf9e1ee1157e83b04c3823cf4407d95677d0c896f421718fb76c09dbc1e50846c8266b577a01e26f8d117e0410d0f74ed
+  checksum: b9febfc8beffb63079f65a76aa644c8a260d613760e4edb0107008e70fff2af720588ffe3761316321f1f473615f589240ddbde129d7d2e77d02cb1a4bf896ca
   languageName: node
   linkType: hard
 
@@ -16222,7 +16215,7 @@ __metadata:
     react-native-ios-utilities: "npm:5.2.0"
     react-native-keyboard-controller: "npm:1.18.5"
     react-native-reanimated: "npm:~4.1.1"
-    react-native-reanimated-carousel: "npm:v4.0.0-alpha.12"
+    react-native-reanimated-carousel: "npm:4.0.3"
     react-native-safe-area-context: "npm:~5.6.0"
     react-native-screens: "npm:~4.16.0"
     react-native-svg: "npm:15.12.1"
@@ -16233,7 +16226,7 @@ __metadata:
     rn-emoji-keyboard: "npm:^1.7.0"
     tamagui: "npm:^2.3.1"
     typescript: "npm:~5.9.2"
-    victory-native: "npm:^41.12.5"
+    victory-native: "npm:41.26.0"
     zeego: "npm:^1.10.0"
   languageName: unknown
   linkType: soft
@@ -17028,9 +17021,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"victory-native@npm:^41.12.5":
-  version: 41.21.1
-  resolution: "victory-native@npm:41.21.1"
+"victory-native@npm:41.26.0":
+  version: 41.26.0
+  resolution: "victory-native@npm:41.26.0"
   dependencies:
     d3-scale: "npm:^4.0.2"
     d3-shape: "npm:^3.2.0"
@@ -17043,7 +17036,7 @@ __metadata:
     react-native: "*"
     react-native-gesture-handler: ">=2.0.0"
     react-native-reanimated: ">=3.0.0"
-  checksum: 40ad2b36e6c7e71d3304b1c336735ab53f3009815a4808bc4e1dead357e7b7e0560ab2367c14305298c5cccbcf38003693baba8a8cfd82b60790e9f52f54d639
+  checksum: 621103840b188efb0f82805a0585f629b45fdf1e9356e9a42604e2987f21c89836ba21cb8b0eab08b4c8f4137c9ad88f8dcca4d882c447ee2616d66b0db8d4c4
   languageName: node
   linkType: hard
 

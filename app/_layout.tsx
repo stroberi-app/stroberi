@@ -69,6 +69,8 @@ function RootLayoutNav() {
                 <Stack>
                   <Stack.Screen name="(tabs)" options={tabsOptions} />
                   <Stack.Screen name="create-transaction" options={options} />
+                  <Stack.Screen name="select-category" options={options} />
+                  <Stack.Screen name="edit-category" options={options} />
                 </Stack>
               </BottomSheetModalProvider>
             </DatabaseProvider>

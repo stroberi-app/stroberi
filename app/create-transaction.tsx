@@ -1,4 +1,3 @@
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import {
   ArrowLeft,
@@ -15,21 +14,8 @@ import {
   useNavigation,
   useRouter,
 } from 'expo-router';
-import {
-  type ReactNode,
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import {
-  InteractionManager,
-  Keyboard,
-  Platform,
-  StyleSheet,
-  View as RNView,
-} from 'react-native';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View as RNView } from 'react-native';
 import type { ParamListBase } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FullWindowOverlay } from 'react-native-screens';
@@ -40,7 +26,6 @@ import { CurrencyInput } from '../components/CurrencyInput';
 import { CurrencySelect } from '../components/CurrencySelect';
 import { DatePicker } from '../components/DatePicker';
 import { StyledScrollView } from '../components/StyledScrollView';
-import { ManageCategoriesSheet } from '../components/sheet/ManageCategoriesSheet';
 import { TripSelect } from '../components/TripSelect';
 import type { CategoryModel } from '../database/category-model';
 import { createTransaction, updateTransaction } from '../database/actions/transactions';
@@ -61,6 +46,8 @@ import { MissingCurrencyRateError } from '../lib/currencyConversion';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../hooks/useTripsEnabled';
 import useToast from '../hooks/useToast';
+import { useTransactionFormSheets } from '../hooks/useTransactionFormSheets';
+import { registerCategorySelectionHandler } from '../lib/categorySelectionBridge';
 
 const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
   <FullWindowOverlay>
@@ -70,7 +57,6 @@ const IOSModalOverlayContainer = ({ children }: { children?: ReactNode }) => (
 
 const modalContainerComponent =
   Platform.OS === 'ios' ? IOSModalOverlayContainer : undefined;
-type SheetType = 'currency' | 'categories' | 'trip';
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const router = useRouter();
@@ -102,13 +88,20 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 function CreateTransaction() {
-  const bottomSheetRef = useRef<BottomSheetModal | null>(null);
-  const manageCategoriesSheetRef = useRef<BottomSheetModal | null>(null);
-  const tripSelectSheetRef = useRef<BottomSheetModal | null>(null);
+  const {
+    currencySheetRef,
+    tripSheetRef,
+    isCurrencySheetMounted,
+    isTripSheetMounted,
+    requestSheetOpen,
+  } = useTransactionFormSheets();
   const params = useLocalSearchParams();
   const router = useRouter();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const amountInputRef = useRef<InputRef | null>(null);
+  const categorySelectionIdRef = useRef(
+    `create-transaction-${Date.now()}-${Math.random()}`
+  );
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
   const { legacyCategory, legacyTransaction, transactionId, transactionType } =
@@ -137,83 +130,16 @@ function CreateTransaction() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [amountValidationError, setAmountValidationError] = useState<string | null>(null);
-  const [isCurrencySheetMounted, setIsCurrencySheetMounted] = useState(false);
-  const [isCategoriesSheetMounted, setIsCategoriesSheetMounted] = useState(false);
-  const [isTripSheetMounted, setIsTripSheetMounted] = useState(false);
-  const [pendingSheetToOpen, setPendingSheetToOpen] = useState<SheetType | null>(null);
 
-  const presentSheet = useCallback((sheetRef: RefObject<BottomSheetModal | null>) => {
-    Keyboard.dismiss();
-    InteractionManager.runAfterInteractions(() => {
-      sheetRef.current?.present();
-    });
-  }, []);
-
-  const requestSheetOpen = useCallback(
-    (sheet: SheetType) => {
-      if (sheet === 'currency') {
-        if (!isCurrencySheetMounted) {
-          setIsCurrencySheetMounted(true);
-          setPendingSheetToOpen('currency');
-          return;
+  useEffect(
+    () =>
+      registerCategorySelectionHandler(categorySelectionIdRef.current, (category) => {
+        if (!Array.isArray(category)) {
+          setSelectedCategory(category);
         }
-        presentSheet(bottomSheetRef);
-        return;
-      }
-
-      if (sheet === 'categories') {
-        if (!isCategoriesSheetMounted) {
-          setIsCategoriesSheetMounted(true);
-          setPendingSheetToOpen('categories');
-          return;
-        }
-        presentSheet(manageCategoriesSheetRef);
-        return;
-      }
-
-      if (!isTripSheetMounted) {
-        setIsTripSheetMounted(true);
-        setPendingSheetToOpen('trip');
-        return;
-      }
-      presentSheet(tripSelectSheetRef);
-    },
-    [isCategoriesSheetMounted, isCurrencySheetMounted, isTripSheetMounted, presentSheet]
+      }),
+    []
   );
-
-  useEffect(() => {
-    if (!pendingSheetToOpen) {
-      return;
-    }
-
-    const mounted =
-      (pendingSheetToOpen === 'currency' && isCurrencySheetMounted) ||
-      (pendingSheetToOpen === 'categories' && isCategoriesSheetMounted) ||
-      (pendingSheetToOpen === 'trip' && isTripSheetMounted);
-
-    if (!mounted) {
-      return;
-    }
-
-    const openSheet = () => {
-      if (pendingSheetToOpen === 'currency') {
-        presentSheet(bottomSheetRef);
-      } else if (pendingSheetToOpen === 'categories') {
-        presentSheet(manageCategoriesSheetRef);
-      } else {
-        presentSheet(tripSelectSheetRef);
-      }
-      setPendingSheetToOpen(null);
-    };
-
-    requestAnimationFrame(openSheet);
-  }, [
-    isCategoriesSheetMounted,
-    isCurrencySheetMounted,
-    isTripSheetMounted,
-    pendingSheetToOpen,
-    presentSheet,
-  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -503,7 +429,13 @@ function CreateTransaction() {
             <LinkButton
               color="white"
               onPress={() => {
-                requestSheetOpen('categories');
+                router.push({
+                  pathname: '/select-category',
+                  params: {
+                    selectionId: categorySelectionIdRef.current,
+                    selectedCategoryId: selectedCategory?.id,
+                  },
+                });
               }}
             >
               {selectedCategory ? (
@@ -555,26 +487,18 @@ function CreateTransaction() {
       </StyledScrollView>
       {isCurrencySheetMounted && (
         <CurrencySelect
-          sheetRef={bottomSheetRef}
+          sheetRef={currencySheetRef}
           containerComponent={modalContainerComponent}
           onSelect={(currency) => {
             setSelectedCurrency(currency.code);
-            bottomSheetRef.current?.close();
+            currencySheetRef.current?.close();
           }}
           selectedCurrency={selectedCurrency}
         />
       )}
-      {isCategoriesSheetMounted && (
-        <ManageCategoriesSheet
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          sheetRef={manageCategoriesSheetRef}
-          containerComponent={modalContainerComponent}
-        />
-      )}
       {tripsEnabled && isTripSheetMounted && (
         <TripSelect
-          sheetRef={tripSelectSheetRef}
+          sheetRef={tripSheetRef}
           selectedTrip={selectedTrip}
           onSelect={handleTripSelect}
           containerComponent={modalContainerComponent}
