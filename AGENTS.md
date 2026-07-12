@@ -76,4 +76,3 @@
 ## Release Notes
 
 - Release workflow details are in `RELEASE_GUIDE.md`.
-- Do not bump versions/build numbers unless the task is explicitly release-related.

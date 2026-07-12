@@ -120,7 +120,9 @@ export const SavingsRateTargetSheet = ({ sheetRef }: SavingsRateTargetSheetProps
                   %
                 </Text>
               </View>
-              <Button onPress={handleSave}>Save</Button>
+              <Button backgroundColor="$green" onPress={handleSave}>
+                Save
+              </Button>
             </>
           )}
         </View>
