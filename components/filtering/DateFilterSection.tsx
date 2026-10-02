@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { XCircle } from '@tamagui/lucide-icons';
+import { XCircle } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import type React from 'react';
 import { Text, View } from 'tamagui';

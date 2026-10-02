@@ -6,7 +6,7 @@ import {
   Settings,
   TrendingUp,
   Wallet,
-} from '@tamagui/lucide-icons';
+} from '@tamagui/lucide-icons-2';
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
 import type React from 'react';

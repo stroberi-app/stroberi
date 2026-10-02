@@ -1,5 +1,5 @@
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { ArrowLeft, ChevronRight } from '@tamagui/lucide-icons';
+import { ArrowLeft, ChevronRight } from '@tamagui/lucide-icons-2';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, Pressable } from 'react-native';

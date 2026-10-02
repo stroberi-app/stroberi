@@ -1,4 +1,4 @@
-import { AlertTriangle, ShieldCheck } from '@tamagui/lucide-icons';
+import { AlertTriangle, ShieldCheck } from '@tamagui/lucide-icons-2';
 import { Text, View, styled } from 'tamagui';
 import { formatCurrency } from '../../lib/format';
 import type { MonthForecast, SafeToSpendSummary } from '../../lib/insights';

@@ -1,7 +1,7 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useScrollToTop } from '@react-navigation/native';
-import { Filter } from '@tamagui/lucide-icons';
+import { Filter } from '@tamagui/lucide-icons-2';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';

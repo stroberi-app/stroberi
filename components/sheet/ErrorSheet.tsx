@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { AlertCircle, Download, FileText, RefreshCw, X } from '@tamagui/lucide-icons';
+import { AlertCircle, Download, FileText, RefreshCw, X } from '@tamagui/lucide-icons-2';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

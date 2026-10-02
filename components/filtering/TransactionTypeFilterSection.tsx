@@ -1,4 +1,4 @@
-import { XCircle } from '@tamagui/lucide-icons';
+import { XCircle } from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { TransactionTypeFilter } from '../../lib/transactionQuery';
 import { LinkButton } from '../button/LinkButton';

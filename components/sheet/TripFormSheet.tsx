@@ -3,7 +3,7 @@ import {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { Calendar, DollarSign, Smile } from '@tamagui/lucide-icons';
+import { Calendar, DollarSign, Smile } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable } from 'react-native';

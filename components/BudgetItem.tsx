@@ -1,6 +1,6 @@
 import { Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Pen, Trash2 } from '@tamagui/lucide-icons';
+import { Pen, Trash2 } from '@tamagui/lucide-icons-2';
 import { Alert } from 'react-native';
 import { combineLatest, map, type Observable, of, switchMap } from 'rxjs';
 import { ScrollView, Text, View, XStack } from 'tamagui';

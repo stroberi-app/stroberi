@@ -1,7 +1,7 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Calendar } from '@tamagui/lucide-icons';
+import { Calendar } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { useState } from 'react';

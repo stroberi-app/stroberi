@@ -1,0 +1,65 @@
+diff --git a/node_modules/image-size/dist/types/icns.js b/node_modules/image-size/dist/types/icns.js
+index f2bfafe..6699c88 100644
+--- a/node_modules/image-size/dist/types/icns.js
++++ b/node_modules/image-size/dist/types/icns.js
+@@ -65,6 +65,9 @@ const ICON_TYPE_SIZE = {
+ };
+ function readImageHeader(input, imageOffset) {
+     const imageLengthOffset = imageOffset + ENTRY_LENGTH_OFFSET;
++    if (imageLengthOffset + 4 > input.length) {
++        throw new TypeError('Invalid ICNS');
++    }
+     return [
+         (0, utils_1.toUTF8String)(input, imageOffset, imageLengthOffset),
+         (0, utils_1.readUInt32BE)(input, imageLengthOffset),
+@@ -81,6 +84,9 @@ exports.ICNS = {
+         const fileLength = (0, utils_1.readUInt32BE)(input, FILE_LENGTH_OFFSET);
+         let imageOffset = SIZE_HEADER;
+         let imageHeader = readImageHeader(input, imageOffset);
++        if (imageHeader[1] < 8) {
++            throw new TypeError('Invalid ICNS');
++        }
+         let imageSize = getImageSize(imageHeader[0]);
+         imageOffset += imageHeader[1];
+         if (imageOffset === fileLength)
+@@ -92,6 +98,9 @@ exports.ICNS = {
+         };
+         while (imageOffset < fileLength && imageOffset < inputLength) {
+             imageHeader = readImageHeader(input, imageOffset);
++            if (imageHeader[1] < 8) {
++                throw new TypeError('Invalid ICNS');
++            }
+             imageSize = getImageSize(imageHeader[0]);
+             imageOffset += imageHeader[1];
+             result.images.push(imageSize);
+diff --git a/node_modules/image-size/dist/types/jxl.js b/node_modules/image-size/dist/types/jxl.js
+index f557b0a..8954d1e 100644
+--- a/node_modules/image-size/dist/types/jxl.js
++++ b/node_modules/image-size/dist/types/jxl.js
+@@ -23,6 +23,9 @@ function extractPartialStreams(input) {
+         const jxlpBox = (0, utils_1.findBox)(input, 'jxlp', offset);
+         if (!jxlpBox)
+             break;
++        if (jxlpBox.size < 12) {
++            throw new TypeError('Invalid JXL');
++        }
+         partialStreams.push(input.slice(jxlpBox.offset + 12, jxlpBox.offset + jxlpBox.size));
+         offset = jxlpBox.offset + jxlpBox.size;
+     }
+diff --git a/node_modules/image-size/dist/types/utils.js b/node_modules/image-size/dist/types/utils.js
+index 5224bba..6c77af0 100644
+--- a/node_modules/image-size/dist/types/utils.js
++++ b/node_modules/image-size/dist/types/utils.js
+@@ -62,6 +62,12 @@ function readBox(input, offset) {
+ }
+ function findBox(input, boxName, offset) {
+     while (offset < input.length) {
++        if (input.length - offset < 4)
++            break;
++        if ((0, exports.readUInt32BE)(input, offset) < 8) {
++            offset += 8;
++            continue;
++        }
+         const box = readBox(input, offset);
+         if (!box)
+             break;

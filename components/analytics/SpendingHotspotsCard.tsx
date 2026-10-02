@@ -1,4 +1,4 @@
-import { TrendingUp } from '@tamagui/lucide-icons';
+import { TrendingUp } from '@tamagui/lucide-icons-2';
 import { Separator, Text, View } from 'tamagui';
 import type { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 import { buildCategoryColorMap } from '../../lib/chartColors';

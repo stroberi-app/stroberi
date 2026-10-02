@@ -1,4 +1,4 @@
-import { Check as CheckIcon } from '@tamagui/lucide-icons';
+import { Check as CheckIcon } from '@tamagui/lucide-icons-2';
 import type React from 'react';
 import { Checkbox, Label, XStack } from 'tamagui';
 

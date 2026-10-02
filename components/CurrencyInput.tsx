@@ -1,4 +1,4 @@
-import { ChevronRight } from '@tamagui/lucide-icons';
+import { ChevronRight } from '@tamagui/lucide-icons-2';
 import { forwardRef, type Ref, useCallback, useId, useMemo } from 'react';
 import {
   Input,

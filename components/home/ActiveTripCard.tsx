@@ -1,6 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Plane } from '@tamagui/lucide-icons';
+import { Plane } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';

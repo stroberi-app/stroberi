@@ -1,6 +1,6 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { ArrowLeft, Calendar, FolderOutput, Info } from '@tamagui/lucide-icons';
+import { ArrowLeft, Calendar, FolderOutput, Info } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

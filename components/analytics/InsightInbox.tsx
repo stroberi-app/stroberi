@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Info, Lightbulb } from '@tamagui/lucide-icons';
+import { AlertTriangle, CheckCircle2, Info, Lightbulb } from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import { Text, View, styled } from 'tamagui';
 import type { InsightAction, MoneyInsight } from '../../lib/insights';

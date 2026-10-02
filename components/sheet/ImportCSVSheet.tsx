@@ -1,5 +1,5 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Download, FileText, FolderInput } from '@tamagui/lucide-icons';
+import { Download, FileText, FolderInput } from '@tamagui/lucide-icons-2';
 import type React from 'react';
 import { useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

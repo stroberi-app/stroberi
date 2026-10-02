@@ -1,6 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { PlusCircle } from '@tamagui/lucide-icons';
+import { PlusCircle } from '@tamagui/lucide-icons-2';
 import React, { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

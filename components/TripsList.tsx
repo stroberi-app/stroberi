@@ -1,6 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Plane, PlusCircle } from '@tamagui/lucide-icons';
+import { Plane, PlusCircle } from '@tamagui/lucide-icons-2';
 import type { Observable } from 'rxjs';
 import { ScrollView, Text, View } from 'tamagui';
 import type { TripModel } from '../database/trip-model';

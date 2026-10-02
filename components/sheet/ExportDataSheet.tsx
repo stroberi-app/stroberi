@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { AlertCircle, Calendar, Eye, FolderOutput } from '@tamagui/lucide-icons';
+import { AlertCircle, Calendar, Eye, FolderOutput } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import type React from 'react';
 import { useEffect, useState } from 'react';

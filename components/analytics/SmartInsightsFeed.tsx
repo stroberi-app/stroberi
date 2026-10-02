@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarClock, Smile, TrendingUp } from '@tamagui/lucide-icons';
+import { AlertTriangle, CalendarClock, Smile, TrendingUp } from '@tamagui/lucide-icons-2';
 import { ScrollView, Text, View, styled } from 'tamagui';
 import type { SmartInsight } from '../../lib/forecasting';
 

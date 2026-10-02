@@ -1,4 +1,4 @@
-import { Download, Info } from '@tamagui/lucide-icons';
+import { Download, Info } from '@tamagui/lucide-icons-2';
 import { Text, XStack, YStack } from 'tamagui';
 
 export const ImportIntro = () => (

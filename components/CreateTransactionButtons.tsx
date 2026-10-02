@@ -1,4 +1,4 @@
-import { PlusCircle } from '@tamagui/lucide-icons';
+import { PlusCircle } from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Button } from './button/Button';

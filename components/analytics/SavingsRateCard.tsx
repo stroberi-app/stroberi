@@ -4,7 +4,7 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
-} from '@tamagui/lucide-icons';
+} from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { SavingsRateAnalysis } from '../../lib/advancedAnalytics';

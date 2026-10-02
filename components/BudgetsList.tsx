@@ -1,6 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { PlusCircle, Wallet } from '@tamagui/lucide-icons';
+import { PlusCircle, Wallet } from '@tamagui/lucide-icons-2';
 import type { Observable } from 'rxjs';
 import { ScrollView, Text, View } from 'tamagui';
 import type { BudgetModel } from '../database/budget-model';
