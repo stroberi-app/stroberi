@@ -1,4 +1,4 @@
-import { Heart, Lightbulb } from '@tamagui/lucide-icons';
+import { Heart, Lightbulb } from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { FinancialHealthScore } from '../../lib/advancedAnalytics';
 import { AnalyticsCard, ProgressBar } from './AnalyticsCard';

@@ -1,5 +1,5 @@
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Calendar } from '@tamagui/lucide-icons';
+import { Calendar } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { Pressable } from 'react-native';
 import Animated, {

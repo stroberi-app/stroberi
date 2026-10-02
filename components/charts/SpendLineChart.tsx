@@ -1,4 +1,4 @@
-import { CircleSlash } from '@tamagui/lucide-icons';
+import { CircleSlash } from '@tamagui/lucide-icons-2';
 import * as React from 'react';
 import {
   useAnimatedReaction,

@@ -4,7 +4,7 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { Calendar, FolderOpen, TrendingUp, X } from '@tamagui/lucide-icons';
+import { Calendar, FolderOpen, TrendingUp, X } from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

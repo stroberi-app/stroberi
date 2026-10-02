@@ -1,7 +1,7 @@
 import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useActionSheet } from '@expo/react-native-action-sheet';
-import { ArrowLeft, PlusCircle, Search, Trash2 } from '@tamagui/lucide-icons';
+import { ArrowLeft, PlusCircle, Search, Trash2 } from '@tamagui/lucide-icons-2';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable } from 'react-native';

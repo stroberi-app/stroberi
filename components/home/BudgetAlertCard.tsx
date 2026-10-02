@@ -1,6 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { AlertTriangle, X } from '@tamagui/lucide-icons';
+import { AlertTriangle, X } from '@tamagui/lucide-icons-2';
 import { useEffect, useState } from 'react';
 import { combineLatest, type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';

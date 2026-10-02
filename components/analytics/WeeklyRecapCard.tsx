@@ -1,4 +1,4 @@
-import { CalendarClock } from '@tamagui/lucide-icons';
+import { CalendarClock } from '@tamagui/lucide-icons-2';
 import { Text, View, styled } from 'tamagui';
 import { formatCurrency } from '../../lib/format';
 import type { WeeklyRecap } from '../../lib/insights';

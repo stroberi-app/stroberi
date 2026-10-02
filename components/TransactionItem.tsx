@@ -1,6 +1,6 @@
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Pen, RefreshCw, Trash2 } from '@tamagui/lucide-icons';
+import { Pen, RefreshCw, Trash2 } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';

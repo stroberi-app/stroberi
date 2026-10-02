@@ -1,4 +1,4 @@
-import { PlusCircle, XCircle } from '@tamagui/lucide-icons';
+import { PlusCircle, XCircle } from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Text, View } from 'tamagui';

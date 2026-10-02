@@ -10,7 +10,7 @@ import {
   Tags,
   TrendingUp,
   Wallet,
-} from '@tamagui/lucide-icons';
+} from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { useState } from 'react';

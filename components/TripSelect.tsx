@@ -7,7 +7,7 @@ import {
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { Plane, X } from '@tamagui/lucide-icons';
+import { Plane, X } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import type React from 'react';
 import { useMemo, useState } from 'react';

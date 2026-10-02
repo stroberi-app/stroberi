@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Scale, TrendingDown, TrendingUp } from '@tamagui/lucide-icons';
+import { ArrowLeftRight, Scale, TrendingDown, TrendingUp } from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { IncomeExpenseRatioAnalysis } from '../../lib/advancedAnalytics';
 import { formatMonthLabel } from '../../lib/advancedAnalytics';

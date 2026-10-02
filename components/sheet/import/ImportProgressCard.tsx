@@ -4,7 +4,7 @@ import {
   FileText,
   FolderInput,
   Info,
-} from '@tamagui/lucide-icons';
+} from '@tamagui/lucide-icons-2';
 import { Progress, Text, XStack, YStack } from 'tamagui';
 import type { ImportProgress } from '../../../features/import/useCsvImport';
 

@@ -4,7 +4,7 @@ import {
   ChevronRight,
   TrendingDown,
   TrendingUp,
-} from '@tamagui/lucide-icons';
+} from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { CategoryTrendAnalysis } from '../../lib/advancedAnalytics';
 import { formatCurrency } from '../../lib/format';

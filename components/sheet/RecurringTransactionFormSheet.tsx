@@ -9,7 +9,7 @@ import {
   LayoutGrid,
   RefreshCw,
   User,
-} from '@tamagui/lucide-icons';
+} from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import type React from 'react';

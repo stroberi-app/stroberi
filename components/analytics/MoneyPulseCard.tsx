@@ -1,4 +1,4 @@
-import { Flame } from '@tamagui/lucide-icons';
+import { Flame } from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 import { formatSignedCurrency } from '../../lib/analyticsOverview';

@@ -1,6 +1,6 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { CircleSlash } from '@tamagui/lucide-icons';
+import { CircleSlash } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import * as React from 'react';
 import { Pressable } from 'react-native';

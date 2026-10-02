@@ -1,4 +1,4 @@
-import { ArrowRight } from '@tamagui/lucide-icons';
+import { ArrowRight } from '@tamagui/lucide-icons-2';
 import type * as React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Spinner, Text, View, YGroup } from 'tamagui';

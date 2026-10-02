@@ -1,4 +1,4 @@
-import { Lightbulb } from '@tamagui/lucide-icons';
+import { Lightbulb } from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
 import { getPriorityStyles } from '../../lib/analyticsOverview';

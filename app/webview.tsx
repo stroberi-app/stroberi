@@ -1,4 +1,4 @@
-import { ArrowLeft } from '@tamagui/lucide-icons';
+import { ArrowLeft } from '@tamagui/lucide-icons-2';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

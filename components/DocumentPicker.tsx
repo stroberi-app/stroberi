@@ -1,4 +1,4 @@
-import { PlusCircle } from '@tamagui/lucide-icons';
+import { PlusCircle } from '@tamagui/lucide-icons-2';
 import * as DocumentPickerLib from 'expo-document-picker';
 import { Text, View } from 'tamagui';
 

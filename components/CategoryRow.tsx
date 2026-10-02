@@ -1,4 +1,4 @@
-import { Check } from '@tamagui/lucide-icons';
+import { Check } from '@tamagui/lucide-icons-2';
 import type { ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { Text, View } from 'tamagui';

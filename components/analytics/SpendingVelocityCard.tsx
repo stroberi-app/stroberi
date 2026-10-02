@@ -1,4 +1,4 @@
-import { Clock, Flame, Zap } from '@tamagui/lucide-icons';
+import { Clock, Flame, Zap } from '@tamagui/lucide-icons-2';
 import { Text, View } from 'tamagui';
 import type { SpendingVelocityAnalysis } from '../../lib/advancedAnalytics';
 import type { SpendingForecast } from '../../lib/forecasting';

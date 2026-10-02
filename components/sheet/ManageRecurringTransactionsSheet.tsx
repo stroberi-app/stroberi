@@ -4,7 +4,7 @@ import type { Database } from '@nozbe/watermelondb';
 import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Pen, Plus, Trash2 } from '@tamagui/lucide-icons';
+import { Pen, Plus, Trash2 } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';

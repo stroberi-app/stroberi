@@ -1,4 +1,4 @@
-import { CalendarClock } from '@tamagui/lucide-icons';
+import { CalendarClock } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { Separator, Text, View } from 'tamagui';
 import type { useAnalyticsOverview } from '../../hooks/useAnalyticsOverview';
