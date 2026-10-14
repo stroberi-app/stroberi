@@ -17,7 +17,7 @@ type ActiveTripCardProps = {
 };
 
 const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const { tripsEnabled } = useTripsEnabled();
   const router = useRouter();
   const [spending, setSpending] = useState<{
@@ -109,7 +109,7 @@ const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
 
           <View alignItems="flex-end">
             <Text fontSize="$4" fontWeight="bold" color="$stroberi">
-              {formatCurrency(spending?.totalSpent ?? 0, defaultCurrency || 'USD')}
+              {formatCurrency(spending?.totalSpent ?? 0, currency)}
             </Text>
             <Text fontSize="$1" color="$gray10">
               {spending?.transactionCount ?? 0} expenses

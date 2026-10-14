@@ -66,7 +66,7 @@ export const RecurringTransactionFormSheet = ({
   recurring,
   onSuccess,
 }: RecurringTransactionFormSheetProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { defaultCurrency, currency } = useDefaultCurrency();
   const toast = useToast();
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
@@ -77,7 +77,7 @@ export const RecurringTransactionFormSheet = ({
   );
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency ?? 'USD');
+  const [selectedCurrency, setSelectedCurrency] = useState(currency);
   const [amount, setAmount] = useState('');
   const [merchantName, setMerchantName] = useState('');
   const [frequency, setFrequency] = useState<RecurringFrequency>('monthly');

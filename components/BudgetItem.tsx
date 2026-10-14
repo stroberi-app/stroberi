@@ -32,7 +32,7 @@ const BudgetItemContent = ({
   categories,
   onEdit,
 }: BudgetItemProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
 
   const handleDelete = () => {
     Alert.alert('Delete Budget', 'Are you sure you want to delete this budget?', [
@@ -137,7 +137,7 @@ const BudgetItemContent = ({
         spent={budgetStatus.spent}
         budget={budgetStatus.budgetLimit}
         percentage={budgetStatus.percentage}
-        currency={defaultCurrency || 'USD'}
+        currency={currency}
         color={progressColor}
       />
 

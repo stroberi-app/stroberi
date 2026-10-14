@@ -4,6 +4,7 @@ import type {
   RecurringFrequency,
   RecurringTransactionModel,
 } from '../../database/recurring-transaction-model';
+import { FALLBACK_CURRENCY } from '../../lib/format';
 import { upcomingOccurrences } from '../../lib/recurrence';
 
 export type RecurringTransactionFormState = {
@@ -27,7 +28,7 @@ export const getDefaultRecurringTransactionFormState = (
   hasEndDate: false,
   merchantName: '',
   selectedCategory: null,
-  selectedCurrency: defaultCurrency ?? 'USD',
+  selectedCurrency: defaultCurrency ?? FALLBACK_CURRENCY,
   startDate: new Date(),
   transactionType: 'expense',
 });

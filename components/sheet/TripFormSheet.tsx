@@ -44,7 +44,7 @@ type TripFormSheetProps = {
 export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps) => {
   const toast = useToast();
   const { bottom } = useSafeAreaInsets();
-  const { defaultCurrency } = useDefaultCurrency();
+  const { defaultCurrency, currency } = useDefaultCurrency();
   const iconPickerRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
 
@@ -453,7 +453,7 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
           setCurrencyCode(currency.code);
           currencySheetRef.current?.close();
         }}
-        selectedCurrency={currencyCode || defaultCurrency || 'USD'}
+        selectedCurrency={currencyCode || currency}
       />
     </>
   );

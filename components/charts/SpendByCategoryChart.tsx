@@ -71,7 +71,7 @@ const SpendByCategory = withObservables<
       .pipe(map((transactions) => calculateCategorySpending(transactions))),
   };
 })(({ chartData, categories, dateFilter, setDateFilter }: SpendByCategoryProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { defaultCurrency, currency } = useDefaultCurrency();
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   const maxCategories = 6;
@@ -196,7 +196,7 @@ const SpendByCategory = withObservables<
                   Top {processedData.length}
                 </Text>
                 <Text fontSize="$3" fontWeight="bold" color="white">
-                  {formatCurrency(shownTotal, defaultCurrency ?? 'USD')}
+                  {formatCurrency(shownTotal, currency)}
                 </Text>
               </View>
               <View flexDirection="row" height={10} borderRadius={5} overflow="hidden">
@@ -263,7 +263,7 @@ const SpendByCategory = withObservables<
                 numberOfLines={1}
               >
                 {selectedItem
-                  ? `${selectedItem.icon} ${selectedItem.name} — ${formatCurrency(selectedItem.total, defaultCurrency ?? 'USD')}`
+                  ? `${selectedItem.icon} ${selectedItem.name} — ${formatCurrency(selectedItem.total, currency)}`
                   : 'Tap a category for details'}
               </Text>
             </View>

@@ -68,7 +68,7 @@ export const BudgetFormSheet = ({
 }: BudgetFormSheetProps) => {
   const database = useDatabase();
   const router = useRouter();
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const toast = useToast();
   const { bottom } = useSafeAreaInsets();
   const periodPickerRef = useRef<BottomSheetModal>(null);
@@ -131,7 +131,7 @@ export const BudgetFormSheet = ({
     selectedCategoryIds,
     parsedAmount,
     alertThreshold,
-    currency: defaultCurrency ?? 'USD',
+    currency,
   });
 
   const resetForm = () => {
@@ -255,7 +255,7 @@ export const BudgetFormSheet = ({
                 <CurrencyInput
                   value={amount}
                   onChangeText={setAmount}
-                  selectedCurrency={defaultCurrency ?? 'USD'}
+                  selectedCurrency={currency}
                   focusOnMount={!budget}
                   onCurrencySelect={() => {}}
                 />
@@ -294,17 +294,13 @@ export const BudgetFormSheet = ({
                       spent={budgetPreview.spent}
                       budget={budgetPreview.budgetLimit}
                       percentage={budgetPreview.percentage}
-                      currency={defaultCurrency ?? 'USD'}
+                      currency={currency}
                       color={previewColor}
                     />
 
                     {rollover && budgetPreview.rolloverAmount > 0 && (
                       <Text fontSize="$2" color="$gray10" marginTop="$2">
-                        Includes{' '}
-                        {formatCurrency(
-                          budgetPreview.rolloverAmount,
-                          defaultCurrency ?? 'USD'
-                        )}{' '}
+                        Includes {formatCurrency(budgetPreview.rolloverAmount, currency)}{' '}
                         carried over from the previous {period.slice(0, -2)}.
                       </Text>
                     )}
@@ -477,7 +473,6 @@ export const BudgetFormSheet = ({
           thresholdPickerRef.current?.close();
         }}
       />
-
     </>
   );
 };

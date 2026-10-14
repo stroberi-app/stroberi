@@ -2,6 +2,7 @@ import { getLocales } from 'expo-localization';
 import { useEffect, useState } from 'react';
 import { database } from '../database';
 import { rebaseTransactionsToCurrency } from '../database/actions/transactions';
+import { FALLBACK_CURRENCY } from '../lib/format';
 import { STORAGE_KEYS } from '../lib/storageKeys';
 
 let defaultCurrencyListeners: Array<(currency: string | null) => void> = [];
@@ -72,6 +73,8 @@ export const useDefaultCurrency = () => {
 
   return {
     defaultCurrency,
+    /** `defaultCurrency`, or the fallback while none is set; use for display. */
+    currency: defaultCurrency ?? FALLBACK_CURRENCY,
     setDefaultCurrency: handleSetDefaultCurrency,
     isUpdatingCurrency,
     isDefaultCurrencyLoaded,

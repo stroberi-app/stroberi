@@ -21,7 +21,7 @@ type BudgetAlertCardProps = {
 };
 
 const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
   const { value: dismissedBudgetIds, setValue: setDismissedBudgetIds } = useStoredSetting(
     STORAGE_KEYS.DISMISSED_BUDGET_ALERTS,
@@ -117,8 +117,8 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
                   </View>
                 </View>
                 <Text fontSize="$2" color="$gray11">
-                  {formatCurrency(alert.spent, defaultCurrency || 'USD')} /{' '}
-                  {formatCurrency(alert.budgetLimit, defaultCurrency || 'USD')}
+                  {formatCurrency(alert.spent, currency)} /{' '}
+                  {formatCurrency(alert.budgetLimit, currency)}
                 </Text>
               </View>
               <LinkButton

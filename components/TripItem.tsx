@@ -22,12 +22,12 @@ type TripItemProps = {
 };
 
 const TripItemInner = ({ trip, transactions, onPress, onEdit }: TripItemProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const scale = useSharedValue(1);
 
   const totalSpent = calculateTripSpend(trip, transactions);
   const transactionCount = transactions.length;
-  const displayCurrency = trip.currencyCode || defaultCurrency || 'USD';
+  const displayCurrency = trip.currencyCode || currency;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
