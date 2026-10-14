@@ -21,6 +21,24 @@ export const numberSetting = (defaultValue: number): SettingCodec<number> => ({
   serialize: String,
 });
 
+export const stringListSetting: SettingCodec<string[]> = {
+  parse: (stored) => {
+    if (typeof stored !== 'string') {
+      return [];
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      return Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === 'string')
+        : [];
+    } catch {
+      return [];
+    }
+  },
+  serialize: (value) => JSON.stringify(value),
+};
+
 // Mounted hooks per key, so a change made on one screen reaches the others.
 const listenersByKey = new Map<string, Set<(stored: string) => void>>();
 

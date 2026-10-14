@@ -1,4 +1,4 @@
-import { booleanSetting, numberSetting } from './useStoredSetting';
+import { booleanSetting, numberSetting, stringListSetting } from './useStoredSetting';
 
 jest.mock('../database', () => ({ database: {} }));
 
@@ -20,5 +20,13 @@ describe('setting codecs', () => {
     expect(codec.parse(null)).toBe(20);
     expect(codec.parse('abc')).toBe(20);
     expect(codec.serialize(12.5)).toBe('12.5');
+  });
+
+  it('parses string lists, ignoring corrupt JSON and non-string items', () => {
+    expect(stringListSetting.parse('["a","b"]')).toEqual(['a', 'b']);
+    expect(stringListSetting.parse('[1,"a",null]')).toEqual(['a']);
+    expect(stringListSetting.parse('{oops')).toEqual([]);
+    expect(stringListSetting.parse(null)).toEqual([]);
+    expect(stringListSetting.serialize(['a'])).toBe('["a"]');
   });
 });

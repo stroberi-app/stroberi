@@ -77,19 +77,23 @@ export const groupTotalsByMonth = (entries: LedgerEntry[]): MonthlyTotals[] => {
   return Array.from(months.values()).sort((a, b) => a.month.localeCompare(b.month));
 };
 
-/** Sums expense magnitudes per key; income entries are ignored. */
-export const sumExpensesBy = <T extends LedgerEntry>(
+/** Sums entry magnitudes per key, e.g. to bucket pre-filtered spend by day. */
+export const sumMagnitudesBy = <T extends Pick<LedgerEntry, 'amountInBaseCurrency'>>(
   entries: T[],
   keyOf: (entry: T) => string
 ): Map<string, number> => {
   const totals = new Map<string, number>();
 
   for (const entry of entries) {
-    if (isExpense(entry)) {
-      const key = keyOf(entry);
-      totals.set(key, (totals.get(key) ?? 0) + magnitude(entry));
-    }
+    const key = keyOf(entry);
+    totals.set(key, (totals.get(key) ?? 0) + magnitude(entry));
   }
 
   return totals;
 };
+
+/** Sums expense magnitudes per key; income entries are ignored. */
+export const sumExpensesBy = <T extends LedgerEntry>(
+  entries: T[],
+  keyOf: (entry: T) => string
+): Map<string, number> => sumMagnitudesBy(entries.filter(isExpense), keyOf);

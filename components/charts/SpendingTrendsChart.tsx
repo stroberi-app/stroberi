@@ -6,6 +6,7 @@ import { map, type Observable } from 'rxjs';
 import { Button, styled, Text, View } from 'tamagui';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { sumMagnitudesBy } from '../../lib/ledger';
 import { SpendLineChart } from './SpendLineChart';
 
 type SpendingTrendsProps = {
@@ -43,15 +44,9 @@ const SpendingTrends = withObservables<
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {
-          const dailyTotals = new Map<string, number>();
-          for (const transaction of transactions) {
-            const dayKey = dayjs(transaction.date).format('YYYY-MM-DD');
-            const currentTotal = dailyTotals.get(dayKey) ?? 0;
-            dailyTotals.set(
-              dayKey,
-              currentTotal + Math.abs(transaction.amountInBaseCurrency)
-            );
-          }
+          const dailyTotals = sumMagnitudesBy(transactions, (transaction) =>
+            dayjs(transaction.date).format('YYYY-MM-DD')
+          );
 
           if (trendType === 'daily') {
             const currentMonth = dayjs().startOf('month');
@@ -91,17 +86,9 @@ const SpendingTrends = withObservables<
               })
               .sort((a, b) => a.sortKey - b.sortKey);
           } else {
-            const weeklyTotals = new Map<string, number>();
-            for (const transaction of transactions) {
-              const weekKey = dayjs(transaction.date)
-                .startOf('week')
-                .format('YYYY-MM-DD');
-              const currentTotal = weeklyTotals.get(weekKey) ?? 0;
-              weeklyTotals.set(
-                weekKey,
-                currentTotal + Math.abs(transaction.amountInBaseCurrency)
-              );
-            }
+            const weeklyTotals = sumMagnitudesBy(transactions, (transaction) =>
+              dayjs(transaction.date).startOf('week').format('YYYY-MM-DD')
+            );
 
             const last8Weeks = Array.from({ length: 8 }, (_, i) => {
               return dayjs().subtract(i, 'week').startOf('week');
