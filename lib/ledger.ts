@@ -61,7 +61,7 @@ export const calculatePeriodTotals = (entries: LedgerEntry[]): PeriodTotals => {
   return { ...totals, net: totals.income - totals.expenses };
 };
 
-export const monthKey = (date: Date) => dayjs(date).format('YYYY-MM');
+const monthKey = (date: Date) => dayjs(date).format('YYYY-MM');
 
 /** Income and expense totals per calendar month, oldest first. */
 export const groupTotalsByMonth = (entries: LedgerEntry[]): MonthlyTotals[] => {

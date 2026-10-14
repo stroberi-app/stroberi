@@ -1,5 +1,5 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { InteractionManager, Keyboard } from 'react-native';
 
 export type TransactionFormSheet = 'currency' | 'categories' | 'trip';
@@ -15,13 +15,18 @@ export const useTransactionFormSheets = () => {
   const categoriesSheetRef = useRef<BottomSheetModal | null>(null);
   const tripSheetRef = useRef<BottomSheetModal | null>(null);
 
-  const [isCurrencySheetMounted, setIsCurrencySheetMounted] = useState(false);
-  const [isCategoriesSheetMounted, setIsCategoriesSheetMounted] = useState(false);
-  const [isTripSheetMounted, setIsTripSheetMounted] = useState(false);
-  const [pendingSheetToOpen, setPendingSheetToOpen] =
-    useState<TransactionFormSheet | null>(null);
+  const [mountedSheets, setMountedSheets] = useState<ReadonlySet<TransactionFormSheet>>(
+    () => new Set()
+  );
+  const [pendingSheet, setPendingSheet] = useState<TransactionFormSheet | null>(null);
 
-  const presentSheet = useCallback((sheetRef: RefObject<BottomSheetModal | null>) => {
+  const presentSheet = useCallback((sheet: TransactionFormSheet) => {
+    const sheetRef = {
+      currency: currencySheetRef,
+      categories: categoriesSheetRef,
+      trip: tripSheetRef,
+    }[sheet];
+
     Keyboard.dismiss();
     InteractionManager.runAfterInteractions(() => {
       sheetRef.current?.present();
@@ -30,78 +35,36 @@ export const useTransactionFormSheets = () => {
 
   const requestSheetOpen = useCallback(
     (sheet: TransactionFormSheet) => {
-      if (sheet === 'currency') {
-        if (!isCurrencySheetMounted) {
-          setIsCurrencySheetMounted(true);
-          setPendingSheetToOpen('currency');
-          return;
-        }
-        presentSheet(currencySheetRef);
+      if (mountedSheets.has(sheet)) {
+        presentSheet(sheet);
         return;
       }
 
-      if (sheet === 'categories') {
-        if (!isCategoriesSheetMounted) {
-          setIsCategoriesSheetMounted(true);
-          setPendingSheetToOpen('categories');
-          return;
-        }
-        presentSheet(categoriesSheetRef);
-        return;
-      }
-
-      if (!isTripSheetMounted) {
-        setIsTripSheetMounted(true);
-        setPendingSheetToOpen('trip');
-        return;
-      }
-      presentSheet(tripSheetRef);
+      setMountedSheets((current) => new Set(current).add(sheet));
+      setPendingSheet(sheet);
     },
-    [isCategoriesSheetMounted, isCurrencySheetMounted, isTripSheetMounted, presentSheet]
+    [mountedSheets, presentSheet]
   );
 
   useEffect(() => {
-    if (!pendingSheetToOpen) {
+    if (!pendingSheet || !mountedSheets.has(pendingSheet)) {
       return;
     }
 
-    const mounted =
-      (pendingSheetToOpen === 'currency' && isCurrencySheetMounted) ||
-      (pendingSheetToOpen === 'categories' && isCategoriesSheetMounted) ||
-      (pendingSheetToOpen === 'trip' && isTripSheetMounted);
-
-    if (!mounted) {
-      return;
-    }
-
-    const openSheet = () => {
-      if (pendingSheetToOpen === 'currency') {
-        presentSheet(currencySheetRef);
-      } else if (pendingSheetToOpen === 'categories') {
-        presentSheet(categoriesSheetRef);
-      } else {
-        presentSheet(tripSheetRef);
-      }
-      setPendingSheetToOpen(null);
-    };
-
-    const handle = requestAnimationFrame(openSheet);
+    const handle = requestAnimationFrame(() => {
+      presentSheet(pendingSheet);
+      setPendingSheet(null);
+    });
     return () => cancelAnimationFrame(handle);
-  }, [
-    isCategoriesSheetMounted,
-    isCurrencySheetMounted,
-    isTripSheetMounted,
-    pendingSheetToOpen,
-    presentSheet,
-  ]);
+  }, [mountedSheets, pendingSheet, presentSheet]);
 
   return {
     currencySheetRef,
     categoriesSheetRef,
     tripSheetRef,
-    isCurrencySheetMounted,
-    isCategoriesSheetMounted,
-    isTripSheetMounted,
+    isCurrencySheetMounted: mountedSheets.has('currency'),
+    isCategoriesSheetMounted: mountedSheets.has('categories'),
+    isTripSheetMounted: mountedSheets.has('trip'),
     requestSheetOpen,
   };
 };

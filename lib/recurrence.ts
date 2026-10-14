@@ -13,7 +13,7 @@ const CADENCE_UNITS: Record<Cadence, ManipulateType> = {
   yearly: 'year',
 };
 
-export const CADENCE_LABELS: Record<Cadence, string> = {
+const CADENCE_LABELS: Record<Cadence, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
   monthly: 'Monthly',

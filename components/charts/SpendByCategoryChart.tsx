@@ -28,7 +28,7 @@ type SpendByCategoryChartData = {
 }[];
 
 type SpendByCategoryDateFilter = 'thisMonth' | 'lastMonth' | 'thisYear';
-export const SpendByCategory = withObservables<
+const SpendByCategory = withObservables<
   { database: Database; dateFilter: SpendByCategoryDateFilter },
   {
     chartData: Observable<SpendByCategoryChartData>;
@@ -187,7 +187,11 @@ export const SpendByCategory = withObservables<
         ) : (
           <View flex={1} justifyContent="space-between">
             <View paddingHorizontal="$2" gap="$2">
-              <View flexDirection="row" justifyContent="space-between" alignItems="baseline">
+              <View
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="baseline"
+              >
                 <Text fontSize="$1" color="$gray10">
                   Top {processedData.length}
                 </Text>
@@ -246,13 +250,18 @@ export const SpendByCategory = withObservables<
                 })}
                 {hiddenCategories > 0 && (
                   <Text fontSize={10} color="$gray10">
-                    +{hiddenCategories} more {hiddenCategories === 1 ? 'category' : 'categories'}
+                    +{hiddenCategories} more{' '}
+                    {hiddenCategories === 1 ? 'category' : 'categories'}
                   </Text>
                 )}
               </View>
             </View>
             <View height={16} justifyContent="center" paddingHorizontal="$3">
-              <Text fontSize={11} color={selectedItem ? 'white' : '$gray10'} numberOfLines={1}>
+              <Text
+                fontSize={11}
+                color={selectedItem ? 'white' : '$gray10'}
+                numberOfLines={1}
+              >
                 {selectedItem
                   ? `${selectedItem.icon} ${selectedItem.name} — ${formatCurrency(selectedItem.total, defaultCurrency ?? 'USD')}`
                   : 'Tap a category for details'}

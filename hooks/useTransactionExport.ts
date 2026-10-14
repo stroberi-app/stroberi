@@ -53,7 +53,7 @@ export const EXPORT_PREVIEW_FULL_THRESHOLD = 500;
 export const EXPORT_PREVIEW_SAMPLE_SIZE = 200;
 
 // Shared default export columns
-export const DEFAULT_EXPORT_COLUMNS: ExportColumn[] = [
+const DEFAULT_EXPORT_COLUMNS: ExportColumn[] = [
   { name: 'date', checked: true, label: 'date' },
   { name: 'amount', checked: true, label: 'amount' },
   { name: 'merchant', checked: true, label: 'merchant' },

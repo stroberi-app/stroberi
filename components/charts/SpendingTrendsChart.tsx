@@ -23,7 +23,7 @@ export type SpendingTrendsChartData = {
 
 type SpendingTrendType = 'daily' | 'last30days' | 'weekly';
 
-export const SpendingTrends = withObservables<
+const SpendingTrends = withObservables<
   { database: Database; trendType: SpendingTrendType },
   {
     chartData: Observable<SpendingTrendsChartData>;
