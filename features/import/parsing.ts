@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 import type { ErrorInfo } from './types';
 import type { CSVRow } from './validation';
 
-export const REQUIRED_IMPORT_COLUMNS = ['amount', 'date', 'currencyCode'] as const;
+const REQUIRED_IMPORT_COLUMNS = ['amount', 'date', 'currencyCode'] as const;
 
 export type ParsedImportCsv =
   | { ok: true; rows: CSVRow[] }
