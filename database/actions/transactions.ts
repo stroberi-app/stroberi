@@ -330,3 +330,19 @@ export const rebaseTransactionsToCurrency = (baseCurrency: string): Promise<void
       );
     }, 'rebase transactions');
   });
+
+/** A transaction with the related records the edit form needs. */
+export const getTransactionForEditing = (id: string) =>
+  runAction('load transaction', async () => {
+    const transaction = await collection('transactions').find(id);
+    const [category, trip] = await Promise.all([
+      findCategoryOrThrow(transaction.categoryId).catch(() => null),
+      transaction.tripId
+        ? collection('trips')
+            .find(transaction.tripId)
+            .catch(() => null)
+        : null,
+    ]);
+
+    return { transaction, category, trip };
+  });

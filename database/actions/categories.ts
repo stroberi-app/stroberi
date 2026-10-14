@@ -6,6 +6,28 @@ import { collection, findRecordOrThrow, runWriteAction } from './shared';
 
 type CategoryInput = { name: string; icon: string };
 
+export class DuplicateCategoryError extends Error {
+  constructor() {
+    super('A category with this name already exists');
+    this.name = 'DuplicateCategoryError';
+  }
+}
+
+const normalizeName = (name: string) => name.trim().toLowerCase();
+
+/** Category names are unique, ignoring case and surrounding whitespace. */
+const assertNameAvailable = async (name: string, exceptId?: string) => {
+  const categories = await collection('categories').query().fetch();
+  const taken = categories.some(
+    (category) =>
+      category.id !== exceptId && normalizeName(category.name) === normalizeName(name)
+  );
+
+  if (taken) {
+    throw new DuplicateCategoryError();
+  }
+};
+
 const prepareCategory = ({ name, icon }: CategoryInput) =>
   collection('categories').prepareCreate((category) => {
     category.name = name;
@@ -18,6 +40,7 @@ const findCategory = (id: string) =>
 
 export const createCategory = (input: CategoryInput): Promise<CategoryModel> =>
   runWriteAction('create category', async () => {
+    await assertNameAvailable(input.name);
     const category = prepareCategory(input);
     await database.batch(category);
     return category;
@@ -55,6 +78,7 @@ export const updateCategory = ({
 }: { id: string } & CategoryInput): Promise<CategoryModel> =>
   runWriteAction('update category', async () => {
     const category = await findCategory(id);
+    await assertNameAvailable(input.name, id);
 
     return category.update((record) => {
       record.name = input.name;

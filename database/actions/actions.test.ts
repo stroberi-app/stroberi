@@ -3,6 +3,7 @@ import type { ConversionResult } from '../../lib/currencyConversion';
 import { createBudget, deleteBudget, updateBudget } from './budgets';
 import {
   createCategory,
+  DuplicateCategoryError,
   deleteCategory,
   seedDefaultCategories,
   updateCategory,
@@ -17,6 +18,7 @@ import {
   createTransaction,
   createTransactionsBatch,
   deleteTransaction,
+  getTransactionForEditing,
   rebaseTransactionsToCurrency,
   updateTransaction,
 } from './transactions';
@@ -142,6 +144,29 @@ describe('transactions', () => {
     expect(await usageCountOf(food.id)).toBe(2);
   });
 
+  it('loads a transaction with its category and trip for editing', async () => {
+    const category = await createCategory({ name: 'Food', icon: '🍔' });
+    const trip = await createTrip({ name: 'Rome', icon: '🏛️', startDate: new Date() });
+    const transaction = await createTransaction({
+      ...baseTransaction,
+      categoryId: category.id,
+      tripId: trip.id,
+    });
+
+    expect(await getTransactionForEditing(transaction.id)).toEqual({
+      transaction,
+      category,
+      trip,
+    });
+
+    const bare = await createTransaction(baseTransaction);
+    expect(await getTransactionForEditing(bare.id)).toEqual({
+      transaction: bare,
+      category: null,
+      trip: null,
+    });
+  });
+
   it('rebases every transaction into a new base currency', async () => {
     mockRates.USD_EUR = 2;
     const euro = await createTransaction(baseTransaction);
@@ -174,6 +199,21 @@ describe('categories', () => {
     expect(seeded.length).toBeGreaterThan(0);
     expect(await seedDefaultCategories()).toEqual([]);
     expect(await collection('categories').query().fetchCount()).toBe(seeded.length);
+  });
+
+  it('keeps category names unique regardless of case and whitespace', async () => {
+    const food = await createCategory({ name: 'Food', icon: '🍔' });
+    const fun = await createCategory({ name: 'Fun', icon: '🎉' });
+
+    await expect(createCategory({ name: '  food ', icon: '🍕' })).rejects.toBeInstanceOf(
+      DuplicateCategoryError
+    );
+    await expect(
+      updateCategory({ id: fun.id, name: 'FOOD', icon: '🎉' })
+    ).rejects.toThrow('A category with this name already exists');
+
+    await updateCategory({ id: food.id, name: 'food', icon: '🥗' });
+    expect(food.icon).toBe('🥗');
   });
 
   it('updates and refuses to delete categories that are still linked', async () => {
