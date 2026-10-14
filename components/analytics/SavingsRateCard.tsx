@@ -8,7 +8,7 @@ import {
 import { Text, View } from 'tamagui';
 import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
 import type { SavingsRateAnalysis } from '../../lib/advancedAnalytics';
-import { formatMonthLabel } from '../../lib/advancedAnalytics';
+import { formatMonthLabel } from '../../lib/date';
 import { formatCurrency } from '../../lib/format';
 import { buildSavingsRateSummary } from '../../lib/savingsRate';
 import { Sparkline } from '../charts/Sparkline';
@@ -230,10 +230,7 @@ export const SavingsRateCard = ({ analysis, currency }: SavingsRateCardProps) =>
                 {summary.chartData.map((month) => {
                   const fillPercent =
                     month.rate !== 0
-                      ? Math.max(
-                          6,
-                          Math.min(100, (Math.abs(month.rate) / maxRate) * 100)
-                        )
+                      ? Math.max(6, Math.min(100, (Math.abs(month.rate) / maxRate) * 100))
                       : 0;
 
                   return (

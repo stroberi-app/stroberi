@@ -14,12 +14,10 @@ import {
   buildActionPlan,
   calculateNoSpendStats,
   calculatePercentChange,
-  calculatePeriodTotals,
   calculatePotentialMonthlySavings,
   calculateGlobalMonthlyBudgetLimit,
   createCategoryHotspots,
   derivePulseState,
-  filterTransactionsByDateRange,
   getDateRange,
   getForecastState,
   getPreviousRange,
@@ -31,6 +29,7 @@ import {
   type SpendingForecast,
 } from '../lib/forecasting';
 import { buildInsightsOverview, type InsightTransaction } from '../lib/insights';
+import { calculatePeriodTotals, filterByDateRange } from '../lib/ledger';
 
 type UseAnalyticsOverviewArgs = {
   transactions: TransactionModel[];
@@ -62,12 +61,12 @@ export const useAnalyticsOverview = ({
     [fromDate, comparisonToDate]
   );
   const periodTransactions = useMemo(
-    () => filterTransactionsByDateRange(transactions, fromDate, comparisonToDate),
+    () => filterByDateRange(transactions, fromDate, comparisonToDate),
     [transactions, fromDate, comparisonToDate]
   );
   const previousPeriodTransactions = useMemo(
     () =>
-      filterTransactionsByDateRange(
+      filterByDateRange(
         transactions,
         previousRange.previousFromDate,
         previousRange.previousToDate

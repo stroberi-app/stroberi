@@ -1,10 +1,11 @@
 import dayjs from 'dayjs';
-import { formatCurrency } from './format';
-import type { SpendingForecast } from './forecasting';
 import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { BudgetModel } from '../database/budget-model';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
+import type { SpendingForecast } from './forecasting';
+import { formatCurrency } from './format';
+import { isExpense, sumExpensesBy } from './ledger';
 
 export type DateFilter =
   | 'thisMonth'
@@ -38,12 +39,6 @@ export type CategoryHotspot = {
   changePercent: number;
   share: number;
   potentialSavings: number;
-};
-
-export type PeriodTotals = {
-  income: number;
-  expenses: number;
-  net: number;
 };
 
 type MonthlyBudgetSource = Pick<BudgetModel, 'id' | 'amount' | 'period'>;
@@ -137,38 +132,6 @@ export const calculateGlobalMonthlyBudgetLimit = (
   return total > 0 ? total : undefined;
 };
 
-export const filterTransactionsByDateRange = (
-  transactions: TransactionModel[],
-  fromDate: Date,
-  toDate: Date
-) => {
-  return transactions.filter((transaction) => {
-    const transactionDate = new Date(transaction.date).getTime();
-    return transactionDate >= fromDate.getTime() && transactionDate <= toDate.getTime();
-  });
-};
-
-export const calculatePeriodTotals = (transactions: TransactionModel[]): PeriodTotals => {
-  let income = 0;
-  let expenses = 0;
-
-  for (const transaction of transactions) {
-    const amount = transaction.amountInBaseCurrency;
-
-    if (amount >= 0) {
-      income += amount;
-    } else {
-      expenses += Math.abs(amount);
-    }
-  }
-
-  return {
-    income,
-    expenses,
-    net: income - expenses,
-  };
-};
-
 export const calculatePercentChange = (current: number, previous: number) => {
   if (previous === 0) {
     return current > 0 ? 100 : 0;
@@ -192,46 +155,22 @@ export const createCategoryHotspots = (
   previousPeriodTransactions: TransactionModel[],
   categories: CategoryModel[]
 ): CategoryHotspot[] => {
-  const currentTotals: Record<string, number> = {};
-  const previousTotals: Record<string, number> = {};
-  const categoryMeta = new Map(
-    categories.map((category) => [
-      category.id,
-      { name: category.name, icon: category.icon || '•' },
-    ])
-  );
-  const expenseTransactions = periodTransactions.filter(
-    (transaction) => transaction.amountInBaseCurrency < 0
-  );
-  const previousExpenseTransactions = previousPeriodTransactions.filter(
-    (transaction) => transaction.amountInBaseCurrency < 0
-  );
-
-  for (const transaction of expenseTransactions) {
-    const categoryId = transaction.category?.id || 'uncategorized';
-    currentTotals[categoryId] =
-      (currentTotals[categoryId] || 0) + Math.abs(transaction.amountInBaseCurrency);
-  }
-
-  for (const transaction of previousExpenseTransactions) {
-    const categoryId = transaction.category?.id || 'uncategorized';
-    previousTotals[categoryId] =
-      (previousTotals[categoryId] || 0) + Math.abs(transaction.amountInBaseCurrency);
-  }
-
-  const totalCurrentSpend = Object.values(currentTotals).reduce(
+  const categoryKey = (transaction: TransactionModel) =>
+    transaction.categoryId || 'uncategorized';
+  const currentTotals = sumExpensesBy(periodTransactions, categoryKey);
+  const previousTotals = sumExpensesBy(previousPeriodTransactions, categoryKey);
+  const categoryMeta = new Map(categories.map((category) => [category.id, category]));
+  const totalCurrentSpend = Array.from(currentTotals.values()).reduce(
     (sum, value) => sum + value,
     0
   );
-  const allCategoryIds = new Set([
-    ...Object.keys(currentTotals),
-    ...Object.keys(previousTotals),
-  ]);
 
-  return Array.from(allCategoryIds)
+  // Categories without current spend are filtered out below, so only the
+  // current period's keys matter.
+  return Array.from(currentTotals.keys())
     .map((categoryId) => {
-      const currentSpend = currentTotals[categoryId] || 0;
-      const previousSpend = previousTotals[categoryId] || 0;
+      const currentSpend = currentTotals.get(categoryId) ?? 0;
+      const previousSpend = previousTotals.get(categoryId) ?? 0;
       const changePercent = calculatePercentChange(currentSpend, previousSpend);
       const share = totalCurrentSpend > 0 ? (currentSpend / totalCurrentSpend) * 100 : 0;
       const potentialSavings =
@@ -263,7 +202,7 @@ export const calculateNoSpendStats = (
   const expenseDaySet = new Set<string>();
 
   for (const transaction of periodTransactions) {
-    if (transaction.amountInBaseCurrency < 0) {
+    if (isExpense(transaction)) {
       expenseDaySet.add(dayjs(transaction.date).format('YYYY-MM-DD'));
     }
   }
