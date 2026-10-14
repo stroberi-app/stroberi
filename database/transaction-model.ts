@@ -1,12 +1,5 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import {
-  date,
-  field,
-  readonly,
-  relation,
-  text,
-  writer,
-} from '@nozbe/watermelondb/decorators';
+import { date, field, readonly, relation, text } from '@nozbe/watermelondb/decorators';
 import type { Associations } from '@nozbe/watermelondb/Model';
 import type { ConversionStatus } from '../lib/currencyConversion';
 import type { CategoryModel } from './category-model';
@@ -51,8 +44,4 @@ export class TransactionModel extends Model {
 
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
-
-  @writer deleteTx() {
-    return this.markAsDeleted();
-  }
 }

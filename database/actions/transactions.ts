@@ -1,11 +1,21 @@
 import { type Model, Q } from '@nozbe/watermelondb';
-import type { ConversionResult, ConversionStatus } from '../../lib/currencyConversion';
-import { MissingCurrencyRateError } from '../../lib/currencyConversion';
+import {
+  type BaseCurrencyAmount,
+  type ConversionResult,
+  toBaseCurrencyAmount,
+} from '../../lib/currencyConversion';
 import { getCurrencyConversion } from '../../lib/currencyConversionService';
 import type { CategoryModel } from '../category-model';
 import { database } from '../index';
 import type { TransactionModel } from '../transaction-model';
-import { findCategoryOrThrow, findRecordOrThrow, logAndRethrow } from './shared';
+import {
+  collection,
+  findCategoryOrThrow,
+  findRecordOrThrow,
+  prepareCategoryUsageChange,
+  runAction,
+  runWriteAction,
+} from './shared';
 
 export type CreateTransactionPayload = {
   merchant: string;
@@ -21,95 +31,129 @@ export type CreateTransactionPayload = {
   sourceRowNumber?: number;
 };
 
+export type UpdateTransactionPayload = { id: string } & Omit<
+  CreateTransactionPayload,
+  'recurringTransactionId' | 'sourceRowNumber'
+>;
+
 export type CreateTransactionsBatchResult = {
   importedCount: number;
   failed: Array<{ row: number; reason: string }>;
 };
 
-type ResolvedConversion = {
-  baseCurrencyCode: string;
-  amountInBaseCurrency: number;
-  exchangeRate: number;
-  conversionStatus: ConversionStatus;
-};
+/** Exchange rates keyed by `${baseCurrency}_${currencyCode}`, reused across rows. */
+export type ConversionCache = Map<string, ConversionResult>;
 
-type ConversionCache = Map<string, ConversionResult>;
+type ConversionInput = Pick<
+  CreateTransactionPayload,
+  'amount' | 'currencyCode' | 'baseCurrency' | 'allowMissingRate'
+>;
 
-const resolveConversion = async ({
-  amount,
-  baseCurrency,
-  currencyCode,
-  allowMissingRate = false,
-  conversionCache,
-}: {
-  amount: number;
-  baseCurrency: string;
-  currencyCode: string;
-  allowMissingRate?: boolean;
-  conversionCache?: ConversionCache;
-}): Promise<ResolvedConversion> => {
+const fetchConversion = async (
+  baseCurrency: string,
+  currencyCode: string,
+  cache?: ConversionCache
+): Promise<ConversionResult | null> => {
   if (baseCurrency === currencyCode) {
-    return {
-      baseCurrencyCode: baseCurrency,
-      amountInBaseCurrency: amount,
-      exchangeRate: 1,
-      conversionStatus: 'ok',
-    };
+    return null;
   }
 
   const cacheKey = `${baseCurrency}_${currencyCode}`;
-  let conversion = conversionCache?.get(cacheKey);
-
-  if (!conversion) {
-    conversion = await getCurrencyConversion(baseCurrency, currencyCode);
-    conversionCache?.set(cacheKey, conversion);
+  const cached = cache?.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
-  if (conversion.rate !== null) {
-    return {
-      baseCurrencyCode: baseCurrency,
-      amountInBaseCurrency: amount * conversion.rate,
-      exchangeRate: conversion.rate,
-      conversionStatus: conversion.status,
-    };
-  }
-
-  if (!allowMissingRate) {
-    throw new MissingCurrencyRateError(baseCurrency, currencyCode);
-  }
-
-  return {
-    baseCurrencyCode: baseCurrency,
-    amountInBaseCurrency: amount,
-    exchangeRate: 1,
-    conversionStatus: 'missing_rate',
-  };
+  const conversion = await getCurrencyConversion(baseCurrency, currencyCode);
+  cache?.set(cacheKey, conversion);
+  return conversion;
 };
 
-const getCategoryMap = async (transactions: CreateTransactionPayload[]) => {
-  const uniqueCategoryIds = Array.from(
-    new Set(
-      transactions
-        .map((transaction) => transaction.categoryId)
-        .filter((categoryId): categoryId is string => Boolean(categoryId))
-    )
-  );
+/**
+ * Resolves the base-currency amount up front. This may hit the network, so it
+ * must run before entering a writer to avoid blocking the write queue.
+ */
+export const resolveBaseCurrencyAmount = async (
+  { amount, currencyCode, baseCurrency, allowMissingRate }: ConversionInput,
+  cache?: ConversionCache
+): Promise<BaseCurrencyAmount> =>
+  toBaseCurrencyAmount({
+    amount,
+    currencyCode,
+    baseCurrency,
+    allowMissingRate,
+    conversion: await fetchConversion(baseCurrency, currencyCode, cache),
+  });
 
-  const categoryMap = new Map<string, CategoryModel>();
-  if (uniqueCategoryIds.length === 0) {
-    return categoryMap;
+const applyBaseCurrencyAmount = (
+  record: TransactionModel,
+  converted: BaseCurrencyAmount
+) => {
+  record.baseCurrencyCode = converted.baseCurrencyCode;
+  record.amountInBaseCurrency = converted.amountInBaseCurrency;
+  record.exchangeRate = converted.exchangeRate;
+  record.conversionStatus = converted.conversionStatus;
+};
+
+const assignTransaction = (
+  record: TransactionModel,
+  payload: Pick<
+    CreateTransactionPayload,
+    'merchant' | 'amount' | 'date' | 'currencyCode' | 'note'
+  >,
+  converted: BaseCurrencyAmount,
+  category: CategoryModel | null
+) => {
+  record.merchant = payload.merchant;
+  record.amount = payload.amount;
+  record.date = payload.date;
+  record.currencyCode = payload.currencyCode;
+  record.note = payload.note;
+  record.categoryId = category?.id ?? null;
+  applyBaseCurrencyAmount(record, converted);
+};
+
+const prepareNewTransaction = (
+  payload: CreateTransactionPayload,
+  converted: BaseCurrencyAmount,
+  category: CategoryModel | null
+) =>
+  collection('transactions').prepareCreate((record) => {
+    assignTransaction(record, payload, converted, category);
+    record.recurringTransactionId = payload.recurringTransactionId || null;
+    record.tripId = payload.tripId || null;
+  });
+
+/**
+ * Prepares a new transaction plus its category usage bump. Must be called
+ * inside a writer; the caller batches `records` (optionally with its own).
+ */
+export const prepareTransactionRecords = async (
+  payload: CreateTransactionPayload,
+  converted: BaseCurrencyAmount
+) => {
+  const category = await findCategoryOrThrow(payload.categoryId);
+  const transaction = prepareNewTransaction(payload, converted, category);
+  const records: Model[] = [transaction];
+
+  if (category) {
+    records.push(prepareCategoryUsageChange(category, 1));
   }
 
-  const categories = await database
-    .get<CategoryModel>('categories')
-    .query(Q.where('id', Q.oneOf(uniqueCategoryIds)))
+  return { transaction, records };
+};
+
+const fetchCategoriesById = async (categoryIds: Array<string | null>) => {
+  const uniqueIds = Array.from(new Set(categoryIds.filter((id): id is string => !!id)));
+  if (!uniqueIds.length) {
+    return new Map<string, CategoryModel>();
+  }
+
+  const categories = await collection('categories')
+    .query(Q.where('id', Q.oneOf(uniqueIds)))
     .fetch();
 
-  for (const category of categories) {
-    categoryMap.set(category.id, category);
-  }
-
-  return categoryMap;
+  return new Map(categories.map((category) => [category.id, category]));
 };
 
 export const createTransactionsBatch = async (
@@ -120,44 +164,28 @@ export const createTransactionsBatch = async (
     return { importedCount: 0, failed: [] };
   }
 
-  const failed: Array<{ row: number; reason: string }> = [];
-  const categoryMap = await getCategoryMap(transactions);
-  const normalizedTransactions: Array<
-    Omit<CreateTransactionPayload, 'allowMissingRate'> & {
-      resolvedConversion: ResolvedConversion;
-      category: CategoryModel | null;
-    }
-  > = [];
+  const failed: CreateTransactionsBatchResult['failed'] = [];
+  const categories = await fetchCategoriesById(transactions.map((tx) => tx.categoryId));
+  const ready: Array<{
+    payload: CreateTransactionPayload;
+    converted: BaseCurrencyAmount;
+    category: CategoryModel | null;
+  }> = [];
 
-  for (const transaction of transactions) {
-    const row = transaction.sourceRowNumber ?? -1;
-    const category =
-      transaction.categoryId === null
-        ? null
-        : (categoryMap.get(transaction.categoryId) ?? null);
+  for (const payload of transactions) {
+    const row = payload.sourceRowNumber ?? -1;
+    const category = payload.categoryId
+      ? (categories.get(payload.categoryId) ?? null)
+      : null;
 
-    if (transaction.categoryId && !category) {
-      failed.push({
-        row,
-        reason: `Category not found: ${transaction.categoryId}`,
-      });
+    if (payload.categoryId && !category) {
+      failed.push({ row, reason: `Category not found: ${payload.categoryId}` });
       continue;
     }
 
     try {
-      const resolvedConversion = await resolveConversion({
-        amount: transaction.amount,
-        baseCurrency: transaction.baseCurrency,
-        currencyCode: transaction.currencyCode,
-        allowMissingRate: transaction.allowMissingRate,
-        conversionCache,
-      });
-
-      normalizedTransactions.push({
-        ...transaction,
-        category,
-        resolvedConversion,
-      });
+      const converted = await resolveBaseCurrencyAmount(payload, conversionCache);
+      ready.push({ payload, converted, category });
     } catch (error) {
       failed.push({
         row,
@@ -166,245 +194,139 @@ export const createTransactionsBatch = async (
     }
   }
 
-  if (!normalizedTransactions.length) {
-    return {
-      importedCount: 0,
-      failed,
-    };
+  if (!ready.length) {
+    return { importedCount: 0, failed };
   }
 
   await database.write(async () => {
-    const collection = database.get<TransactionModel>('transactions');
-    const preparedRecords: Model[] = [];
-    const categoryUsageIncrements = new Map<string, number>();
+    const records: Model[] = [];
+    const usageIncrements = new Map<CategoryModel, number>();
 
-    for (const transaction of normalizedTransactions) {
-      preparedRecords.push(
-        collection.prepareCreate((tx) => {
-          tx.merchant = transaction.merchant;
-          tx.amount = transaction.amount;
-          tx.date = transaction.date;
-          tx.currencyCode = transaction.currencyCode;
-          tx.note = transaction.note;
-          tx.baseCurrencyCode = transaction.resolvedConversion.baseCurrencyCode;
-          tx.amountInBaseCurrency = transaction.resolvedConversion.amountInBaseCurrency;
-          tx.exchangeRate = transaction.resolvedConversion.exchangeRate;
-          tx.conversionStatus = transaction.resolvedConversion.conversionStatus;
-          tx.recurringTransactionId = transaction.recurringTransactionId || null;
-          tx.tripId = transaction.tripId || null;
+    for (const { payload, converted, category } of ready) {
+      records.push(prepareNewTransaction(payload, converted, category));
 
-          if (transaction.category) {
-            tx.category?.set(transaction.category);
-          }
-        })
-      );
-
-      if (transaction.category) {
-        const currentCount = categoryUsageIncrements.get(transaction.category.id) ?? 0;
-        categoryUsageIncrements.set(transaction.category.id, currentCount + 1);
+      if (category) {
+        usageIncrements.set(category, (usageIncrements.get(category) ?? 0) + 1);
       }
     }
 
-    for (const [categoryId, increment] of categoryUsageIncrements.entries()) {
-      const category = categoryMap.get(categoryId);
-      if (!category) {
-        continue;
-      }
-
-      preparedRecords.push(
-        category.prepareUpdate((record) => {
-          record.usageCount = (record.usageCount || 0) + increment;
-        })
-      );
+    for (const [category, increment] of usageIncrements) {
+      records.push(prepareCategoryUsageChange(category, increment));
     }
 
-    await database.batch(...preparedRecords);
+    await database.batch(...records);
+  }, 'import transactions');
+
+  return { importedCount: ready.length, failed };
+};
+
+export const createTransaction = (
+  payload: CreateTransactionPayload
+): Promise<TransactionModel> =>
+  runAction('create transaction', async () => {
+    const converted = await resolveBaseCurrencyAmount(payload);
+
+    return database.write(async () => {
+      const { transaction, records } = await prepareTransactionRecords(
+        payload,
+        converted
+      );
+      await database.batch(...records);
+      return transaction;
+    }, 'create transaction');
   });
 
-  return {
-    importedCount: normalizedTransactions.length,
-    failed,
-  };
-};
+export const updateTransaction = (
+  payload: UpdateTransactionPayload
+): Promise<TransactionModel> =>
+  runAction('update transaction', async () => {
+    const converted = await resolveBaseCurrencyAmount(payload);
 
-export const createTransaction = async ({
-  merchant,
-  amount,
-  categoryId,
-  date,
-  currencyCode,
-  note,
-  baseCurrency,
-  recurringTransactionId,
-  tripId,
-  allowMissingRate = false,
-}: CreateTransactionPayload): Promise<TransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<TransactionModel>('transactions');
-      const category = await findCategoryOrThrow(categoryId);
-      const resolvedConversion = await resolveConversion({
-        amount,
-        baseCurrency,
-        currencyCode,
-        allowMissingRate,
-      });
-      const preparedRecords: Model[] = [];
-
-      const transaction = collection.prepareCreate((tx) => {
-        tx.merchant = merchant;
-        tx.amount = amount;
-        tx.date = date;
-        tx.currencyCode = currencyCode;
-        tx.note = note;
-        tx.baseCurrencyCode = resolvedConversion.baseCurrencyCode;
-        tx.amountInBaseCurrency = resolvedConversion.amountInBaseCurrency;
-        tx.exchangeRate = resolvedConversion.exchangeRate;
-        tx.conversionStatus = resolvedConversion.conversionStatus;
-        tx.recurringTransactionId = recurringTransactionId || null;
-        tx.tripId = tripId || null;
-
-        if (category) {
-          tx.category?.set(category);
-        }
-      });
-
-      preparedRecords.push(transaction);
-
-      if (category) {
-        preparedRecords.push(
-          category.prepareUpdate((record) => {
-            record.usageCount = (record.usageCount || 0) + 1;
-          })
-        );
-      }
-
-      await database.batch(...preparedRecords);
-      return transaction;
-    });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to create transaction:',
-      error,
-      'Failed to create transaction'
-    );
-  }
-};
-
-export const updateTransaction = async ({
-  id,
-  merchant,
-  amount,
-  categoryId,
-  date,
-  currencyCode,
-  note,
-  baseCurrency,
-  tripId,
-  allowMissingRate = false,
-}: {
-  id: string;
-  merchant: string;
-  amount: number;
-  categoryId: string | null;
-  date: Date;
-  currencyCode: string;
-  note: string;
-  baseCurrency: string;
-  tripId?: string | null;
-  allowMissingRate?: boolean;
-}): Promise<TransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<TransactionModel>('transactions');
-      const transaction = await findRecordOrThrow(collection, id, 'Transaction');
-      const oldCategory = await transaction.category?.fetch();
-      const oldCategoryId = oldCategory?.id || null;
-      const nextCategory = await findCategoryOrThrow(categoryId);
-      const resolvedConversion = await resolveConversion({
-        amount,
-        baseCurrency,
-        currencyCode,
-        allowMissingRate,
-      });
-      const preparedRecords: Model[] = [];
-
-      preparedRecords.push(
-        transaction.prepareUpdate((record) => {
-          record.merchant = merchant;
-          record.amount = amount;
-          record.date = date;
-          record.currencyCode = currencyCode;
-          record.note = note;
-          record.baseCurrencyCode = resolvedConversion.baseCurrencyCode;
-          record.amountInBaseCurrency = resolvedConversion.amountInBaseCurrency;
-          record.exchangeRate = resolvedConversion.exchangeRate;
-          record.conversionStatus = resolvedConversion.conversionStatus;
-          record.tripId = tripId !== undefined ? tripId : record.tripId;
-          record._setRaw('categoryId', nextCategory?.id ?? null);
-        })
-      );
-
-      if (oldCategoryId !== categoryId) {
-        if (oldCategory) {
-          preparedRecords.push(
-            oldCategory.prepareUpdate((record) => {
-              record.usageCount = Math.max(0, (record.usageCount || 0) - 1);
-            })
-          );
-        }
-
-        if (nextCategory) {
-          preparedRecords.push(
-            nextCategory.prepareUpdate((record) => {
-              record.usageCount = (record.usageCount || 0) + 1;
-            })
-          );
-        }
-      }
-
-      await database.batch(...preparedRecords);
-      return transaction;
-    });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to update transaction:',
-      error,
-      'Failed to update transaction'
-    );
-  }
-};
-
-export const deleteTransaction = async (
-  transactionId: string
-): Promise<TransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<TransactionModel>('transactions');
+    return database.write(async () => {
       const transaction = await findRecordOrThrow(
-        collection,
-        transactionId,
+        collection('transactions'),
+        payload.id,
         'Transaction'
       );
-      const category = await transaction.category?.fetch();
-      const preparedRecords: Model[] = [transaction.prepareMarkAsDeleted()];
+      const previousCategory = (await transaction.category?.fetch()) ?? null;
+      const nextCategory = await findCategoryOrThrow(payload.categoryId);
+      const records: Model[] = [
+        transaction.prepareUpdate((record) => {
+          assignTransaction(record, payload, converted, nextCategory);
+          if (payload.tripId !== undefined) {
+            record.tripId = payload.tripId;
+          }
+        }),
+      ];
 
-      if (category) {
-        preparedRecords.push(
-          category.prepareUpdate((record) => {
-            record.usageCount = Math.max(0, (record.usageCount || 0) - 1);
-          })
-        );
+      if (previousCategory?.id !== nextCategory?.id) {
+        if (previousCategory) {
+          records.push(prepareCategoryUsageChange(previousCategory, -1));
+        }
+        if (nextCategory) {
+          records.push(prepareCategoryUsageChange(nextCategory, 1));
+        }
       }
 
-      await database.batch(...preparedRecords);
+      await database.batch(...records);
       return transaction;
-    });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to delete transaction:',
-      error,
-      'Failed to delete transaction'
+    }, 'update transaction');
+  });
+
+export const deleteTransaction = (transactionId: string): Promise<TransactionModel> =>
+  runWriteAction('delete transaction', async () => {
+    const transaction = await findRecordOrThrow(
+      collection('transactions'),
+      transactionId,
+      'Transaction'
     );
-  }
-};
+    const category = await transaction.category?.fetch();
+    const records: Model[] = [transaction.prepareMarkAsDeleted()];
+
+    if (category) {
+      records.push(prepareCategoryUsageChange(category, -1));
+    }
+
+    await database.batch(...records);
+    return transaction;
+  });
+
+/**
+ * Re-expresses every transaction in a new base currency. Rows whose rate is
+ * unavailable keep their original amount and are flagged `missing_rate`.
+ */
+export const rebaseTransactionsToCurrency = (baseCurrency: string): Promise<void> =>
+  runAction('rebase transactions', async () => {
+    const transactions = await collection('transactions').query().fetch();
+    if (!transactions.length) {
+      return;
+    }
+
+    const cache: ConversionCache = new Map();
+    const currencyCodes = new Set(transactions.map((tx) => tx.currencyCode));
+    await Promise.all(
+      Array.from(currencyCodes, (code) => fetchConversion(baseCurrency, code, cache))
+    );
+
+    const converted = await Promise.all(
+      transactions.map((tx) =>
+        resolveBaseCurrencyAmount(
+          {
+            amount: tx.amount,
+            currencyCode: tx.currencyCode,
+            baseCurrency,
+            allowMissingRate: true,
+          },
+          cache
+        )
+      )
+    );
+
+    await database.write(async () => {
+      await database.batch(
+        ...transactions.map((tx, index) =>
+          tx.prepareUpdate((record) => applyBaseCurrencyAmount(record, converted[index]))
+        )
+      );
+    }, 'rebase transactions');
+  });

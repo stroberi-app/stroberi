@@ -19,11 +19,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { ScrollView, Text, View } from 'tamagui';
 import type { CategoryModel } from '../../database/category-model';
-import { deleteRecurringTransaction } from '../../database/actions/recurring-transactions';
+import {
+  deleteRecurringTransaction,
+  toggleRecurringTransaction,
+} from '../../database/actions/recurring-transactions';
 import type { RecurringTransactionModel } from '../../database/recurring-transaction-model';
 import useToast from '../../hooks/useToast';
 import { DateFormats } from '../../lib/date';
 import { formatCurrency } from '../../lib/format';
+import { formatCadence } from '../../lib/recurrence';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { Switch } from '../Switch';
@@ -80,20 +84,13 @@ const RecurringItem = withObservables<
 
   const handleToggle = async (_checked: boolean) => {
     try {
-      await recurring.toggle();
+      await toggleRecurringTransaction(recurring.id);
     } catch {
       toast.show({
         title: 'Failed to toggle recurring transaction',
         preset: 'error',
       });
     }
-  };
-
-  const frequencyLabels = {
-    daily: 'Daily',
-    weekly: 'Weekly',
-    monthly: 'Monthly',
-    yearly: 'Yearly',
   };
 
   const RightActions = ({ drag }: { drag: SharedValue<number> }) => {
@@ -169,7 +166,7 @@ const RecurringItem = withObservables<
             {recurring.merchant || 'Untitled'}
           </Text>
           <Text fontSize="$2" color="gray">
-            {frequencyLabels[recurring.frequency]} • Next:{' '}
+            {formatCadence(recurring.frequency)} • Next:{' '}
             {dayjs(recurring.nextDueDate).format(DateFormats.FullMonthFullDay)}
           </Text>
           {recurring.endDate && (

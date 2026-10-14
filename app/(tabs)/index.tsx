@@ -67,7 +67,7 @@ export default function HomeScreen() {
               </Text>
             </View>
             <BudgetAlertCard database={database} />
-            <ActiveTripCard database={database} />
+            <ActiveTripCard />
             <Carousel renderItem={renderCarouselItem} data={carouselData} />
             {transactionCount > 0 ? (
               <View flexDirection="row" gap="$2" marginTop="$4" width="100%">
