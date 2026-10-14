@@ -4,6 +4,12 @@ import { STORAGE_KEYS } from './storageKeys';
 
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
+// Same dataset from two hosts; the second is a fallback when the CDN fails.
+const RATE_SOURCES = [
+  'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies',
+  'https://currency-api.pages.dev/v1/currencies',
+];
+
 type CachedRate = {
   rate: number;
   timestamp: number;
@@ -42,24 +48,24 @@ const isFresh = (cachedRate: CachedRate) => {
   return Date.now() - cachedRate.timestamp < CACHE_EXPIRY_MS;
 };
 
-const fetchFromApi = async (
-  url: string,
+/** Fetches a rate from one source; resolves to null on any failure. */
+const fetchFromSource = async (
+  sourceUrl: string,
   baseCurrency: string,
   targetCurrency: string
 ): Promise<number | null> => {
-  const response = await fetch(url);
-  if (!response.ok) {
+  try {
+    const response = await fetch(`${sourceUrl}/${targetCurrency.toLowerCase()}.json`);
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const rate = data?.[targetCurrency.toLowerCase()]?.[baseCurrency.toLowerCase()];
+    return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : null;
+  } catch {
     return null;
   }
-
-  const data = await response.json();
-  const rawRate = data?.[targetCurrency.toLowerCase()]?.[baseCurrency.toLowerCase()];
-
-  if (typeof rawRate !== 'number' || !Number.isFinite(rawRate) || rawRate <= 0) {
-    return null;
-  }
-
-  return rawRate;
 };
 
 const getCurrencyConversionCacheEntry = async (
@@ -106,47 +112,23 @@ export const getCurrencyConversion = async (
 
   const request = (async (): Promise<ConversionResult> => {
     try {
-      const primaryUrl = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${targetCurrency.toLowerCase()}.json`;
-      const primaryRate = await fetchFromApi(primaryUrl, baseCurrency, targetCurrency);
-
-      if (primaryRate) {
-        await setCurrencyConversionCacheEntry(cacheKey, {
-          rate: primaryRate,
-          timestamp: Date.now(),
-        });
-        return { status: 'ok', rate: primaryRate };
-      }
-
-      const fallbackUrl = `https://currency-api.pages.dev/v1/currencies/${targetCurrency.toLowerCase()}.json`;
-      const fallbackRate = await fetchFromApi(fallbackUrl, baseCurrency, targetCurrency);
-
-      if (fallbackRate) {
-        await setCurrencyConversionCacheEntry(cacheKey, {
-          rate: fallbackRate,
-          timestamp: Date.now(),
-        });
-        return { status: 'ok', rate: fallbackRate };
-      }
-
-      if (cachedData) {
-        return {
-          status: 'stale',
-          rate: cachedData.rate,
-        };
+      for (const sourceUrl of RATE_SOURCES) {
+        const rate = await fetchFromSource(sourceUrl, baseCurrency, targetCurrency);
+        if (rate) {
+          await setCurrencyConversionCacheEntry(cacheKey, {
+            rate,
+            timestamp: Date.now(),
+          });
+          return { status: 'ok', rate };
+        }
       }
     } catch {
-      if (cachedData) {
-        return {
-          status: 'stale',
-          rate: cachedData.rate,
-        };
-      }
+      // Caching the fresh rate failed; fall back to the last known rate.
     }
 
-    return {
-      status: 'missing_rate',
-      rate: null,
-    };
+    return cachedData
+      ? { status: 'stale', rate: cachedData.rate }
+      : { status: 'missing_rate', rate: null };
   })();
 
   inFlightRequests.set(cacheKey, request);
@@ -158,21 +140,4 @@ export const getCurrencyConversion = async (
       inFlightRequests.delete(cacheKey);
     }
   }
-};
-
-export const getCachedCurrencyConversion = async (
-  baseCurrency: string,
-  targetCurrency: string
-): Promise<ConversionResult> => {
-  const cacheKey = getCurrencyConversionCacheKey(baseCurrency, targetCurrency);
-  const cachedData = await getCurrencyConversionCacheEntry(cacheKey);
-
-  if (!cachedData) {
-    return { status: 'missing_rate', rate: null };
-  }
-
-  return {
-    status: isFresh(cachedData) ? 'ok' : 'stale',
-    rate: cachedData.rate,
-  };
 };
