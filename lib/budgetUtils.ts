@@ -1,107 +1,66 @@
-import dayjs from 'dayjs';
 import { Q } from '@nozbe/watermelondb';
+import dayjs from 'dayjs';
 import type { BudgetModel, BudgetPeriod } from '../database/budget-model';
-import './date';
+import { type LedgerEntry, magnitude } from './ledger';
+import { formatCadence, periodWindow } from './recurrence';
 
-type BudgetPeriodConfig = Pick<BudgetModel, 'period' | 'startDate'>;
-type BudgetRolloverConfig = Pick<BudgetModel, 'amount' | 'rollover'>;
-type SpendableTransaction = {
-  amountInBaseCurrency: number;
+export type BudgetHealth = 'ok' | 'warning' | 'exceeded';
+
+export type BudgetEvaluation = {
+  spent: number;
+  /** The budget amount plus any rollover carried in from the previous period. */
+  budgetLimit: number;
+  rolloverAmount: number;
+  remaining: number;
+  percentage: number;
+  status: BudgetHealth;
 };
 
-const shiftPeriod = (date: dayjs.Dayjs, period: BudgetPeriod, periods: number) => {
-  if (periods === 0) {
-    return date;
-  }
+type BudgetTerms = Pick<BudgetModel, 'amount' | 'rollover' | 'alertThreshold'>;
 
-  switch (period) {
-    case 'weekly':
-      return date.add(periods, 'week');
-    case 'monthly':
-      return date.add(periods, 'month');
-    case 'yearly':
-      return date.add(periods, 'year');
-    default:
-      return date.add(periods, 'month');
-  }
-};
-
+/** The budget's current period window, or one shifted by `periodOffset` periods. */
 export const calculateBudgetPeriodDates = (
-  budget: BudgetPeriodConfig,
+  budget: Pick<BudgetModel, 'period' | 'startDate'>,
   periodOffset = 0
-) => {
-  const now = dayjs();
-  const startDate = dayjs(budget.startDate);
+) => periodWindow(budget.startDate, budget.period, { offset: periodOffset });
 
-  let currentPeriodStart = startDate;
-
-  switch (budget.period) {
-    case 'weekly': {
-      while (currentPeriodStart.add(1, 'week').isBefore(now)) {
-        currentPeriodStart = currentPeriodStart.add(1, 'week');
-      }
-      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
-      return {
-        start: currentPeriodStart.toDate(),
-        end: currentPeriodStart.add(1, 'week').subtract(1, 'second').toDate(),
-      };
-    }
-    case 'monthly': {
-      while (currentPeriodStart.add(1, 'month').isBefore(now)) {
-        currentPeriodStart = currentPeriodStart.add(1, 'month');
-      }
-      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
-      return {
-        start: currentPeriodStart.toDate(),
-        end: currentPeriodStart.add(1, 'month').subtract(1, 'second').toDate(),
-      };
-    }
-    case 'yearly': {
-      while (currentPeriodStart.add(1, 'year').isBefore(now)) {
-        currentPeriodStart = currentPeriodStart.add(1, 'year');
-      }
-      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
-      return {
-        start: currentPeriodStart.toDate(),
-        end: currentPeriodStart.add(1, 'year').subtract(1, 'second').toDate(),
-      };
-    }
-    default:
-      currentPeriodStart = shiftPeriod(currentPeriodStart, budget.period, periodOffset);
-      return {
-        start: currentPeriodStart.toDate(),
-        end: currentPeriodStart.add(1, 'month').subtract(1, 'second').toDate(),
-      };
-  }
-};
-
-export const getNextPeriodDate = (period: BudgetPeriod, currentDate: Date): Date => {
-  const current = dayjs(currentDate);
-
-  switch (period) {
-    case 'weekly':
-      return current.add(1, 'week').toDate();
-    case 'monthly':
-      return current.add(1, 'month').toDate();
-    case 'yearly':
-      return current.add(1, 'year').toDate();
-    default:
-      return current.add(1, 'month').toDate();
-  }
-};
-
+/** Unspent budget carried into the next period; never negative. */
 export const calculateRollover = (
-  budget: BudgetRolloverConfig,
+  budget: Pick<BudgetModel, 'amount' | 'rollover'>,
   previousSpent: number
-): number => {
-  if (!budget.rollover) {
-    return 0;
-  }
+): number => (budget.rollover ? Math.max(0, budget.amount - previousSpent) : 0);
 
-  const remaining = budget.amount - previousSpent;
-  return remaining > 0 ? remaining : 0;
+/**
+ * Evaluates spend against a budget. Rollover only applies when the previous
+ * period's spend is known.
+ */
+export const evaluateBudget = (
+  budget: BudgetTerms,
+  spent: number,
+  previousSpent?: number
+): BudgetEvaluation => {
+  const rolloverAmount =
+    previousSpent === undefined ? 0 : calculateRollover(budget, previousSpent);
+  const budgetLimit = budget.amount + rolloverAmount;
+  const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
+  const status: BudgetHealth =
+    percentage >= 100
+      ? 'exceeded'
+      : percentage >= budget.alertThreshold
+        ? 'warning'
+        : 'ok';
+
+  return {
+    spent,
+    budgetLimit,
+    rolloverAmount,
+    remaining: budgetLimit - spent,
+    percentage,
+    status,
+  };
 };
 
+/** Query clauses for the expenses that count against a budget window. */
 export const buildBudgetTransactionConditions = (
   periodStart: Date,
   periodEnd: Date,
@@ -120,11 +79,10 @@ export const buildBudgetTransactionConditions = (
   return conditions;
 };
 
-export const sumBudgetTransactions = (transactions: SpendableTransaction[]) => {
-  return transactions.reduce((sum, transaction) => {
-    return sum + Math.abs(transaction.amountInBaseCurrency);
-  }, 0);
-};
+/** Total spend of transactions already scoped to a budget (see conditions above). */
+export const sumBudgetTransactions = (
+  transactions: Array<Pick<LedgerEntry, 'amountInBaseCurrency'>>
+) => transactions.reduce((sum, transaction) => sum + magnitude(transaction), 0);
 
 export const getBudgetProgressColor = (percentage: number, threshold: number): string => {
   if (percentage >= 100) {
@@ -136,18 +94,10 @@ export const getBudgetProgressColor = (percentage: number, threshold: number): s
   return '$green';
 };
 
-export const formatBudgetPeriod = (period: BudgetPeriod): string => {
-  switch (period) {
-    case 'weekly':
-      return 'Weekly';
-    case 'monthly':
-      return 'Monthly';
-    case 'yearly':
-      return 'Yearly';
-    default:
-      return 'Monthly';
-  }
-};
+export const formatBudgetPeriod = (period: BudgetPeriod): string => formatCadence(period);
+
+export const getBudgetDisplayName = (budget: Pick<BudgetModel, 'name' | 'period'>) =>
+  budget.name || `${formatBudgetPeriod(budget.period)} Budget`;
 
 export const getPeriodLabel = (budget: BudgetModel): string => {
   const { start, end } = calculateBudgetPeriodDates(budget);

@@ -1,13 +1,20 @@
 import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { BudgetModel } from '../database/budget-model';
 import type { TransactionModel } from '../database/transaction-model';
-import { calculateBudgetPeriodDates } from './budgetUtils';
+import {
+  type BudgetHealth,
+  calculateBudgetPeriodDates,
+  evaluateBudget,
+  sumBudgetTransactions,
+} from './budgetUtils';
+import { filterByDateRange } from './ledger';
 
 export type BudgetAlertData = {
   budget: BudgetModel;
   spent: number;
   percentage: number;
   budgetLimit: number;
+  status: BudgetHealth;
 };
 
 type BudgetPeriodDates = {
@@ -18,33 +25,23 @@ type BudgetPeriodDates = {
 type CalculateBudgetAlertArgs = {
   budget: BudgetModel;
   categoryIds: string[];
+  /** Expense transactions; budgets only count spend. */
   transactions: TransactionModel[];
   periodDates: BudgetPeriodDates;
   previousPeriodDates?: BudgetPeriodDates;
 };
 
-const sumSpentTransactions = (transactions: TransactionModel[]) => {
-  return transactions.reduce((sum, transaction) => {
-    return sum + Math.abs(transaction.amountInBaseCurrency);
-  }, 0);
-};
-
-const filterTransactionsForPeriod = (
+const spentDuring = (
   transactions: TransactionModel[],
-  periodDates: BudgetPeriodDates,
+  { start, end }: BudgetPeriodDates,
   categoryIds: string[]
-) => {
-  return transactions.filter((transaction) => {
-    const txDate = new Date(transaction.date).getTime();
-    const inPeriod =
-      txDate >= periodDates.start.getTime() && txDate <= periodDates.end.getTime();
-    const transactionCategoryId = transaction.category?.id ?? '';
-    const matchesCategory =
-      categoryIds.length === 0 || categoryIds.includes(transactionCategoryId);
-
-    return inPeriod && matchesCategory;
-  });
-};
+) =>
+  sumBudgetTransactions(
+    filterByDateRange(transactions, start, end).filter(
+      (transaction) =>
+        categoryIds.length === 0 || categoryIds.includes(transaction.categoryId ?? '')
+    )
+  );
 
 export const calculateBudgetAlert = ({
   budget,
@@ -53,35 +50,21 @@ export const calculateBudgetAlert = ({
   periodDates,
   previousPeriodDates,
 }: CalculateBudgetAlertArgs): BudgetAlertData | null => {
-  const periodTransactions = filterTransactionsForPeriod(
-    transactions,
-    periodDates,
-    categoryIds
+  const previousSpent =
+    budget.rollover && previousPeriodDates
+      ? spentDuring(transactions, previousPeriodDates, categoryIds)
+      : undefined;
+  const { spent, percentage, budgetLimit, status } = evaluateBudget(
+    budget,
+    spentDuring(transactions, periodDates, categoryIds),
+    previousSpent
   );
-  const spent = sumSpentTransactions(periodTransactions);
 
-  let budgetLimit = budget.amount;
-  if (budget.rollover && previousPeriodDates) {
-    const previousTransactions = filterTransactionsForPeriod(
-      transactions,
-      previousPeriodDates,
-      categoryIds
-    );
-    const previousSpent = sumSpentTransactions(previousTransactions);
-    budgetLimit += Math.max(0, budget.amount - previousSpent);
-  }
-
-  const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
   if (percentage < budget.alertThreshold) {
     return null;
   }
 
-  return {
-    budget,
-    spent,
-    percentage,
-    budgetLimit,
-  };
+  return { budget, spent, percentage, budgetLimit, status };
 };
 
 export const calculateBudgetAlerts = ({
@@ -93,30 +76,27 @@ export const calculateBudgetAlerts = ({
   budgetCategories: BudgetCategoryModel[];
   transactions: TransactionModel[];
 }): BudgetAlertData[] => {
-  const budgetCategoryMap = new Map<string, string[]>();
+  const categoryIdsByBudget = new Map<string, string[]>();
 
-  for (const budgetCategory of budgetCategories) {
-    const categoryIds = budgetCategoryMap.get(budgetCategory.budgetId) ?? [];
-    categoryIds.push(budgetCategory.categoryId);
-    budgetCategoryMap.set(budgetCategory.budgetId, categoryIds);
+  for (const { budgetId, categoryId } of budgetCategories) {
+    categoryIdsByBudget.set(budgetId, [
+      ...(categoryIdsByBudget.get(budgetId) ?? []),
+      categoryId,
+    ]);
   }
 
   return budgets
-    .map((budget) => {
-      const categoryIds = budgetCategoryMap.get(budget.id) ?? [];
-      const periodDates = calculateBudgetPeriodDates(budget);
-      const previousPeriodDates = budget.rollover
-        ? calculateBudgetPeriodDates(budget, -1)
-        : undefined;
-
-      return calculateBudgetAlert({
+    .map((budget) =>
+      calculateBudgetAlert({
         budget,
-        categoryIds,
+        categoryIds: categoryIdsByBudget.get(budget.id) ?? [],
         transactions,
-        periodDates,
-        previousPeriodDates,
-      });
-    })
+        periodDates: calculateBudgetPeriodDates(budget),
+        previousPeriodDates: budget.rollover
+          ? calculateBudgetPeriodDates(budget, -1)
+          : undefined,
+      })
+    )
     .filter((alert): alert is BudgetAlertData => alert !== null)
     .sort((left, right) => right.percentage - left.percentage);
 };

@@ -12,6 +12,7 @@ import type { TransactionModel } from '../../database/transaction-model';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { calculateBudgetAlerts, type BudgetAlertData } from '../../lib/budgetAlerts';
+import { getBudgetDisplayName } from '../../lib/budgetUtils';
 import { formatCurrency } from '../../lib/format';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
 import { LinkButton } from '../button/LinkButton';
@@ -60,10 +61,10 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
     return null;
   }
 
-  const exceededCount = visibleAlerts.filter((alert) => alert.percentage >= 100).length;
-  const warningCount = visibleAlerts.filter(
-    (alert) => alert.percentage >= alert.budget.alertThreshold && alert.percentage < 100
+  const exceededCount = visibleAlerts.filter(
+    (alert) => alert.status === 'exceeded'
   ).length;
+  const warningCount = visibleAlerts.filter((alert) => alert.status === 'warning').length;
 
   return (
     <View
@@ -121,11 +122,12 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
                   marginBottom="$1"
                 >
                   <Text fontSize="$2" color="white" fontWeight="bold" flex={1}>
-                    {alert.budget.name ||
-                      `${alert.budget.period.charAt(0).toUpperCase() + alert.budget.period.slice(1)} Budget`}
+                    {getBudgetDisplayName(alert.budget)}
                   </Text>
                   <View
-                    backgroundColor={alert.percentage >= 100 ? '$stroberi' : '$yellow'}
+                    backgroundColor={
+                      alert.status === 'exceeded' ? '$stroberi' : '$yellow'
+                    }
                     paddingHorizontal="$1.5"
                     paddingVertical="$0.5"
                     borderRadius="$1"
