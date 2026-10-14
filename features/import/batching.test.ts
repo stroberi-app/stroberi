@@ -14,7 +14,9 @@ describe('processImportBatches', () => {
   });
 
   it('resumes from the next batch checkpoint after a successful batch', async () => {
-    const transactions = Array.from({ length: 5 }, (_, index) => buildTransaction(index + 1));
+    const transactions = Array.from({ length: 5 }, (_, index) =>
+      buildTransaction(index + 1)
+    );
     const calls: number[] = [];
     const createBatch = async (batch: CreateTransactionPayload[]) => {
       calls.push(batch.length);
@@ -56,7 +58,9 @@ describe('processImportBatches', () => {
   });
 
   it('keeps the checkpoint on the last successful batch when a later batch fails', async () => {
-    const transactions = Array.from({ length: 4 }, (_, index) => buildTransaction(index + 1));
+    const transactions = Array.from({ length: 4 }, (_, index) =>
+      buildTransaction(index + 1)
+    );
     const calls: number[] = [];
     const createBatch = async (batch: CreateTransactionPayload[]) => {
       calls.push(batch.length);
@@ -89,7 +93,9 @@ describe('processImportBatches', () => {
   });
 
   it('continues the cumulative imported count when resuming from a checkpoint', async () => {
-    const transactions = Array.from({ length: 5 }, (_, index) => buildTransaction(index + 1));
+    const transactions = Array.from({ length: 5 }, (_, index) =>
+      buildTransaction(index + 1)
+    );
     const calls: number[] = [];
     const createBatch = async (batch: CreateTransactionPayload[]) => {
       calls.push(batch.length);

@@ -2,12 +2,14 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
-import Papa from 'papaparse';
 import type { RefObject } from 'react';
 import { useRef, useState } from 'react';
 import { currencies } from '../../data/currencies';
 import { createCategoriesBatch } from '../../database/actions/categories';
-import { createTransactionsBatch } from '../../database/actions/transactions';
+import {
+  type ConversionCache,
+  createTransactionsBatch,
+} from '../../database/actions/transactions';
 import type { CategoryModel } from '../../database/category-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import useToast from '../../hooks/useToast';
@@ -16,16 +18,11 @@ import {
   isLargeImportFile,
   MAX_IMPORT_FILE_SIZE_BYTES,
 } from '../../lib/dataLimits';
-import type { ConversionResult } from '../../lib/currencyConversion';
 import { doExport } from '../../lib/downloads';
-import type { ErrorInfo } from '../../components/sheet/ErrorSheet';
 import { processImportBatches, type ProcessImportBatchesResult } from './batching';
-import {
-  buildImportTransactionPayloads,
-  prepareImportRows,
-  type PreparedImportTransaction,
-} from './preparation';
-import type { CSVRow } from './validation';
+import { parseImportCsv } from './parsing';
+import { buildImportTransactionPayloads, prepareImportRows } from './preparation';
+import type { ErrorInfo, ImportRowFailure } from './types';
 
 export interface ImportProgress {
   phase: 'parsing' | 'validating' | 'importing' | 'complete';
@@ -36,13 +33,16 @@ export interface ImportProgress {
 
 type ImportSession = {
   validTransactions: ReturnType<typeof buildImportTransactionPayloads>;
-  conversionCache: Map<string, ConversionResult>;
+  conversionCache: ConversionCache;
   importedCount: number;
   nextBatchIndex: number;
 };
 
 const BATCH_SIZE = 100;
 const supportedCurrencyCodes = currencies.map((currency) => currency.code);
+
+const describeFailures = (failed: ImportRowFailure[]) =>
+  failed.map((failure) => `Row ${failure.row}: ${failure.reason}`);
 
 const CSV_TEMPLATE = `merchant,amount,date,note,currencyCode,category,categoryIcon
 Starbucks,-4.50,2024-01-15,Morning coffee,USD,Food & Drink,☕
@@ -74,6 +74,17 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
   const hideError = () => {
     errorSheetRef.current?.dismiss();
     setErrorInfo(null);
+  };
+
+  const stopImporting = () => {
+    setImporting(false);
+    setProgress(null);
+  };
+
+  /** Ends the current import attempt and explains why. */
+  const fail = (error: ErrorInfo) => {
+    stopImporting();
+    showError(error);
   };
 
   const resetAllStates = () => {
@@ -125,18 +136,6 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
   ) => {
     const total = session.validTransactions.length;
 
-    if (importResult.failed.length > 0) {
-      setProgress((prev) =>
-        prev
-          ? {
-              ...prev,
-              current: importResult.importedCount,
-              message: `Imported ${importResult.importedCount} of ${total}; ${importResult.failed.length} skipped`,
-            }
-          : null
-      );
-    }
-
     clearImportSession();
     setProgress({
       phase: 'complete',
@@ -164,9 +163,7 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
         title: 'Some Rows Were Skipped',
         message:
           'A few rows could not be imported. Review the details below and retry those rows if needed.',
-        errors: importResult.failed.map(
-          (failure) => `Row ${failure.row}: ${failure.reason}`
-        ),
+        errors: describeFailures(importResult.failed),
         type: 'validation',
         showTemplateButton: false,
         showRetryButton: false,
@@ -175,9 +172,7 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
       showError({
         title: 'No Transactions Imported',
         message: 'No rows could be imported. Review the issues below and try again.',
-        errors: importResult.failed.map(
-          (failure) => `Row ${failure.row}: ${failure.reason}`
-        ),
+        errors: describeFailures(importResult.failed),
         type: 'validation',
         showTemplateButton: true,
         showRetryButton: true,
@@ -186,21 +181,14 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
 
     if (importResult.importedCount > 0) {
       sheetRef.current?.dismiss();
-
-      setTimeout(() => {
-        setImporting(false);
-        setProgress(null);
-      }, 500);
+      setTimeout(stopImporting, 500);
     } else {
-      setImporting(false);
-      setProgress(null);
+      stopImporting();
     }
   };
 
   const handleImportError = () => {
-    setImporting(false);
-    setProgress(null);
-    showError({
+    fail({
       title: 'Import Failed',
       message:
         "We couldn't complete the import. Try Again will continue from the last successful batch.",
@@ -232,16 +220,13 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
         copyToCacheDirectory: true,
       });
       if (!res.assets?.[0].uri) {
-        setImporting(false);
-        setProgress(null);
+        stopImporting();
         return;
       }
 
       const importBaseCurrency = defaultCurrency;
       if (!importBaseCurrency) {
-        setImporting(false);
-        setProgress(null);
-        showError({
+        fail({
           title: 'Default Currency Required',
           message:
             'Set your default currency in Settings > Default Currency, then retry import.',
@@ -262,9 +247,7 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
             : null;
 
       if (fileSize !== null && isLargeImportFile(fileSize)) {
-        setImporting(false);
-        setProgress(null);
-        showError({
+        fail({
           title: 'CSV File Too Large',
           message: `This file is ${formatFileSize(fileSize)}. Import works best under ${formatFileSize(MAX_IMPORT_FILE_SIZE_BYTES)}. Please split it into smaller files and try again.`,
           type: 'file',
@@ -280,63 +263,16 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
         prev ? { ...prev, message: 'Processing CSV data...' } : null
       );
 
-      const results = Papa.parse<CSVRow>(content, {
-        header: true,
-        skipEmptyLines: true,
-      });
-
-      if (results.errors.length > 0) {
-        setImporting(false);
-        setProgress(null);
-        showError({
-          title: "Can't Read Your File",
-          message:
-            "There seems to be an issue with your CSV file format. Make sure it's a valid CSV file and try again.",
-          type: 'parse',
-          showTemplateButton: true,
-          showRetryButton: true,
-        });
-        return;
-      }
-
-      if (results.data.length === 0) {
-        setImporting(false);
-        setProgress(null);
-        showError({
-          title: 'Empty File',
-          message:
-            "Your CSV file doesn't contain any transaction data. Please check the file and try again.",
-          type: 'file',
-          showTemplateButton: true,
-          showRetryButton: true,
-        });
-        return;
-      }
-
-      const requiredColumns = ['amount', 'date', 'currencyCode'];
-      const missingColumns = requiredColumns.filter(
-        (col) => !results.meta.fields?.includes(col)
-      );
-
-      if (missingColumns.length > 0) {
-        setImporting(false);
-        setProgress(null);
-        showError({
-          title: 'Wrong Format',
-          message:
-            'Your CSV file is missing required columns. Please make sure your file includes all the necessary columns and matches our template format.',
-          errors: [`Missing columns: ${missingColumns.join(', ')}`],
-          type: 'format',
-          showTemplateButton: true,
-          showRetryButton: true,
-        });
+      const parsed = parseImportCsv(content);
+      if (!parsed.ok) {
+        fail(parsed.error);
         return;
       }
 
       setProgress({
         phase: 'validating',
         current: 0,
-        total: results.data.length,
+        total: parsed.rows.length,
         message: 'Checking your transactions...',
       });
 
@@ -350,55 +286,19 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
           category.id,
         ])
       );
-      const existingCategoryNames = new Set(categoryNameMap.keys());
 
-      const allErrors: string[] = [];
-      const preparedTransactions: PreparedImportTransaction[] = [];
-      const categoriesToCreate = new Map<string, { name: string; icon: string }>();
+      const { preparedTransactions, categoriesToCreate, errors } = prepareImportRows({
+        rows: parsed.rows,
+        supportedCurrencyCodes,
+        existingCategoryNames: new Set(categoryNameMap.keys()),
+        baseCurrency: importBaseCurrency,
+      });
 
-      for (let index = 0; index < results.data.length; index += BATCH_SIZE) {
-        const chunk = results.data.slice(
-          index,
-          Math.min(index + BATCH_SIZE, results.data.length)
-        );
-        const preparedChunk = prepareImportRows({
-          rows: chunk,
-          supportedCurrencyCodes,
-          existingCategoryNames,
-          baseCurrency: importBaseCurrency,
-          startIndex: index,
-        });
-
-        preparedTransactions.push(...preparedChunk.preparedTransactions);
-        allErrors.push(...preparedChunk.errors);
-
-        for (const [
-          categoryName,
-          categoryData,
-        ] of preparedChunk.categoriesToCreate.entries()) {
-          if (!categoriesToCreate.has(categoryName)) {
-            categoriesToCreate.set(categoryName, categoryData);
-          }
-        }
-
-        setProgress((prev) =>
-          prev
-            ? {
-                ...prev,
-                current: Math.min(index + BATCH_SIZE, results.data.length),
-                message: `Validated ${Math.min(index + BATCH_SIZE, results.data.length)} out of ${results.data.length} transactions`,
-              }
-            : null
-        );
-      }
-
-      if (allErrors.length > 0) {
-        setImporting(false);
-        setProgress(null);
-        showError({
+      if (errors.length > 0) {
+        fail({
           title: 'Data Validation Issues',
-          message: `We found ${allErrors.length} issue${allErrors.length > 1 ? 's' : ''} in your CSV file. Please fix these issues and try importing again.`,
-          errors: allErrors,
+          message: `We found ${errors.length} issue${errors.length > 1 ? 's' : ''} in your CSV file. Please fix these issues and try importing again.`,
+          errors,
           type: 'validation',
           showTemplateButton: true,
           showRetryButton: true,
@@ -407,9 +307,7 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
       }
 
       if (preparedTransactions.length === 0) {
-        setImporting(false);
-        setProgress(null);
-        showError({
+        fail({
           title: 'No Valid Transactions',
           message:
             "We couldn't find any valid transactions in your CSV file. Please check the format and try again.",
@@ -439,9 +337,7 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
             categoryNameMap.set(category.name.trim().toLowerCase(), category.id);
           }
         } catch (_error) {
-          setImporting(false);
-          setProgress(null);
-          showError({
+          fail({
             title: 'Category Creation Failed',
             message:
               "We couldn't create some of the new categories found in your file. Please check for duplicates or invalid data.",

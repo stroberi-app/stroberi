@@ -5,7 +5,7 @@ describe('import error summary', () => {
     const result = summarizeImportIssues([
       'Row 10: Amount must be a valid number',
       'Missing columns: merchant, amount',
-      'Row 2: Currency code \'ABC\' is not supported',
+      "Row 2: Currency code 'ABC' is not supported",
       'Row 10: Date format is invalid (use YYYY-MM-DD)',
     ]);
 

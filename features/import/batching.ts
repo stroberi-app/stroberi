@@ -1,5 +1,7 @@
-import type { CreateTransactionPayload } from '../../database/actions/transactions';
-import type { ConversionResult } from '../../lib/currencyConversion';
+import type {
+  ConversionCache,
+  CreateTransactionPayload,
+} from '../../database/actions/transactions';
 import type { ImportResult } from './types';
 
 export type ProcessImportBatchesOptions = {
@@ -7,10 +9,10 @@ export type ProcessImportBatchesOptions = {
   batchSize: number;
   startBatchIndex?: number;
   initialImportedCount?: number;
-  conversionCache?: Map<string, ConversionResult>;
+  conversionCache?: ConversionCache;
   createBatch: (
     transactions: CreateTransactionPayload[],
-    conversionCache: Map<string, ConversionResult>
+    conversionCache: ConversionCache
   ) => Promise<ImportResult>;
   onBatchSuccess?: (checkpoint: {
     importedCount: number;
@@ -28,7 +30,7 @@ export const processImportBatches = async ({
   batchSize,
   startBatchIndex = 0,
   initialImportedCount = 0,
-  conversionCache = new Map<string, ConversionResult>(),
+  conversionCache = new Map(),
   createBatch,
   onBatchSuccess,
 }: ProcessImportBatchesOptions): Promise<ProcessImportBatchesResult> => {

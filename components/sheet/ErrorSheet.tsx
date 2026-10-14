@@ -5,18 +5,10 @@ import { useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Separator, Text, View, XStack, YStack } from 'tamagui';
 import { summarizeImportIssues } from '../../features/import/errorSummary';
+import type { ErrorInfo } from '../../features/import/types';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle } from './constants';
-
-export interface ErrorInfo {
-  title: string;
-  message: string;
-  errors?: string[];
-  type: 'file' | 'format' | 'validation' | 'import' | 'parse';
-  showTemplateButton?: boolean;
-  showRetryButton?: boolean;
-}
 
 type ErrorSheetProps = {
   sheetRef: React.RefObject<BottomSheetModal | null>;
