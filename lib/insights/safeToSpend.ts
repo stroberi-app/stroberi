@@ -1,3 +1,5 @@
+import { filterByDateRange } from '../ledger';
+import { MS_PER_DAY, sumExpenses, sumIncome } from './shared';
 import type {
   InsightConfidence,
   InsightTransaction,
@@ -27,8 +29,6 @@ type CalculateMonthForecastArgs = {
 
 const clampMoney = (value: number) => Math.round(value * 100) / 100;
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
 const utcDayNumber = (date: Date) =>
   Math.floor(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / MS_PER_DAY
@@ -36,26 +36,6 @@ const utcDayNumber = (date: Date) =>
 
 const utcMonthKey = (date: Date) =>
   `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-
-const sumExpenses = (transactions: InsightTransaction[]) =>
-  transactions
-    .filter((transaction) => transaction.type === 'expense')
-    .reduce((sum, transaction) => sum + Math.abs(transaction.amountInBaseCurrency), 0);
-
-const sumIncome = (transactions: InsightTransaction[]) =>
-  transactions
-    .filter((transaction) => transaction.type === 'income')
-    .reduce((sum, transaction) => sum + Math.abs(transaction.amountInBaseCurrency), 0);
-
-const getTransactionsInRange = (
-  transactions: InsightTransaction[],
-  fromDate: Date,
-  toDate: Date
-) =>
-  transactions.filter((transaction) => {
-    const time = transaction.date.getTime();
-    return time >= fromDate.getTime() && time <= toDate.getTime();
-  });
 
 export const getHistoricalMonthlyAverage = (
   transactions: InsightTransaction[],
@@ -115,7 +95,7 @@ export const calculateSafeToSpend = ({
   expectedRecurring,
   historicalMonthlyAverage,
 }: CalculateSafeToSpendArgs): SafeToSpendSummary => {
-  const periodTransactions = getTransactionsInRange(transactions, fromDate, toDate);
+  const periodTransactions = filterByDateRange(transactions, fromDate, toDate);
   const spentSoFar = clampMoney(sumExpenses(periodTransactions));
   const incomeSoFar = clampMoney(sumIncome(periodTransactions));
   const baseline =
