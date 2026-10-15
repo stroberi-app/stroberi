@@ -81,7 +81,9 @@ export function detectRecurringTransactions(
   for (const entry of transactions) {
     if (isExpense(entry) && new Date(entry.date) >= threeMonthsAgo) {
       const merchant = entry.merchant || 'Uncategorized';
-      byMerchant.set(merchant, [...(byMerchant.get(merchant) ?? []), entry]);
+      const entries = byMerchant.get(merchant) ?? [];
+      entries.push(entry);
+      byMerchant.set(merchant, entries);
     }
   }
 

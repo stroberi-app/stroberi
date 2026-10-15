@@ -449,8 +449,8 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
 
       <CurrencySelect
         sheetRef={currencySheetRef}
-        onSelect={(currency) => {
-          setCurrencyCode(currency.code);
+        onSelect={(selected) => {
+          setCurrencyCode(selected.code);
           currencySheetRef.current?.close();
         }}
         selectedCurrency={currencyCode || currency}

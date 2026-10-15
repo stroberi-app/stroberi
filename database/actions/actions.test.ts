@@ -212,6 +212,9 @@ describe('categories', () => {
       updateCategory({ id: fun.id, name: 'FOOD', icon: '🎉' })
     ).rejects.toThrow('A category with this name already exists');
 
+    // An expected refusal, not a failure: nothing is logged.
+    expect(console.error).not.toHaveBeenCalled();
+
     await updateCategory({ id: food.id, name: 'food', icon: '🥗' });
     expect(food.icon).toBe('🥗');
   });

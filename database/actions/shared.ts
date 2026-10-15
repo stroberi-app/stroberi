@@ -21,8 +21,19 @@ export const collection = <Table extends keyof TableModels>(table: Table) =>
   database.get<TableModels[Table] & Model>(table);
 
 /**
- * Runs an action, logging failures and normalising whatever was thrown into an
- * `Error` so callers can always surface `error.message`.
+ * An expected refusal (e.g. a duplicate name) whose message is meant for the
+ * user. Actions throw it without logging it as a failure.
+ */
+export class ActionRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ActionRejectedError';
+  }
+}
+
+/**
+ * Runs an action, logging unexpected failures and normalising whatever was
+ * thrown into an `Error` so callers can always surface `error.message`.
  */
 export const runAction = async <T>(
   action: string,
@@ -31,7 +42,9 @@ export const runAction = async <T>(
   try {
     return await work();
   } catch (error) {
-    console.error(`Failed to ${action}:`, error);
+    if (!(error instanceof ActionRejectedError)) {
+      console.error(`Failed to ${action}:`, error);
+    }
     throw error instanceof Error ? error : new Error(`Failed to ${action}`);
   }
 };

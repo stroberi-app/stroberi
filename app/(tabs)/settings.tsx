@@ -353,11 +353,11 @@ export default function SettingsScreen() {
       <SavingsRateTargetSheet sheetRef={savingsRateTargetSheetRef} />
       <CurrencySelect
         sheetRef={currencySheetRef}
-        onSelect={(currency) => {
+        onSelect={(selected) => {
           if (isUpdatingCurrency) {
             return;
           }
-          setDefaultCurrency(currency.code);
+          setDefaultCurrency(selected.code);
           currencySheetRef.current?.close();
         }}
         selectedCurrency={currency}

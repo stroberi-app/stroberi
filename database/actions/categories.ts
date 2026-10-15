@@ -2,11 +2,16 @@ import { Q } from '@nozbe/watermelondb';
 import { DEFAULT_CATEGORIES } from '../../data/defaultCategories';
 import type { CategoryModel } from '../category-model';
 import { database } from '../index';
-import { collection, findRecordOrThrow, runWriteAction } from './shared';
+import {
+  ActionRejectedError,
+  collection,
+  findRecordOrThrow,
+  runWriteAction,
+} from './shared';
 
 type CategoryInput = { name: string; icon: string };
 
-export class DuplicateCategoryError extends Error {
+export class DuplicateCategoryError extends ActionRejectedError {
   constructor() {
     super('A category with this name already exists');
     this.name = 'DuplicateCategoryError';

@@ -79,10 +79,9 @@ export const calculateBudgetAlerts = ({
   const categoryIdsByBudget = new Map<string, string[]>();
 
   for (const { budgetId, categoryId } of budgetCategories) {
-    categoryIdsByBudget.set(budgetId, [
-      ...(categoryIdsByBudget.get(budgetId) ?? []),
-      categoryId,
-    ]);
+    const categoryIds = categoryIdsByBudget.get(budgetId) ?? [];
+    categoryIds.push(categoryId);
+    categoryIdsByBudget.set(budgetId, categoryIds);
   }
 
   return budgets
