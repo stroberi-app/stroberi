@@ -12,6 +12,7 @@ import useTransactionExport, {
   type ExportDateRange,
   type TransactionExportData,
 } from '../../hooks/useTransactionExport';
+import { FALLBACK_CURRENCY, formatCurrency } from '../../lib/format';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
@@ -97,13 +98,6 @@ export const TransactionPreviewSheet = forwardRef<
     }
   }, [dateRange, isOpening]);
 
-  const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string) => {
     return dayjs(dateString).format('MMM DD, YYYY');
   };
@@ -155,7 +149,7 @@ export const TransactionPreviewSheet = forwardRef<
               fontWeight="700"
               color={item.amountInBaseCurrency >= 0 ? '$green10' : '$red10'}
             >
-              {formatAmount(item.amount, item.currencyCode)}
+              {formatCurrency(item.amount, item.currencyCode || FALLBACK_CURRENCY)}
             </Text>
             {item.currencyCode !== item.baseCurrencyCode && (
               <Text fontSize="$2" color="$gray10">

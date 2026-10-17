@@ -41,6 +41,7 @@ const buildTransaction = ({
     conversionStatus: 'ok',
     recurringTransactionId: null,
     tripId: null,
+    categoryId: categoryId ?? null,
     category: categoryId ? ({ id: categoryId } as never) : null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),

@@ -6,7 +6,9 @@ import {
   generateSmallPurchaseInsights,
   rankInsights,
 } from './generators';
+import { filterByDateRange } from '../ledger';
 import { calculateMonthForecast, calculateSafeToSpend } from './safeToSpend';
+import { sumExpenses } from './shared';
 import type { InsightCategory, InsightTransaction, InsightsOverview } from './types';
 import { buildWeeklyRecap } from './weeklyRecap';
 
@@ -24,16 +26,6 @@ export type BuildInsightsOverviewArgs = {
   expectedRecurring: number;
 };
 
-const inRange = (transaction: InsightTransaction, fromDate: Date, toDate: Date) => {
-  const time = transaction.date.getTime();
-  return time >= fromDate.getTime() && time <= toDate.getTime();
-};
-
-const sumCurrentSpend = (transactions: InsightTransaction[]) =>
-  transactions
-    .filter((transaction) => transaction.type === 'expense')
-    .reduce((sum, transaction) => sum + Math.abs(transaction.amountInBaseCurrency), 0);
-
 export const buildInsightsOverview = ({
   transactions,
   categories,
@@ -47,11 +39,11 @@ export const buildInsightsOverview = ({
   budgetLimit,
   expectedRecurring,
 }: BuildInsightsOverviewArgs): InsightsOverview => {
-  const currentTransactions = transactions.filter((transaction) =>
-    inRange(transaction, fromDate, comparisonToDate)
-  );
-  const previousTransactions = transactions.filter((transaction) =>
-    inRange(transaction, previousFromDate, previousToDate)
+  const currentTransactions = filterByDateRange(transactions, fromDate, comparisonToDate);
+  const previousTransactions = filterByDateRange(
+    transactions,
+    previousFromDate,
+    previousToDate
   );
   const dataQuality = buildDataQualitySummary(currentTransactions);
   const safeToSpend = calculateSafeToSpend({
@@ -63,7 +55,7 @@ export const buildInsightsOverview = ({
     expectedRecurring,
   });
   const forecast = calculateMonthForecast({
-    currentSpend: sumCurrentSpend(currentTransactions),
+    currentSpend: sumExpenses(currentTransactions),
     budgetLimit,
     fromDate,
     toDate,

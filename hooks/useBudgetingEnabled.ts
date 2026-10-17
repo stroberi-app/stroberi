@@ -1,16 +1,7 @@
-import { notifyFeatureFlagChanged, useFeatureFlag } from './useFeatureFlag';
 import { STORAGE_KEYS } from '../lib/storageKeys';
-
-export const notifyBudgetingEnabledChanged = (enabled: boolean) => {
-  notifyFeatureFlagChanged(STORAGE_KEYS.BUDGETING_ENABLED, enabled);
-};
+import { useFeatureFlag } from './useFeatureFlag';
 
 export const useBudgetingEnabled = () => {
-  const {
-    value: budgetingEnabled,
-    isLoading,
-    setValue: setBudgetingEnabled,
-  } = useFeatureFlag(STORAGE_KEYS.BUDGETING_ENABLED, false);
-
-  return { budgetingEnabled, isLoading, setBudgetingEnabled };
+  const { value, isLoading, setValue } = useFeatureFlag(STORAGE_KEYS.BUDGETING_ENABLED);
+  return { budgetingEnabled: value, isLoading, setBudgetingEnabled: setValue };
 };

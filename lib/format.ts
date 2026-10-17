@@ -1,4 +1,9 @@
+/** Display currency until the user has picked a base currency. */
+export const FALLBACK_CURRENCY = 'USD';
+
+// A worklet so the UI-thread formatter below can call it too.
 const fallbackFormat = (value: number, currency: string) => {
+  'worklet';
   const code =
     typeof currency === 'string' && currency.trim().length > 0 ? currency.trim() : '?';
   const amount = Number.isFinite(value) ? value.toFixed(2) : String(value);
@@ -27,9 +32,6 @@ export const formatCurrencyWorklet = (value: number, currency: string) => {
       currency,
     }).format(value);
   } catch {
-    const code =
-      typeof currency === 'string' && currency.trim().length > 0 ? currency.trim() : '?';
-    const amount = Number.isFinite(value) ? value.toFixed(2) : String(value);
-    return `${code} ${amount}`;
+    return fallbackFormat(value, currency);
   }
 };

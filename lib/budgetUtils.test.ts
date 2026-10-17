@@ -11,6 +11,8 @@ jest.mock('@nozbe/watermelondb', () => ({
 import {
   buildBudgetTransactionConditions,
   calculateRollover,
+  evaluateBudget,
+  getBudgetDisplayName,
   sumBudgetTransactions,
 } from './budgetUtils';
 
@@ -68,5 +70,42 @@ describe('budgetUtils', () => {
         { amountInBaseCurrency: -4.5 },
       ])
     ).toBe(25);
+  });
+
+  describe('evaluateBudget', () => {
+    const budget = { amount: 200, rollover: true, alertThreshold: 75 };
+
+    it('grades spend against the limit and alert threshold', () => {
+      expect(evaluateBudget({ ...budget, rollover: false }, 50)).toEqual({
+        spent: 50,
+        budgetLimit: 200,
+        rolloverAmount: 0,
+        remaining: 150,
+        percentage: 25,
+        status: 'ok',
+      });
+      expect(evaluateBudget(budget, 150).status).toBe('warning');
+      expect(evaluateBudget(budget, 200).status).toBe('exceeded');
+    });
+
+    it('adds rollover only when the previous period spend is known', () => {
+      expect(evaluateBudget(budget, 150, 120)).toMatchObject({
+        budgetLimit: 280,
+        rolloverAmount: 80,
+        status: 'ok',
+      });
+      expect(evaluateBudget(budget, 150).rolloverAmount).toBe(0);
+    });
+
+    it('treats a zero limit as 0% used', () => {
+      expect(evaluateBudget({ ...budget, amount: 0 }, 10).percentage).toBe(0);
+    });
+  });
+
+  it('names unnamed budgets after their period', () => {
+    expect(getBudgetDisplayName({ name: '', period: 'weekly' })).toBe('Weekly Budget');
+    expect(getBudgetDisplayName({ name: 'Groceries', period: 'weekly' })).toBe(
+      'Groceries'
+    );
   });
 });

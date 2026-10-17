@@ -10,6 +10,7 @@ import Animated, {
 import { Text, View } from 'tamagui';
 import type { TransactionModel } from '../database/transaction-model';
 import type { TripModel } from '../database/trip-model';
+import { calculateTripSpend } from '../features/trips/spend';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { formatCurrency } from '../lib/format';
 
@@ -21,28 +22,12 @@ type TripItemProps = {
 };
 
 const TripItemInner = ({ trip, transactions, onPress, onEdit }: TripItemProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const scale = useSharedValue(1);
 
-  // Calculate spending reactively from observed transactions
-  const useTripCurrency = !!trip.currencyCode;
-  let totalSpent = 0;
-
-  if (useTripCurrency) {
-    const tripCurrencyTransactions = transactions.filter(
-      (tx) => tx.currencyCode === trip.currencyCode
-    );
-    totalSpent = tripCurrencyTransactions
-      .filter((tx) => tx.amount < 0)
-      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-  } else {
-    totalSpent = transactions
-      .filter((tx) => tx.amountInBaseCurrency < 0)
-      .reduce((sum, tx) => sum + Math.abs(tx.amountInBaseCurrency), 0);
-  }
-
+  const totalSpent = calculateTripSpend(trip, transactions);
   const transactionCount = transactions.length;
-  const displayCurrency = trip.currencyCode || defaultCurrency || 'USD';
+  const displayCurrency = trip.currencyCode || currency;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

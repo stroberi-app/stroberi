@@ -3,6 +3,7 @@ import type { CreateTransactionPayload } from '../../database/actions/transactio
 import type { CategoryModel } from '../../database/category-model';
 import type { TransactionModel } from '../../database/transaction-model';
 import type { TripModel } from '../../database/trip-model';
+import { FALLBACK_CURRENCY } from '../../lib/format';
 
 type TransactionType = 'expense' | 'income';
 
@@ -55,7 +56,7 @@ export const getDefaultSelectedCurrency = (
   transaction: TransactionModel | null,
   defaultCurrency?: string | null
 ) => {
-  return transaction?.currencyCode ?? defaultCurrency ?? 'USD';
+  return transaction?.currencyCode ?? defaultCurrency ?? FALLBACK_CURRENCY;
 };
 
 export const getAmountValidationMessage = (

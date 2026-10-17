@@ -1,16 +1,7 @@
-import { notifyFeatureFlagChanged, useFeatureFlag } from './useFeatureFlag';
 import { STORAGE_KEYS } from '../lib/storageKeys';
-
-export const notifyTripsEnabledChanged = (enabled: boolean) => {
-  notifyFeatureFlagChanged(STORAGE_KEYS.TRIPS_ENABLED, enabled);
-};
+import { useFeatureFlag } from './useFeatureFlag';
 
 export const useTripsEnabled = () => {
-  const {
-    value: tripsEnabled,
-    isLoading,
-    setValue: setTripsEnabled,
-  } = useFeatureFlag(STORAGE_KEYS.TRIPS_ENABLED, false);
-
-  return { tripsEnabled, isLoading, setTripsEnabled };
+  const { value, isLoading, setValue } = useFeatureFlag(STORAGE_KEYS.TRIPS_ENABLED);
+  return { tripsEnabled: value, isLoading, setTripsEnabled: setValue };
 };

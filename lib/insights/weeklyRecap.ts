@@ -1,11 +1,17 @@
+import { filterByDateRange } from '../ledger';
+import {
+  categoryLabel,
+  formatWholeAmount,
+  MS_PER_DAY,
+  sumExpenses,
+  UNCATEGORIZED_KEY,
+} from './shared';
 import type {
   InsightCategory,
   InsightTransaction,
   RecapItem,
   WeeklyRecap,
 } from './types';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const startOfUtcDay = (date: Date) =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -24,31 +30,7 @@ const endOfUtcDay = (date: Date) =>
   );
 
 const money = (value: number, currency: string) =>
-  new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Math.round(Math.abs(value)));
-
-const sumExpenses = (transactions: InsightTransaction[]) =>
-  transactions
-    .filter((transaction) => transaction.type === 'expense')
-    .reduce((sum, transaction) => sum + Math.abs(transaction.amountInBaseCurrency), 0);
-
-const inRange = (transaction: InsightTransaction, fromDate: Date, toDate: Date) => {
-  const time = transaction.date.getTime();
-  return time >= fromDate.getTime() && time <= toDate.getTime();
-};
-
-const categoryName = (categories: InsightCategory[], categoryId: string | null) => {
-  if (!categoryId) {
-    return 'Uncategorized';
-  }
-
-  return (
-    categories.find((category) => category.id === categoryId)?.name ?? 'Unknown category'
-  );
-};
+  formatWholeAmount(Math.round(Math.abs(value)), currency);
 
 const totalsByCategory = (
   transactions: InsightTransaction[],
@@ -61,10 +43,10 @@ const totalsByCategory = (
       continue;
     }
 
-    const key = transaction.categoryId ?? 'uncategorized';
+    const key = transaction.categoryId ?? UNCATEGORIZED_KEY;
     const existing = totals.get(key);
     totals.set(key, {
-      label: categoryName(categories, transaction.categoryId),
+      label: categoryLabel(categories, transaction.categoryId),
       amount: (existing?.amount ?? 0) + Math.abs(transaction.amountInBaseCurrency),
       changeAmount: 0,
       categoryId: transaction.categoryId ?? undefined,
@@ -92,12 +74,8 @@ export const buildWeeklyRecap = ({
   const previousStart = new Date(currentStart.getTime() - 7 * MS_PER_DAY);
   const previousEnd = new Date(currentStart.getTime() - 1);
 
-  const current = transactions.filter((transaction) =>
-    inRange(transaction, currentStart, currentEnd)
-  );
-  const previous = transactions.filter((transaction) =>
-    inRange(transaction, previousStart, previousEnd)
-  );
+  const current = filterByDateRange(transactions, currentStart, currentEnd);
+  const previous = filterByDateRange(transactions, previousStart, previousEnd);
   const totalSpent = Math.round(sumExpenses(current));
   const previousWeekSpent = Math.round(sumExpenses(previous));
   const changeAmount = totalSpent - previousWeekSpent;

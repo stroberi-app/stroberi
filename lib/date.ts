@@ -29,3 +29,7 @@ export function formatDateRange(from: dayjs.Dayjs, to: dayjs.Dayjs): string {
 }
 
 export type DateFilters = 'This Year' | 'This Month' | 'Custom';
+
+/** Short month name ("Jan") for a `YYYY-MM` key. */
+export const formatMonthLabel = (monthKey: string): string =>
+  dayjs(`${monthKey}-01`).locale('en').format('MMM');

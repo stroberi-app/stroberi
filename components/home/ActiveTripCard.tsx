@@ -1,4 +1,3 @@
-import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Plane } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
@@ -6,10 +5,7 @@ import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
-import {
-  buildActiveTripFilterClauses,
-  getTripSpending,
-} from '../../database/actions/trips';
+import { getTripSpending, mostRecentActiveTripQuery } from '../../database/actions/trips';
 import type { TripModel } from '../../database/trip-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../../hooks/useTripsEnabled';
@@ -21,13 +17,12 @@ type ActiveTripCardProps = {
 };
 
 const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const { tripsEnabled } = useTripsEnabled();
   const router = useRouter();
   const [spending, setSpending] = useState<{
     totalSpent: number;
     transactionCount: number;
-    currencyCode: string | null;
   } | null>(null);
 
   const activeTrip = activeTrips[0]; // Show the first/most recent active trip
@@ -51,7 +46,6 @@ const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
         setSpending({
           totalSpent: result.totalSpent,
           transactionCount: result.transactionCount,
-          currencyCode: result.currencyCode,
         });
       } catch (error) {
         console.error('Failed to load trip spending:', error);
@@ -115,10 +109,7 @@ const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
 
           <View alignItems="flex-end">
             <Text fontSize="$4" fontWeight="bold" color="$stroberi">
-              {formatCurrency(
-                spending?.totalSpent ?? 0,
-                spending?.currencyCode || defaultCurrency || 'USD'
-              )}
+              {formatCurrency(spending?.totalSpent ?? 0, currency)}
             </Text>
             <Text fontSize="$1" color="$gray10">
               {spending?.transactionCount ?? 0} expenses
@@ -141,15 +132,10 @@ const ActiveTripCard = ({ activeTrips }: ActiveTripCardProps) => {
 };
 
 const enhance = withObservables<
-  { database: Database },
+  Record<string, never>,
   { activeTrips: Observable<TripModel[]> }
->(['database'], ({ database }) => {
-  return {
-    activeTrips: database
-      .get<TripModel>('trips')
-      .query(...buildActiveTripFilterClauses(), Q.sortBy('startDate', Q.desc), Q.take(1))
-      .observe(),
-  };
-});
+>([], () => ({
+  activeTrips: mostRecentActiveTripQuery().observe(),
+}));
 
 export default enhance(ActiveTripCard);

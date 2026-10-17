@@ -4,6 +4,8 @@ import type {
   RecurringFrequency,
   RecurringTransactionModel,
 } from '../../database/recurring-transaction-model';
+import { FALLBACK_CURRENCY } from '../../lib/format';
+import { upcomingOccurrences } from '../../lib/recurrence';
 
 export type RecurringTransactionFormState = {
   amount: string;
@@ -26,7 +28,7 @@ export const getDefaultRecurringTransactionFormState = (
   hasEndDate: false,
   merchantName: '',
   selectedCategory: null,
-  selectedCurrency: defaultCurrency ?? 'USD',
+  selectedCurrency: defaultCurrency ?? FALLBACK_CURRENCY,
   startDate: new Date(),
   transactionType: 'expense',
 });
@@ -125,54 +127,10 @@ export const getNextRecurringOccurrences = ({
   frequency: RecurringFrequency;
   hasEndDate: boolean;
   startDate: Date;
-}) => {
-  const occurrences: Date[] = [];
-  let current = dayjs(startDate);
-  const today = dayjs().startOf('day');
-
-  while (current.isBefore(today)) {
-    switch (frequency) {
-      case 'daily':
-        current = current.add(1, 'day');
-        break;
-      case 'weekly':
-        current = current.add(1, 'week');
-        break;
-      case 'monthly':
-        current = current.add(1, 'month');
-        break;
-      case 'yearly':
-        current = current.add(1, 'year');
-        break;
-    }
-
-    if (hasEndDate && current.isAfter(dayjs(endDate))) {
-      return occurrences;
-    }
-  }
-
-  for (let index = 0; index < 5; index += 1) {
-    if (hasEndDate && current.isAfter(dayjs(endDate))) {
-      break;
-    }
-
-    occurrences.push(current.toDate());
-
-    switch (frequency) {
-      case 'daily':
-        current = current.add(1, 'day');
-        break;
-      case 'weekly':
-        current = current.add(1, 'week');
-        break;
-      case 'monthly':
-        current = current.add(1, 'month');
-        break;
-      case 'yearly':
-        current = current.add(1, 'year');
-        break;
-    }
-  }
-
-  return occurrences;
-};
+}) =>
+  upcomingOccurrences({
+    startDate,
+    cadence: frequency,
+    endDate: hasEndDate ? endDate : null,
+    limit: 5,
+  });

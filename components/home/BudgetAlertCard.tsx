@@ -1,17 +1,17 @@
 import { type Database, Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { AlertTriangle, X } from '@tamagui/lucide-icons-2';
-import { useEffect, useState } from 'react';
 import { combineLatest, type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Text, View } from 'tamagui';
 import type { BudgetCategoryModel } from '../../database/budget-category-model';
 import type { BudgetModel } from '../../database/budget-model';
-import { database } from '../../database/index';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useBudgetingEnabled } from '../../hooks/useBudgetingEnabled';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { stringListSetting, useStoredSetting } from '../../hooks/useStoredSetting';
 import { calculateBudgetAlerts, type BudgetAlertData } from '../../lib/budgetAlerts';
+import { getBudgetDisplayName } from '../../lib/budgetUtils';
 import { formatCurrency } from '../../lib/format';
 import { STORAGE_KEYS } from '../../lib/storageKeys';
 import { LinkButton } from '../button/LinkButton';
@@ -21,49 +21,28 @@ type BudgetAlertCardProps = {
 };
 
 const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
   const { budgetingEnabled } = useBudgetingEnabled();
-  const [dismissedBudgetIds, setDismissedBudgetIds] = useState<Set<string>>(new Set());
+  const { value: dismissedBudgetIds, setValue: setDismissedBudgetIds } = useStoredSetting(
+    STORAGE_KEYS.DISMISSED_BUDGET_ALERTS,
+    stringListSetting
+  );
 
-  useEffect(() => {
-    const loadDismissedState = async () => {
-      const dismissed = await database.localStorage.get(
-        STORAGE_KEYS.DISMISSED_BUDGET_ALERTS
-      );
-      if (dismissed && typeof dismissed === 'string') {
-        try {
-          const ids = JSON.parse(dismissed) as string[];
-          setDismissedBudgetIds(new Set(ids));
-        } catch {
-          setDismissedBudgetIds(new Set());
-        }
-      }
-    };
-    loadDismissedState();
-  }, []);
-
-  const handleDismissBudget = async (budgetId: string) => {
-    const newDismissedIds = new Set(dismissedBudgetIds);
-    newDismissedIds.add(budgetId);
-    setDismissedBudgetIds(newDismissedIds);
-    await database.localStorage.set(
-      STORAGE_KEYS.DISMISSED_BUDGET_ALERTS,
-      JSON.stringify(Array.from(newDismissedIds))
-    );
-  };
+  const handleDismissBudget = (budgetId: string) =>
+    setDismissedBudgetIds([...dismissedBudgetIds, budgetId]);
 
   const visibleAlerts = budgetAlerts.filter(
-    (alert) => !dismissedBudgetIds.has(alert.budget.id)
+    (alert) => !dismissedBudgetIds.includes(alert.budget.id)
   );
 
   if (!budgetingEnabled || visibleAlerts.length === 0) {
     return null;
   }
 
-  const exceededCount = visibleAlerts.filter((alert) => alert.percentage >= 100).length;
-  const warningCount = visibleAlerts.filter(
-    (alert) => alert.percentage >= alert.budget.alertThreshold && alert.percentage < 100
+  const exceededCount = visibleAlerts.filter(
+    (alert) => alert.status === 'exceeded'
   ).length;
+  const warningCount = visibleAlerts.filter((alert) => alert.status === 'warning').length;
 
   return (
     <View
@@ -121,11 +100,12 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
                   marginBottom="$1"
                 >
                   <Text fontSize="$2" color="white" fontWeight="bold" flex={1}>
-                    {alert.budget.name ||
-                      `${alert.budget.period.charAt(0).toUpperCase() + alert.budget.period.slice(1)} Budget`}
+                    {getBudgetDisplayName(alert.budget)}
                   </Text>
                   <View
-                    backgroundColor={alert.percentage >= 100 ? '$stroberi' : '$yellow'}
+                    backgroundColor={
+                      alert.status === 'exceeded' ? '$stroberi' : '$yellow'
+                    }
                     paddingHorizontal="$1.5"
                     paddingVertical="$0.5"
                     borderRadius="$1"
@@ -137,8 +117,8 @@ const BudgetAlertCard = ({ budgetAlerts }: BudgetAlertCardProps) => {
                   </View>
                 </View>
                 <Text fontSize="$2" color="$gray11">
-                  {formatCurrency(alert.spent, defaultCurrency || 'USD')} /{' '}
-                  {formatCurrency(alert.budgetLimit, defaultCurrency || 'USD')}
+                  {formatCurrency(alert.spent, currency)} /{' '}
+                  {formatCurrency(alert.budgetLimit, currency)}
                 </Text>
               </View>
               <LinkButton

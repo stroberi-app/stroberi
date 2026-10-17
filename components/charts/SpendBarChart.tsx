@@ -50,7 +50,7 @@ export const SpendBarChart = <
   footer,
   formatXLabel,
 }: SpendBarChartProps<RawData, XK, YK>) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
 
   const { state, isActive } = useChartPressState({
     x: xKey as string,
@@ -59,7 +59,7 @@ export const SpendBarChart = <
   const amount = useDerivedValue(() => {
     const rawValue = state?.y.total.value.value;
     const safeValue = sanitizeChartPressNumber(rawValue, 0);
-    const formattedCurrency = formatCurrencyWorklet(safeValue, defaultCurrency ?? 'USD');
+    const formattedCurrency = formatCurrencyWorklet(safeValue, currency);
     const xValue = state?.x.value.value;
     const xLabel = xValue === undefined || xValue === null ? '' : String(xValue);
     return `${xLabel}: ${formattedCurrency}`;

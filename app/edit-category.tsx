@@ -12,7 +12,11 @@ import {
   shouldUseNativeCategoryIconPicker,
 } from '../components/sheet/categoryIconPicker';
 import type { CategoryModel } from '../database/category-model';
-import { createCategory, updateCategory } from '../database/actions/categories';
+import {
+  createCategory,
+  DuplicateCategoryError,
+  updateCategory,
+} from '../database/actions/categories';
 import { spendingCategories } from '../data/emojis';
 import useToast from '../hooks/useToast';
 
@@ -91,28 +95,6 @@ export default function EditCategoryScreen() {
     setIsSaving(true);
 
     try {
-      const existingCategories = await database
-        .get<CategoryModel>('categories')
-        .query()
-        .fetch();
-
-      const duplicate = existingCategories.find(
-        (item) =>
-          item.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
-          item.id !== category?.id
-      );
-
-      if (duplicate) {
-        toast.show({
-          title: 'Duplicate Category',
-          message: 'A category with this name already exists',
-          preset: 'error',
-          haptic: 'error',
-        });
-        setIsSaving(false);
-        return;
-      }
-
       if (category?.id) {
         await updateCategory({ id: category.id, name: trimmedName, icon: trimmedIcon });
       } else {
@@ -124,7 +106,7 @@ export default function EditCategoryScreen() {
     } catch (error) {
       setIsSaving(false);
       toast.show({
-        title: 'Error',
+        title: error instanceof DuplicateCategoryError ? 'Duplicate Category' : 'Error',
         message: error instanceof Error ? error.message : 'Failed to save category',
         preset: 'error',
         haptic: 'error',

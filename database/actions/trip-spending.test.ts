@@ -63,7 +63,6 @@ describe('getTripSpending', () => {
       totalIncome: 10,
       netAmount: -32.5,
       transactionCount: 3,
-      currencyCode: null,
     });
   });
 });

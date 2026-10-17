@@ -15,6 +15,8 @@
 - `database/`: WatermelonDB schema, migrations, models, and DB actions.
 - `hooks/`: Shared hooks for feature flags, analytics, export, recurring tasks.
 - `lib/`: Pure utilities (analytics, forecasting, budget logic, formatting, conversion helpers).
+  - `lib/ledger.ts`: shared math over signed base-currency amounts (expense test, date ranges, totals, per-key sums). Use it instead of re-deriving `amountInBaseCurrency < 0` loops.
+  - `lib/recurrence.ts`: the only implementation of daily/weekly/monthly/yearly stepping, shared by recurring transactions and budget periods.
 - `data/`: Static datasets (currencies, default categories, emojis).
 
 ## Setup and Commands
@@ -46,6 +48,8 @@
   - affected Watermelon model files in `database/*-model.ts`
 - Keep indexed queries aligned with `schema.ts` indexes when changing transaction/category filtering paths.
 - Do not bypass database action helpers for write operations; keep write logic centralized in `database/actions/`.
+- Models are data-only: do not add `@writer` methods. Actions wrap work in `runWriteAction`, and calling a writer from inside another writer deadlocks WatermelonDB's queue.
+- Action tests run against a real in-memory database: mock `../index` with `database/testing/createTestDatabase` (see `database/actions/actions.test.ts`).
 
 ## Currency and Transaction Behavior
 

@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { map, type Observable } from 'rxjs';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
+import { sumMagnitudesBy } from '../../lib/ledger';
 import { SpendBarChart } from './SpendBarChart';
 
 type SpendByMonthProps = {
@@ -37,16 +38,9 @@ export const SpendByType = withObservables<
       .observeWithColumns(['date', 'amountInBaseCurrency'])
       .pipe(
         map((transactions) => {
-          const totalsByMonthKey = new Map<string, number>();
-          for (const transaction of transactions) {
-            const transactionDate = dayjs(transaction.date);
-            const monthKey = transactionDate.format('YYYY-MM');
-            const currentTotal = totalsByMonthKey.get(monthKey) ?? 0;
-            totalsByMonthKey.set(
-              monthKey,
-              currentTotal + Math.abs(transaction.amountInBaseCurrency)
-            );
-          }
+          const totalsByMonthKey = sumMagnitudesBy(transactions, (transaction) =>
+            dayjs(transaction.date).format('YYYY-MM')
+          );
 
           const last6Months = Array.from({ length: 6 }, (_, i) => {
             return dayjs().subtract(i, 'month');

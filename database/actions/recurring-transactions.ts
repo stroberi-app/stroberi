@@ -1,62 +1,20 @@
 import { Q } from '@nozbe/watermelondb';
 import dayjs from 'dayjs';
-import '../../lib/date';
-import type { CategoryModel } from '../category-model';
+import { advanceByCadence, firstOccurrenceOnOrAfter } from '../../lib/recurrence';
 import { database } from '../index';
 import type {
   RecurringFrequency,
   RecurringTransactionModel,
 } from '../recurring-transaction-model';
 import type { TransactionModel } from '../transaction-model';
-import { createTransaction } from './transactions';
-import { findCategoryOrThrow, findRecordOrThrow, logAndRethrow } from './shared';
-
-export const calculateNextDueDate = (
-  frequency: RecurringFrequency,
-  fromDate: Date = new Date()
-): Date => {
-  const current = dayjs(fromDate);
-
-  switch (frequency) {
-    case 'daily':
-      return current.add(1, 'day').toDate();
-    case 'weekly':
-      return current.add(1, 'week').toDate();
-    case 'monthly':
-      return current.add(1, 'month').toDate();
-    case 'yearly':
-      return current.add(1, 'year').toDate();
-    default:
-      return current.add(1, 'month').toDate();
-  }
-};
-
-export const calculateNextDueDateFromStart = (
-  frequency: RecurringFrequency,
-  startDate: Date
-): Date => {
-  let current = dayjs(startDate);
-  const today = dayjs().startOf('day');
-
-  while (current.isBefore(today)) {
-    switch (frequency) {
-      case 'daily':
-        current = current.add(1, 'day');
-        break;
-      case 'weekly':
-        current = current.add(1, 'week');
-        break;
-      case 'monthly':
-        current = current.add(1, 'month');
-        break;
-      case 'yearly':
-        current = current.add(1, 'year');
-        break;
-    }
-  }
-
-  return current.toDate();
-};
+import { prepareTransactionRecords, resolveBaseCurrencyAmount } from './transactions';
+import {
+  collection,
+  findCategoryOrThrow,
+  findRecordOrThrow,
+  runAction,
+  runWriteAction,
+} from './shared';
 
 export type CreateRecurringTransactionPayload = {
   merchant: string;
@@ -69,197 +27,137 @@ export type CreateRecurringTransactionPayload = {
   endDate?: Date;
 };
 
-export const createRecurringTransaction = async ({
-  merchant,
-  amount,
-  categoryId,
-  currencyCode,
-  note,
-  frequency,
-  startDate,
-  endDate,
-}: CreateRecurringTransactionPayload): Promise<RecurringTransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<RecurringTransactionModel>(
-        'recurring_transactions'
-      );
-      const category = await findCategoryOrThrow(categoryId);
-      const nextDueDate = calculateNextDueDateFromStart(frequency, startDate);
+const findRecurring = (id: string) =>
+  findRecordOrThrow(collection('recurring_transactions'), id, 'Recurring transaction');
 
-      return collection.create((recurring) => {
-        recurring.merchant = merchant;
-        recurring.amount = amount;
-        recurring.currencyCode = currencyCode;
-        recurring.note = note;
-        recurring.frequency = frequency;
-        recurring.startDate = startDate;
-        recurring.endDate = endDate || null;
-        recurring.nextDueDate = nextDueDate;
-        recurring.lastCreatedDate = null;
-        recurring.isActive = true;
-
-        if (category) {
-          recurring.category?.set(category);
-        }
-      });
-    });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to create recurring transaction:',
-      error,
-      'Failed to create recurring transaction'
-    );
-  }
+const assignRecurring = (
+  record: RecurringTransactionModel,
+  payload: CreateRecurringTransactionPayload
+) => {
+  record.merchant = payload.merchant;
+  record.amount = payload.amount;
+  record.currencyCode = payload.currencyCode;
+  record.note = payload.note;
+  record.frequency = payload.frequency;
+  record.startDate = payload.startDate;
+  record.endDate = payload.endDate || null;
+  record.nextDueDate = firstOccurrenceOnOrAfter(
+    payload.startDate,
+    payload.frequency
+  ).toDate();
 };
 
-export const updateRecurringTransaction = async ({
+export const createRecurringTransaction = (
+  payload: CreateRecurringTransactionPayload
+): Promise<RecurringTransactionModel> =>
+  runWriteAction('create recurring transaction', async () => {
+    const category = await findCategoryOrThrow(payload.categoryId);
+
+    return collection('recurring_transactions').create((record) => {
+      assignRecurring(record, payload);
+      record.lastCreatedDate = null;
+      record.isActive = true;
+      record._setRaw('categoryId', category?.id ?? null);
+    });
+  });
+
+export const updateRecurringTransaction = ({
   id,
-  merchant,
-  amount,
-  categoryId,
-  currencyCode,
-  note,
-  frequency,
-  startDate,
-  endDate,
+  ...payload
 }: {
   id: string;
-} & CreateRecurringTransactionPayload): Promise<RecurringTransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<RecurringTransactionModel>(
-        'recurring_transactions'
-      );
-      const recurring = await findRecordOrThrow(collection, id, 'Recurring transaction');
-      const category = await findCategoryOrThrow(categoryId);
-      const nextDueDate = calculateNextDueDateFromStart(frequency, startDate);
+} & CreateRecurringTransactionPayload): Promise<RecurringTransactionModel> =>
+  runWriteAction('update recurring transaction', async () => {
+    const recurring = await findRecurring(id);
+    const category = await findCategoryOrThrow(payload.categoryId);
 
-      return recurring.update((record) => {
-        record.merchant = merchant;
-        record.amount = amount;
-        record.currencyCode = currencyCode;
-        record.note = note;
-        record.frequency = frequency;
-        record.startDate = startDate;
-        record.endDate = endDate || null;
-        record.nextDueDate = nextDueDate;
-        record._setRaw('categoryId', category?.id ?? null);
-      });
+    return recurring.update((record) => {
+      assignRecurring(record, payload);
+      record._setRaw('categoryId', category?.id ?? null);
     });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to update recurring transaction:',
-      error,
-      'Failed to update recurring transaction'
-    );
-  }
-};
+  });
 
-export const deleteRecurringTransaction = async (
+export const deleteRecurringTransaction = (
   recurringId: string
-): Promise<RecurringTransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<RecurringTransactionModel>(
-        'recurring_transactions'
-      );
-      const recurring = await findRecordOrThrow(
-        collection,
-        recurringId,
-        'Recurring transaction'
-      );
+): Promise<RecurringTransactionModel> =>
+  runWriteAction('delete recurring transaction', async () => {
+    const recurring = await findRecurring(recurringId);
+    await recurring.markAsDeleted();
+    return recurring;
+  });
 
-      await recurring.markAsDeleted();
-      return recurring;
-    });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to delete recurring transaction:',
-      error,
-      'Failed to delete recurring transaction'
-    );
-  }
-};
-
-export const toggleRecurringTransaction = async (
+export const toggleRecurringTransaction = (
   recurringId: string
-): Promise<RecurringTransactionModel> => {
-  try {
-    return await database.write(async () => {
-      const collection = database.get<RecurringTransactionModel>(
-        'recurring_transactions'
-      );
-      const recurring = await findRecordOrThrow(
-        collection,
-        recurringId,
-        'Recurring transaction'
-      );
-
-      return recurring.toggle();
+): Promise<RecurringTransactionModel> =>
+  runWriteAction('toggle recurring transaction', async () => {
+    const recurring = await findRecurring(recurringId);
+    return recurring.update((record) => {
+      record.isActive = !record.isActive;
     });
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to toggle recurring transaction:',
-      error,
-      'Failed to toggle recurring transaction'
-    );
+  });
+
+const isDue = (recurring: RecurringTransactionModel, now: dayjs.Dayjs) => {
+  if (recurring.endDate && now.isAfter(dayjs(recurring.endDate))) {
+    return false;
   }
+
+  return !now.isBefore(dayjs(recurring.nextDueDate), 'day');
 };
 
-export const checkAndCreateDueTransactions = async (
+/**
+ * Materialises one transaction per due schedule (stamped today at the
+ * schedule's time of day) and advances its next due date by one period, both
+ * in a single batch so a schedule can never fire twice for the same period.
+ */
+export const checkAndCreateDueTransactions = (
   baseCurrency: string
-): Promise<TransactionModel[]> => {
-  try {
-    const collection = database.get<RecurringTransactionModel>('recurring_transactions');
-    const activeRecurring = await collection.query(Q.where('isActive', true)).fetch();
+): Promise<TransactionModel[]> =>
+  runAction('check and create due transactions', async () => {
     const now = dayjs();
-    const dueTransactions = activeRecurring.filter((recurring) => {
-      if (recurring.endDate && now.isAfter(dayjs(recurring.endDate))) {
-        return false;
-      }
+    const activeRecurring = await collection('recurring_transactions')
+      .query(Q.where('isActive', true))
+      .fetch();
+    const created: TransactionModel[] = [];
 
-      return now.isSameOrAfter(dayjs(recurring.nextDueDate), 'day');
-    });
-
-    if (dueTransactions.length === 0) {
-      return [];
-    }
-
-    const createdTransactions: TransactionModel[] = [];
-
-    for (const recurring of dueTransactions) {
+    for (const recurring of activeRecurring.filter((item) => isDue(item, now))) {
       try {
-        const category = (await recurring.category?.fetch()) as CategoryModel | null;
-        const transactionDate = dayjs()
-          .hour(dayjs(recurring.startDate).hour())
-          .minute(dayjs(recurring.startDate).minute())
-          .second(0)
-          .millisecond(0)
-          .toDate();
-
-        const transaction = await createTransaction({
+        const scheduledTime = dayjs(recurring.startDate);
+        const payload = {
           merchant: recurring.merchant,
           amount: recurring.amount,
-          categoryId: category?.id ?? null,
-          date: transactionDate,
+          categoryId: recurring.category?.id ?? null,
+          date: now
+            .hour(scheduledTime.hour())
+            .minute(scheduledTime.minute())
+            .second(0)
+            .millisecond(0)
+            .toDate(),
           currencyCode: recurring.currencyCode,
           note: recurring.note,
           baseCurrency,
           recurringTransactionId: recurring.id,
-        });
+        };
+        const converted = await resolveBaseCurrencyAmount(payload);
 
-        const previousDue = recurring.nextDueDate ?? recurring.startDate;
-        const nextDue = calculateNextDueDate(recurring.frequency, previousDue);
+        const transaction = await database.write(async () => {
+          const { transaction, records } = await prepareTransactionRecords(
+            payload,
+            converted
+          );
+          await database.batch(
+            ...records,
+            recurring.prepareUpdate((record) => {
+              record.nextDueDate = advanceByCadence(
+                record.nextDueDate ?? record.startDate,
+                record.frequency
+              ).toDate();
+              record.lastCreatedDate = new Date();
+            })
+          );
+          return transaction;
+        }, 'create due recurring transaction');
 
-        await database.write(async () => {
-          await recurring.update((record) => {
-            record.nextDueDate = nextDue;
-            record.lastCreatedDate = new Date();
-          });
-        });
-
-        createdTransactions.push(transaction);
+        created.push(transaction);
       } catch (error) {
         console.error(
           `Failed to create transaction from recurring ${recurring.id}:`,
@@ -268,12 +166,5 @@ export const checkAndCreateDueTransactions = async (
       }
     }
 
-    return createdTransactions;
-  } catch (error) {
-    return logAndRethrow(
-      'Failed to check and create due transactions:',
-      error,
-      'Failed to check and create due transactions'
-    );
-  }
-};
+    return created;
+  });

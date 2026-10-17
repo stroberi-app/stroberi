@@ -1,16 +1,9 @@
-import { notifyFeatureFlagChanged, useFeatureFlag } from './useFeatureFlag';
 import { STORAGE_KEYS } from '../lib/storageKeys';
-
-export const notifySavingsRateEnabledChanged = (enabled: boolean) => {
-  notifyFeatureFlagChanged(STORAGE_KEYS.SAVINGS_RATE_ENABLED, enabled);
-};
+import { useFeatureFlag } from './useFeatureFlag';
 
 export const useSavingsRateEnabled = () => {
-  const {
-    value: savingsRateEnabled,
-    isLoading,
-    setValue: setSavingsRateEnabled,
-  } = useFeatureFlag(STORAGE_KEYS.SAVINGS_RATE_ENABLED, false);
-
-  return { savingsRateEnabled, isLoading, setSavingsRateEnabled };
+  const { value, isLoading, setValue } = useFeatureFlag(
+    STORAGE_KEYS.SAVINGS_RATE_ENABLED
+  );
+  return { savingsRateEnabled: value, isLoading, setSavingsRateEnabled: setValue };
 };

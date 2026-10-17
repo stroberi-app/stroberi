@@ -14,12 +14,10 @@ import {
   buildActionPlan,
   calculateNoSpendStats,
   calculatePercentChange,
-  calculatePeriodTotals,
   calculatePotentialMonthlySavings,
   calculateGlobalMonthlyBudgetLimit,
   createCategoryHotspots,
   derivePulseState,
-  filterTransactionsByDateRange,
   getDateRange,
   getForecastState,
   getPreviousRange,
@@ -30,7 +28,9 @@ import {
   detectRecurringTransactions,
   type SpendingForecast,
 } from '../lib/forecasting';
+import { FALLBACK_CURRENCY } from '../lib/format';
 import { buildInsightsOverview, type InsightTransaction } from '../lib/insights';
+import { calculatePeriodTotals, filterByDateRange } from '../lib/ledger';
 
 type UseAnalyticsOverviewArgs = {
   transactions: TransactionModel[];
@@ -62,12 +62,12 @@ export const useAnalyticsOverview = ({
     [fromDate, comparisonToDate]
   );
   const periodTransactions = useMemo(
-    () => filterTransactionsByDateRange(transactions, fromDate, comparisonToDate),
+    () => filterByDateRange(transactions, fromDate, comparisonToDate),
     [transactions, fromDate, comparisonToDate]
   );
   const previousPeriodTransactions = useMemo(
     () =>
-      filterTransactionsByDateRange(
+      filterByDateRange(
         transactions,
         previousRange.previousFromDate,
         previousRange.previousToDate
@@ -168,7 +168,7 @@ export const useAnalyticsOverview = ({
 
     return Math.max(1, dayjs(toDate).diff(dayjs().startOf('day'), 'day') + 1);
   }, [isCurrentPeriod, toDate]);
-  const currency = defaultCurrency || 'USD';
+  const currency = defaultCurrency || FALLBACK_CURRENCY;
   const insightTransactions: InsightTransaction[] = useMemo(
     () =>
       transactions.map((transaction) => ({

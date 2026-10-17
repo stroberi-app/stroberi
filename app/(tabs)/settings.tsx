@@ -48,7 +48,7 @@ export default function SettingsScreen() {
   const importCsvSheetRef = React.useRef<BottomSheetModal | null>(null);
   const shortcutsSetupSheetRef = React.useRef<BottomSheetModal | null>(null);
   const savingsRateTargetSheetRef = React.useRef<BottomSheetModal | null>(null);
-  const { setDefaultCurrency, defaultCurrency, isUpdatingCurrency } =
+  const { setDefaultCurrency, defaultCurrency, currency, isUpdatingCurrency } =
     useDefaultCurrency();
   const { budgetingEnabled, setBudgetingEnabled } = useBudgetingEnabled();
   const { tripsEnabled, setTripsEnabled } = useTripsEnabled();
@@ -353,14 +353,14 @@ export default function SettingsScreen() {
       <SavingsRateTargetSheet sheetRef={savingsRateTargetSheetRef} />
       <CurrencySelect
         sheetRef={currencySheetRef}
-        onSelect={(currency) => {
+        onSelect={(selected) => {
           if (isUpdatingCurrency) {
             return;
           }
-          setDefaultCurrency(currency.code);
+          setDefaultCurrency(selected.code);
           currencySheetRef.current?.close();
         }}
-        selectedCurrency={defaultCurrency ?? 'USD'}
+        selectedCurrency={currency}
       />
       <ExportDataSheet
         sheetRef={exportDataSheetRef}

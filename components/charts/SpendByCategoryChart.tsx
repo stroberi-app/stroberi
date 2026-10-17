@@ -28,7 +28,7 @@ type SpendByCategoryChartData = {
 }[];
 
 type SpendByCategoryDateFilter = 'thisMonth' | 'lastMonth' | 'thisYear';
-export const SpendByCategory = withObservables<
+const SpendByCategory = withObservables<
   { database: Database; dateFilter: SpendByCategoryDateFilter },
   {
     chartData: Observable<SpendByCategoryChartData>;
@@ -71,7 +71,7 @@ export const SpendByCategory = withObservables<
       .pipe(map((transactions) => calculateCategorySpending(transactions))),
   };
 })(({ chartData, categories, dateFilter, setDateFilter }: SpendByCategoryProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { defaultCurrency, currency } = useDefaultCurrency();
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   const maxCategories = 6;
@@ -187,12 +187,16 @@ export const SpendByCategory = withObservables<
         ) : (
           <View flex={1} justifyContent="space-between">
             <View paddingHorizontal="$2" gap="$2">
-              <View flexDirection="row" justifyContent="space-between" alignItems="baseline">
+              <View
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="baseline"
+              >
                 <Text fontSize="$1" color="$gray10">
                   Top {processedData.length}
                 </Text>
                 <Text fontSize="$3" fontWeight="bold" color="white">
-                  {formatCurrency(shownTotal, defaultCurrency ?? 'USD')}
+                  {formatCurrency(shownTotal, currency)}
                 </Text>
               </View>
               <View flexDirection="row" height={10} borderRadius={5} overflow="hidden">
@@ -246,15 +250,20 @@ export const SpendByCategory = withObservables<
                 })}
                 {hiddenCategories > 0 && (
                   <Text fontSize={10} color="$gray10">
-                    +{hiddenCategories} more {hiddenCategories === 1 ? 'category' : 'categories'}
+                    +{hiddenCategories} more{' '}
+                    {hiddenCategories === 1 ? 'category' : 'categories'}
                   </Text>
                 )}
               </View>
             </View>
             <View height={16} justifyContent="center" paddingHorizontal="$3">
-              <Text fontSize={11} color={selectedItem ? 'white' : '$gray10'} numberOfLines={1}>
+              <Text
+                fontSize={11}
+                color={selectedItem ? 'white' : '$gray10'}
+                numberOfLines={1}
+              >
                 {selectedItem
-                  ? `${selectedItem.icon} ${selectedItem.name} — ${formatCurrency(selectedItem.total, defaultCurrency ?? 'USD')}`
+                  ? `${selectedItem.icon} ${selectedItem.name} — ${formatCurrency(selectedItem.total, currency)}`
                   : 'Tap a category for details'}
               </Text>
             </View>

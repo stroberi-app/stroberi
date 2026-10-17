@@ -1,3 +1,12 @@
+import {
+  categoryLabel,
+  findSmallPurchases,
+  formatWholeAmount,
+  SMALL_PURCHASE_MIN_COUNT,
+  SMALL_PURCHASE_THRESHOLD,
+  sumExpenses,
+  UNCATEGORIZED_KEY,
+} from './shared';
 import type {
   DataQualitySummary,
   InsightCategory,
@@ -6,19 +15,8 @@ import type {
   SpendingLeak,
 } from './types';
 
-const formatAmount = (amount: number, currency: string) =>
-  new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
-
-const sumExpenses = (transactions: InsightTransaction[]) =>
-  Math.round(
-    transactions
-      .filter((transaction) => transaction.type === 'expense')
-      .reduce((sum, transaction) => sum + Math.abs(transaction.amountInBaseCurrency), 0)
-  );
+const roundedExpenses = (transactions: InsightTransaction[]) =>
+  Math.round(sumExpenses(transactions));
 
 const groupByCategory = (transactions: InsightTransaction[]) => {
   const totals = new Map<string, { amount: number; ids: string[] }>();
@@ -28,7 +26,7 @@ const groupByCategory = (transactions: InsightTransaction[]) => {
       continue;
     }
 
-    const key = transaction.categoryId ?? 'uncategorized';
+    const key = transaction.categoryId ?? UNCATEGORIZED_KEY;
     const existing = totals.get(key) ?? { amount: 0, ids: [] };
     totals.set(key, {
       amount: existing.amount + Math.abs(transaction.amountInBaseCurrency),
@@ -38,9 +36,6 @@ const groupByCategory = (transactions: InsightTransaction[]) => {
 
   return totals;
 };
-
-const categoryName = (categories: InsightCategory[], categoryId: string) =>
-  categories.find((category) => category.id === categoryId)?.name ?? 'Unknown category';
 
 type CategoryInsightArgs = {
   currentTransactions: InsightTransaction[];
@@ -60,7 +55,7 @@ export const generateCategoryPaceInsights = ({
   const insights: MoneyInsight[] = [];
 
   for (const [categoryId, currentValue] of current.entries()) {
-    if (categoryId === 'uncategorized') {
+    if (categoryId === UNCATEGORIZED_KEY) {
       continue;
     }
 
@@ -72,13 +67,13 @@ export const generateCategoryPaceInsights = ({
     const changePercent = Math.round(
       ((currentValue.amount - previousValue) / previousValue) * 100
     );
-    const label = categoryName(categories, categoryId);
+    const label = categoryLabel(categories, categoryId);
 
     insights.push({
       id: `category-spike-${categoryId}`,
       type: 'categorySpike',
       title: `${label} is running higher than usual`,
-      body: `${label} is ${changePercent}% above the previous comparable period (${formatAmount(currentValue.amount, currency)} vs ${formatAmount(previousValue, currency)}).`,
+      body: `${label} is ${changePercent}% above the previous comparable period (${formatWholeAmount(currentValue.amount, currency)} vs ${formatWholeAmount(previousValue, currency)}).`,
       severity: changePercent >= 200 ? 'critical' : 'warning',
       confidence: 'medium',
       priority: Math.min(95, 50 + changePercent),
@@ -111,27 +106,23 @@ export const generateSmallPurchaseInsights = ({
   currency,
   fromDate,
   toDate,
-  threshold = 8,
-  minimumCount = 5,
+  threshold = SMALL_PURCHASE_THRESHOLD,
+  minimumCount = SMALL_PURCHASE_MIN_COUNT,
 }: SmallPurchaseArgs): MoneyInsight[] => {
-  const smallPurchases = currentTransactions.filter(
-    (transaction) =>
-      transaction.type === 'expense' &&
-      Math.abs(transaction.amountInBaseCurrency) <= threshold
-  );
+  const smallPurchases = findSmallPurchases(currentTransactions, threshold);
 
   if (smallPurchases.length < minimumCount) {
     return [];
   }
 
-  const amount = sumExpenses(smallPurchases);
+  const amount = roundedExpenses(smallPurchases);
 
   return [
     {
       id: 'small-purchases',
       type: 'smallPurchases',
       title: 'Small purchases are adding up',
-      body: `${smallPurchases.length} purchases under ${formatAmount(threshold, currency)} added up to ${formatAmount(amount, currency)}.`,
+      body: `${smallPurchases.length} purchases under ${formatWholeAmount(threshold, currency)} added up to ${formatWholeAmount(amount, currency)}.`,
       severity: 'neutral',
       confidence: 'high',
       priority: Math.min(75, 30 + amount),
@@ -161,7 +152,7 @@ export const buildDataQualitySummary = (
   );
   const transactionCount = transactions.length;
   const uncategorizedCount = uncategorized.length;
-  const uncategorizedAmount = sumExpenses(uncategorized);
+  const uncategorizedAmount = roundedExpenses(uncategorized);
   const ratio = transactionCount === 0 ? 0 : uncategorizedCount / transactionCount;
 
   return {
@@ -190,7 +181,7 @@ export const generateDataQualityInsights = (
       id: 'data-quality-uncategorized',
       type: 'dataQuality',
       title: `${uncategorizedCount} ${transactionLabel} a category`,
-      body: `${formatAmount(dataQuality.uncategorizedAmount, currency)} is unsorted. ${categorizeLabel} to unlock accurate insights.`,
+      body: `${formatWholeAmount(dataQuality.uncategorizedAmount, currency)} is unsorted. ${categorizeLabel} to unlock accurate insights.`,
       severity: 'neutral',
       confidence: dataQuality.confidence,
       priority: Math.min(85, 45 + uncategorizedCount * 4),
@@ -207,12 +198,9 @@ export const generateDataQualityInsights = (
 export const buildSpendingLeaks = (
   currentTransactions: InsightTransaction[]
 ): SpendingLeak[] => {
-  const smallPurchases = currentTransactions.filter(
-    (transaction) =>
-      transaction.type === 'expense' && Math.abs(transaction.amountInBaseCurrency) <= 8
-  );
+  const smallPurchases = findSmallPurchases(currentTransactions);
 
-  if (smallPurchases.length < 5) {
+  if (smallPurchases.length < SMALL_PURCHASE_MIN_COUNT) {
     return [];
   }
 
@@ -221,7 +209,7 @@ export const buildSpendingLeaks = (
       id: 'leak-tiny-purchases',
       type: 'tinyPurchases',
       title: 'Frequent small purchases',
-      monthlyImpact: sumExpenses(smallPurchases),
+      monthlyImpact: roundedExpenses(smallPurchases),
       confidence: 'high',
       transactions: smallPurchases.map((transaction) => transaction.id),
       action: { type: 'viewTransactions', label: 'Review small purchases' },

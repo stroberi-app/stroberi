@@ -1,38 +1,28 @@
-import { Q } from '@nozbe/watermelondb';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { Pen, Trash2 } from '@tamagui/lucide-icons-2';
 import { Alert } from 'react-native';
 import { combineLatest, map, type Observable, of, switchMap } from 'rxjs';
 import { ScrollView, Text, View, XStack } from 'tamagui';
-import type { BudgetCategoryModel } from '../database/budget-category-model';
 import type { BudgetModel } from '../database/budget-model';
 import type { CategoryModel } from '../database/category-model';
 import { deleteBudget } from '../database/actions/budgets';
 import { database } from '../database/index';
-import type { TransactionModel } from '../database/transaction-model';
+import { observeBudgetSpend } from '../features/budget/observeBudgetSpend';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import {
-  calculateBudgetPeriodDates,
-  calculateRollover,
-  formatBudgetPeriod,
+  type BudgetEvaluation,
+  evaluateBudget,
+  getBudgetDisplayName,
   getBudgetProgressColor,
   getPeriodLabel,
 } from '../lib/budgetUtils';
 import { BudgetProgress } from './BudgetProgress';
 import { LinkButton } from './button/LinkButton';
 
-type BudgetStatus = {
-  spent: number;
-  remaining: number;
-  percentage: number;
-  budgetLimit: number;
-  status: 'ok' | 'warning' | 'exceeded';
-};
-
 type BudgetItemProps = {
   budget: BudgetModel;
   onEdit: (budget: BudgetModel) => void;
-  budgetStatus: BudgetStatus;
+  budgetStatus: BudgetEvaluation;
   categories: CategoryModel[];
 };
 
@@ -42,7 +32,7 @@ const BudgetItemContent = ({
   categories,
   onEdit,
 }: BudgetItemProps) => {
-  const { defaultCurrency } = useDefaultCurrency();
+  const { currency } = useDefaultCurrency();
 
   const handleDelete = () => {
     Alert.alert('Delete Budget', 'Are you sure you want to delete this budget?', [
@@ -89,7 +79,7 @@ const BudgetItemContent = ({
       >
         <View flex={1}>
           <Text fontSize="$6" fontWeight="bold" marginBottom="$1">
-            {budget.name || `${formatBudgetPeriod(budget.period)} Budget`}
+            {getBudgetDisplayName(budget)}
           </Text>
           <Text fontSize="$2" color="$gray10">
             {getPeriodLabel(budget)}
@@ -147,7 +137,7 @@ const BudgetItemContent = ({
         spent={budgetStatus.spent}
         budget={budgetStatus.budgetLimit}
         percentage={budgetStatus.percentage}
-        currency={defaultCurrency || 'USD'}
+        currency={currency}
         color={progressColor}
       />
 
@@ -165,128 +155,37 @@ const BudgetItemContent = ({
 export const BudgetItem = withObservables<
   { budget: BudgetModel; onEdit: (budget: BudgetModel) => void },
   {
-    budgetStatus: Observable<BudgetStatus>;
+    budgetStatus: Observable<BudgetEvaluation>;
     categories: Observable<CategoryModel[]>;
   }
 >(['budget'], ({ budget }) => {
-  const periodDates = calculateBudgetPeriodDates(budget);
-
-  const budgetCategoriesObservable = budget.budgetCategories.observe();
-
-  const categoriesObservable = budgetCategoriesObservable.pipe(
-    switchMap((budgetCategories: BudgetCategoryModel[]) => {
-      if (budgetCategories.length === 0) {
-        return of([]);
-      }
-      const categoryObservables = budgetCategories.map((bc) =>
-        database.get<CategoryModel>('categories').findAndObserve(bc.categoryId)
-      );
-      return combineLatest(categoryObservables);
-    })
-  );
-
-  const previousPeriodDates = calculateBudgetPeriodDates(budget, -1);
-  const budgetStatusObservable = budgetCategoriesObservable.pipe(
-    switchMap((budgetCategories: BudgetCategoryModel[]) => {
-      const categoryIds = budgetCategories.map((bc) => bc.categoryId);
-
-      const currentPeriodConditions = [
-        Q.where('date', Q.gte(periodDates.start.getTime())),
-        Q.where('date', Q.lte(periodDates.end.getTime())),
-        Q.where('amountInBaseCurrency', Q.lt(0)),
-      ];
-
-      if (categoryIds.length > 0) {
-        currentPeriodConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
-      }
-
-      const currentTransactionsObservable = database
-        .get<TransactionModel>('transactions')
-        .query(...currentPeriodConditions)
-        .observeWithColumns(['amountInBaseCurrency']);
-
-      if (!budget.rollover) {
-        return currentTransactionsObservable.pipe(
-          map((transactions) => {
-            const spent = transactions.reduce(
-              (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
-              0
-            );
-            const budgetLimit = budget.amount;
-            const remaining = budgetLimit - spent;
-            const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
-
-            const status =
-              percentage >= 100
-                ? ('exceeded' as const)
-                : percentage >= budget.alertThreshold
-                  ? ('warning' as const)
-                  : ('ok' as const);
-
-            return {
-              spent,
-              remaining,
-              percentage,
-              budgetLimit,
-              status,
-            };
-          })
-        );
-      }
-
-      const previousPeriodConditions = [
-        Q.where('date', Q.gte(previousPeriodDates.start.getTime())),
-        Q.where('date', Q.lte(previousPeriodDates.end.getTime())),
-        Q.where('amountInBaseCurrency', Q.lt(0)),
-      ];
-      if (categoryIds.length > 0) {
-        previousPeriodConditions.push(Q.where('categoryId', Q.oneOf(categoryIds)));
-      }
-
-      const previousTransactionsObservable = database
-        .get<TransactionModel>('transactions')
-        .query(...previousPeriodConditions)
-        .observeWithColumns(['amountInBaseCurrency']);
-
-      return combineLatest([
-        currentTransactionsObservable,
-        previousTransactionsObservable,
-      ]).pipe(
-        map(([transactions, previousTransactions]) => {
-          const spent = transactions.reduce(
-            (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
-            0
-          );
-          const previousSpent = previousTransactions.reduce(
-            (sum, tx) => sum + Math.abs(tx.amountInBaseCurrency),
-            0
-          );
-          const rolloverAmount = calculateRollover(budget, previousSpent);
-          const budgetLimit = budget.amount + rolloverAmount;
-          const remaining = budgetLimit - spent;
-          const percentage = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
-
-          const status =
-            percentage >= 100
-              ? ('exceeded' as const)
-              : percentage >= budget.alertThreshold
-                ? ('warning' as const)
-                : ('ok' as const);
-
-          return {
-            spent,
-            remaining,
-            percentage,
-            budgetLimit,
-            status,
-          };
-        })
-      );
-    })
-  );
+  const categoryIds = budget.budgetCategories
+    .observe()
+    .pipe(map((links) => links.map((link) => link.categoryId)));
 
   return {
-    budgetStatus: budgetStatusObservable,
-    categories: categoriesObservable,
+    budgetStatus: categoryIds.pipe(
+      switchMap((ids) =>
+        // Model fields are prototype getters, so pass them explicitly (no spread).
+        observeBudgetSpend(database, {
+          period: budget.period,
+          startDate: budget.startDate,
+          rollover: budget.rollover,
+          categoryIds: ids,
+        })
+      ),
+      map(({ spent, previousSpent }) => evaluateBudget(budget, spent, previousSpent))
+    ),
+    categories: categoryIds.pipe(
+      switchMap((ids) =>
+        ids.length === 0
+          ? of([])
+          : combineLatest(
+              ids.map((id) =>
+                database.get<CategoryModel>('categories').findAndObserve(id)
+              )
+            )
+      )
+    ),
   };
 })(BudgetItemContent);

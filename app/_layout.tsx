@@ -7,6 +7,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { TamaguiProvider } from 'tamagui';
 import '@tamagui/native/setup-zeego';
 import '../tamagui-web.css';
+// Configures dayjs plugins and locale (Monday week start) before any screen renders.
+import '../lib/date';
 
 import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import { useFonts } from 'expo-font';

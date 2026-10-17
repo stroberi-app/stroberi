@@ -14,7 +14,7 @@ import {
   useNavigation,
   useRouter,
 } from 'expo-router';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View as RNView } from 'react-native';
 import type { ParamListBase } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,9 +28,12 @@ import { DatePicker } from '../components/DatePicker';
 import { StyledScrollView } from '../components/StyledScrollView';
 import { TripSelect } from '../components/TripSelect';
 import type { CategoryModel } from '../database/category-model';
-import { createTransaction, updateTransaction } from '../database/actions/transactions';
+import {
+  createTransaction,
+  getTransactionForEditing,
+  updateTransaction,
+} from '../database/actions/transactions';
 import { getMostRecentActiveTrip } from '../database/actions/trips';
-import { database } from '../database/index';
 import type { TransactionModel } from '../database/transaction-model';
 import type { TripModel } from '../database/trip-model';
 import {
@@ -150,33 +153,22 @@ function CreateTransaction() {
       }
 
       try {
-        const transactionRecord = await database
-          .get<TransactionModel>('transactions')
-          .find(transactionId);
-        const [categoryRecord, tripRecord] = await Promise.all([
-          transactionRecord.category?.fetch().catch(() => null) ?? Promise.resolve(null),
-          transactionRecord.tripId
-            ? database
-                .get<TripModel>('trips')
-                .find(transactionRecord.tripId)
-                .catch(() => null)
-            : Promise.resolve(null),
-        ]);
+        const loaded = await getTransactionForEditing(transactionId);
 
         if (!isMounted) {
           return;
         }
 
-        setTransaction(transactionRecord);
-        setSelectedCategory(categoryRecord ?? null);
-        setSelectedTrip(tripRecord);
-        setSelectedCurrency(transactionRecord.currencyCode);
-        setAmount(transactionRecord.amount.toString());
-        setNote(transactionRecord.note ?? '');
-        setMerchantName(transactionRecord.merchant ?? '');
-        setDate(new Date(transactionRecord.date));
-      } catch (error) {
-        console.error('Failed to load transaction details:', error);
+        setTransaction(loaded.transaction);
+        setSelectedCategory(loaded.category);
+        setSelectedTrip(loaded.trip);
+        setSelectedCurrency(loaded.transaction.currencyCode);
+        setAmount(loaded.transaction.amount.toString());
+        setNote(loaded.transaction.note ?? '');
+        setMerchantName(loaded.transaction.merchant ?? '');
+        setDate(new Date(loaded.transaction.date));
+      } catch {
+        // Logged by the action; the form stays usable with route params.
       }
     };
 
@@ -288,13 +280,13 @@ function CreateTransaction() {
     }
   };
 
-  const handleTripSelect = (trip: TripModel | null) => {
+  // Selecting a trip also adopts its preferred currency, if it has one.
+  const handleTripSelect = useCallback((trip: TripModel | null) => {
     setSelectedTrip(trip);
-    // Auto-select trip's preferred currency if available
     if (trip?.currencyCode) {
       setSelectedCurrency(trip.currencyCode);
     }
-  };
+  }, []);
 
   // Auto-populate with active trip when creating a new transaction
   useEffect(() => {
@@ -312,18 +304,15 @@ function CreateTransaction() {
       try {
         const currentTrip = await getMostRecentActiveTrip();
         if (currentTrip) {
-          setSelectedTrip(currentTrip);
-          if (currentTrip.currencyCode) {
-            setSelectedCurrency(currentTrip.currencyCode);
-          }
+          handleTripSelect(currentTrip);
         }
-      } catch (error) {
-        console.error('Failed to load active trip:', error);
+      } catch {
+        // Logged by the action; the trip can still be picked manually.
       }
     };
 
     loadActiveTrip();
-  }, [transaction, transactionId, tripsEnabled]);
+  }, [handleTripSelect, transaction, transactionId, tripsEnabled]);
 
   useEffect(() => {
     !transaction?.currencyCode && defaultCurrency && setSelectedCurrency(defaultCurrency);
