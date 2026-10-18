@@ -219,7 +219,8 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
         type: ['text/*', 'application/csv'],
         copyToCacheDirectory: true,
       });
-      if (!res.assets?.[0].uri) {
+      const asset = res.assets?.[0];
+      if (!asset?.uri) {
         stopImporting();
         return;
       }
@@ -238,12 +239,12 @@ export const useCsvImport = ({ sheetRef, errorSheetRef }: UseCsvImportParams) =>
 
       setProgress((prev) => (prev ? { ...prev, message: 'Reading your file...' } : null));
 
-      const file = new File(res.assets[0].uri);
+      const file = new File(asset.uri);
       const fileSize =
         typeof file.size === 'number'
           ? file.size
-          : typeof res.assets[0].size === 'number'
-            ? res.assets[0].size
+          : typeof asset.size === 'number'
+            ? asset.size
             : null;
 
       if (fileSize !== null && isLargeImportFile(fileSize)) {

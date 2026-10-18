@@ -1,10 +1,25 @@
-import { normalizeCurrencyCode, validateCSVRow, type CSVRow } from './validation';
+import {
+  type CSVRow,
+  normalizeCurrencyCode,
+  parseImportDate,
+  validateCSVRow,
+} from './validation';
 
 const supportedCurrencyCodes = ['USD', 'EUR', 'GBP'];
 
 describe('import validation', () => {
   it('normalizes currency code to uppercase', () => {
     expect(normalizeCurrencyCode(' usd ')).toBe('USD');
+  });
+
+  it('parses date-only values as local midnight', () => {
+    const date = parseImportDate('2024-01-15');
+    expect([date?.getFullYear(), date?.getMonth(), date?.getDate()]).toEqual([
+      2024, 0, 15,
+    ]);
+    expect(date?.getHours()).toBe(0);
+    expect(parseImportDate(' 2024-01-15 10:30:00 ')?.getHours()).toBe(10);
+    expect(parseImportDate('not a date')).toBeNull();
   });
 
   it('does not require merchant', () => {

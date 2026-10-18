@@ -6,9 +6,9 @@ describe('parseBudgetInsightRoute', () => {
   });
 
   it('normalizes an optional category id', () => {
-    expect(
-      parseBudgetInsightRoute({ openCreate: '1', categoryId: [' food '] })
-    ).toEqual({ categoryId: 'food' });
+    expect(parseBudgetInsightRoute({ openCreate: '1', categoryId: [' food '] })).toEqual({
+      categoryId: 'food',
+    });
     expect(parseBudgetInsightRoute({ openCreate: '1', categoryId: ' ' })).toEqual({});
   });
 });

@@ -25,12 +25,6 @@ export default function TripsScreen() {
     tripFormSheetRef.current?.present();
   };
 
-  const handlePressTrip = (trip: TripModel) => {
-    // For now, pressing a trip opens the edit sheet
-    // In the future, this could navigate to trip details
-    handleEditTrip(trip);
-  };
-
   const handleSuccess = () => {
     setTripToEdit(null);
   };
@@ -61,7 +55,7 @@ export default function TripsScreen() {
           database={database}
           onAdd={handleAddTrip}
           onEdit={handleEditTrip}
-          onPress={handlePressTrip}
+          onPress={handleEditTrip}
         />
       </View>
 

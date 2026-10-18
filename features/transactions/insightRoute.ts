@@ -1,3 +1,5 @@
+import { firstParam } from '../../lib/routeParams';
+
 type RouteParam = string | string[] | undefined;
 
 export type TransactionInsightRouteParams = {
@@ -18,10 +20,7 @@ export type TransactionInsightContext = {
   dateRange?: [Date, Date];
 };
 
-const firstValue = (value: RouteParam) => {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return raw?.trim() || undefined;
-};
+const firstValue = (value: RouteParam) => firstParam(value)?.trim() || undefined;
 
 const positiveNumber = (value: RouteParam) => {
   const parsed = Number(firstValue(value));

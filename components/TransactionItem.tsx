@@ -1,22 +1,20 @@
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Pen, RefreshCw, Trash2 } from '@tamagui/lucide-icons-2';
+import { RefreshCw } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, {
-  type SharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import type { Observable } from 'rxjs';
 import { Text, View } from 'tamagui';
 import { deleteTransaction } from '../database/actions/transactions';
 import type { CategoryModel } from '../database/category-model';
 import type { TransactionModel } from '../database/transaction-model';
+import useToast from '../hooks/useToast';
 import { DateFormats } from '../lib/date';
 import { formatCurrency } from '../lib/format';
+import { SwipeActions } from './SwipeActions';
 
 type TransactionItemProps = {
   category?: CategoryModel | null;
@@ -44,6 +42,7 @@ export const TransactionItem = withObservables<
   };
 })(({ category, transaction, onPress, isFirst, isLast }: TransactionItemProps) => {
   const { showActionSheetWithOptions } = useActionSheet();
+  const toast = useToast();
 
   const router = useRouter();
 
@@ -65,63 +64,34 @@ export const TransactionItem = withObservables<
         cancelButtonIndex: 1,
       },
       async (buttonIndex) => {
-        if (buttonIndex === 0) {
+        if (buttonIndex !== 0) {
+          return;
+        }
+
+        try {
           await deleteTransaction(transaction.id);
+        } catch (error) {
+          toast.show({
+            title: 'Unable to delete transaction',
+            message:
+              error instanceof Error ? error.message : 'Failed to delete transaction.',
+            preset: 'error',
+          });
         }
       }
     );
   };
-  const renderRightAction = (_prog: SharedValue<number>, drag: SharedValue<number>) => {
-    const styleAnimation = useAnimatedStyle(() => {
-      return {
-        transform: [{ translateX: drag.value + 100 }],
-        flexDirection: 'row',
-      };
-    });
-
-    return (
-      <Animated.View style={styleAnimation}>
-        <View backgroundColor="gray" width={50}>
-          <Pressable
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-            onPress={() => {
-              onEdit();
-              drag.value = withTiming(0, { duration: 200 });
-            }}
-            accessibilityLabel="Edit transaction"
-            accessibilityRole="button"
-          >
-            <Pen height={24} width={24} />
-          </Pressable>
-        </View>
-        <View backgroundColor="$stroberiLight" width={50}>
-          <Pressable
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-            onPress={() => {
-              onDelete();
-              drag.value = withTiming(0, { duration: 200 });
-            }}
-          >
-            <Trash2 height={20} width={20} />
-          </Pressable>
-        </View>
-      </Animated.View>
-    );
-  };
+  const renderRightAction = (_prog: SharedValue<number>, drag: SharedValue<number>) => (
+    <SwipeActions
+      drag={drag}
+      itemLabel="transaction"
+      onEdit={onEdit}
+      onDelete={onDelete}
+    />
+  );
 
   return (
     <ReanimatedSwipeable
-      key={transaction.id}
       friction={2}
       enableTrackpadTwoFingerGesture
       rightThreshold={40}

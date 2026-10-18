@@ -19,6 +19,21 @@ type ErrorSheetProps = {
 };
 
 const errorSnapPoints = ['70%', '90%'];
+
+/** A pill summarising one issue count; hidden when there is nothing to count. */
+const SummaryChip = ({ label, count }: { label: string; count: number }) =>
+  count > 0 ? (
+    <View
+      backgroundColor={'$gray3'}
+      borderRadius={'$10'}
+      paddingVertical={'$1'}
+      paddingHorizontal={'$3'}
+    >
+      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
+        {label}: {count}
+      </Text>
+    </View>
+  ) : null;
 const ROW_GROUPS_PAGE_SIZE = 20;
 
 export const ErrorSheet = ({
@@ -98,55 +113,16 @@ export const ErrorSheet = ({
                 </Text>
 
                 <XStack gap={'$2'} flexWrap={'wrap'}>
-                  <View
-                    backgroundColor={'$gray3'}
-                    borderRadius={'$10'}
-                    paddingVertical={'$1'}
-                    paddingHorizontal={'$3'}
-                  >
-                    <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
-                      Total issues: {issueSummary.totalIssues}
-                    </Text>
-                  </View>
-
-                  {issueSummary.rows.length > 0 && (
-                    <View
-                      backgroundColor={'$gray3'}
-                      borderRadius={'$10'}
-                      paddingVertical={'$1'}
-                      paddingHorizontal={'$3'}
-                    >
-                      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
-                        Affected rows: {issueSummary.rows.length}
-                      </Text>
-                    </View>
-                  )}
-
-                  {issueSummary.rowIssueCount > 0 && (
-                    <View
-                      backgroundColor={'$gray3'}
-                      borderRadius={'$10'}
-                      paddingVertical={'$1'}
-                      paddingHorizontal={'$3'}
-                    >
-                      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
-                        Row-specific issues: {issueSummary.rowIssueCount}
-                      </Text>
-                    </View>
-                  )}
-
-                  {issueSummary.generalIssues.length > 0 && (
-                    <View
-                      backgroundColor={'$gray3'}
-                      borderRadius={'$10'}
-                      paddingVertical={'$1'}
-                      paddingHorizontal={'$3'}
-                    >
-                      <Text fontSize={'$2'} color={'$gray11'} fontWeight={'600'}>
-                        General issues: {issueSummary.generalIssues.length}
-                      </Text>
-                    </View>
-                  )}
+                  <SummaryChip label="Total issues" count={issueSummary.totalIssues} />
+                  <SummaryChip label="Affected rows" count={issueSummary.rows.length} />
+                  <SummaryChip
+                    label="Row-specific issues"
+                    count={issueSummary.rowIssueCount}
+                  />
+                  <SummaryChip
+                    label="General issues"
+                    count={issueSummary.generalIssues.length}
+                  />
                 </XStack>
 
                 {issueSummary.rows.length > 0 && (

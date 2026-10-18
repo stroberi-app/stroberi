@@ -1,4 +1,5 @@
 import { type Database, Q } from '@nozbe/watermelondb';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { withObservables } from '@nozbe/watermelondb/react';
 import { AlertTriangle, BarChart3 } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
@@ -10,7 +11,6 @@ import { Button, ScrollView, Text, View, styled } from 'tamagui';
 import type { BudgetModel } from '../../database/budget-model';
 import type { BudgetCategoryModel } from '../../database/budget-category-model';
 import type { CategoryModel } from '../../database/category-model';
-import { database } from '../../database/index';
 import { InsightInbox } from '../../components/analytics/InsightInbox';
 import { MoneyPulseCard } from '../../components/analytics/MoneyPulseCard';
 import { PriorityActionPlanCard } from '../../components/analytics/PriorityActionPlanCard';
@@ -228,5 +228,6 @@ const FilterPill = styled(Button, {
 });
 
 export default function AnalyticsScreen() {
+  const database = useDatabase();
   return <AnalyticsContent database={database} />;
 }

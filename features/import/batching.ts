@@ -36,7 +36,7 @@ export const processImportBatches = async ({
 }: ProcessImportBatchesOptions): Promise<ProcessImportBatchesResult> => {
   const totalBatches = Math.ceil(transactions.length / batchSize);
   const importResult: ImportResult = {
-    importedCount: initialImportedCount ?? 0,
+    importedCount: initialImportedCount,
     failed: [],
   };
 

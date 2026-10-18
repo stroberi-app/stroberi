@@ -1,18 +1,9 @@
 import { ChevronRight } from '@tamagui/lucide-icons-2';
 import { forwardRef, type Ref, useCallback, useId, useMemo } from 'react';
-import {
-  Input,
-  type InputRef,
-  type SizeTokens,
-  type TamaguiElement,
-  Text,
-  View,
-} from 'tamagui';
+import { Input, type InputRef, type TamaguiElement, Text, View } from 'tamagui';
 
 type CurrencyInputProps = {
-  size?: SizeTokens;
   focusOnMount?: boolean;
-  labelText?: string;
   onChangeText?: (text: string) => void;
   onCurrencySelect: () => void;
   selectedCurrency: string;

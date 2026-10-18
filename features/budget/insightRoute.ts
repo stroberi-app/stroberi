@@ -1,3 +1,5 @@
+import { firstParam } from '../../lib/routeParams';
+
 type RouteParam = string | string[] | undefined;
 
 export type BudgetInsightRouteParams = {
@@ -9,10 +11,7 @@ export type BudgetInsightContext = {
   categoryId?: string;
 };
 
-const firstValue = (value: RouteParam) => {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return raw?.trim() || undefined;
-};
+const firstValue = (value: RouteParam) => firstParam(value)?.trim() || undefined;
 
 export const parseBudgetInsightRoute = (
   params: BudgetInsightRouteParams

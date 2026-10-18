@@ -2,7 +2,7 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { InteractionManager, Keyboard } from 'react-native';
 
-export type TransactionFormSheet = 'currency' | 'categories' | 'trip';
+export type TransactionFormSheet = 'currency' | 'trip';
 
 /**
  * Manages the create-transaction screen's bottom sheets. Each sheet is mounted
@@ -12,7 +12,6 @@ export type TransactionFormSheet = 'currency' | 'categories' | 'trip';
  */
 export const useTransactionFormSheets = () => {
   const currencySheetRef = useRef<BottomSheetModal | null>(null);
-  const categoriesSheetRef = useRef<BottomSheetModal | null>(null);
   const tripSheetRef = useRef<BottomSheetModal | null>(null);
 
   const [mountedSheets, setMountedSheets] = useState<ReadonlySet<TransactionFormSheet>>(
@@ -23,7 +22,6 @@ export const useTransactionFormSheets = () => {
   const presentSheet = useCallback((sheet: TransactionFormSheet) => {
     const sheetRef = {
       currency: currencySheetRef,
-      categories: categoriesSheetRef,
       trip: tripSheetRef,
     }[sheet];
 
@@ -60,10 +58,8 @@ export const useTransactionFormSheets = () => {
 
   return {
     currencySheetRef,
-    categoriesSheetRef,
     tripSheetRef,
     isCurrencySheetMounted: mountedSheets.has('currency'),
-    isCategoriesSheetMounted: mountedSheets.has('categories'),
     isTripSheetMounted: mountedSheets.has('trip'),
     requestSheetOpen,
   };

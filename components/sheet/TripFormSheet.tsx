@@ -30,6 +30,7 @@ import {
   canMarkTripAsFinished,
   getDefaultTripFormState,
   TRIP_ICONS,
+  type TripFormState,
   validateTripForm,
 } from './tripFormUtils';
 
@@ -56,8 +57,7 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
   const [hasEndDate, setHasEndDate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const resetForm = useCallback(() => {
-    const nextState = getDefaultTripFormState();
+  const applyFormState = useCallback((nextState: TripFormState) => {
     setName(nextState.name);
     setIcon(nextState.icon);
     setCurrencyCode(nextState.currencyCode);
@@ -66,40 +66,28 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
     setHasEndDate(nextState.hasEndDate);
   }, []);
 
+  const resetForm = useCallback(
+    () => applyFormState(getDefaultTripFormState()),
+    [applyFormState]
+  );
+
   useEffect(() => {
-    const nextState = buildTripFormState(trip);
-    setName(nextState.name);
-    setIcon(nextState.icon);
-    setCurrencyCode(nextState.currencyCode);
-    setStartDate(nextState.startDate);
-    setEndDate(nextState.endDate);
-    setHasEndDate(nextState.hasEndDate);
-  }, [trip]);
+    applyFormState(buildTripFormState(trip));
+  }, [applyFormState, trip]);
 
   const handleSubmit = async () => {
     if (isSaving) return;
 
-    const validationMessage = validateTripForm({
+    const validationError = validateTripForm({
       endDate,
       hasEndDate,
       name,
       startDate,
     });
 
-    if (validationMessage === 'Please enter a trip name') {
+    if (validationError) {
       toast.show({
-        title: 'Missing Name',
-        message: validationMessage,
-        preset: 'error',
-        haptic: 'error',
-      });
-      return;
-    }
-
-    if (validationMessage) {
-      toast.show({
-        title: 'Invalid Date Range',
-        message: validationMessage,
+        ...validationError,
         preset: 'error',
         haptic: 'error',
       });
@@ -184,13 +172,14 @@ export const TripFormSheet = ({ sheetRef, trip, onSuccess }: TripFormSheetProps)
   const handleArchive = async () => {
     if (!trip || isSaving) return;
 
+    // Read before toggling: the update mutates `trip` in place.
+    const wasArchived = trip.isArchived;
     setIsSaving(true);
     try {
       await toggleTripArchive(trip.id);
-      const archiveMessage = trip.isArchived ? 'unarchived' : 'archived';
       toast.show({
-        title: trip.isArchived ? 'Unarchived' : 'Archived',
-        message: `Trip ${archiveMessage} successfully`,
+        title: wasArchived ? 'Unarchived' : 'Archived',
+        message: `Trip ${wasArchived ? 'unarchived' : 'archived'} successfully`,
         preset: 'done',
         haptic: 'success',
       });

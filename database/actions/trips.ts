@@ -1,6 +1,12 @@
 import { Q } from '@nozbe/watermelondb';
 import type { TripModel } from '../trip-model';
-import { collection, findRecordOrThrow, runAction, runWriteAction } from './shared';
+import {
+  ActionRejectedError,
+  collection,
+  findRecordOrThrow,
+  runAction,
+  runWriteAction,
+} from './shared';
 
 export type CreateTripPayload = {
   name: string;
@@ -75,7 +81,7 @@ export const deleteTrip = (tripId: string): Promise<TripModel> =>
       .fetchCount();
 
     if (linkedTransactionCount > 0) {
-      throw new Error(
+      throw new ActionRejectedError(
         'This trip still has linked transactions. Archive it instead of deleting it to preserve your transaction history.'
       );
     }

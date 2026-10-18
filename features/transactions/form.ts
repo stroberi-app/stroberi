@@ -1,31 +1,15 @@
 import type { PlatformOSType } from 'react-native';
 import type { CreateTransactionPayload } from '../../database/actions/transactions';
 import type { CategoryModel } from '../../database/category-model';
-import type { TransactionModel } from '../../database/transaction-model';
 import type { TripModel } from '../../database/trip-model';
-import { FALLBACK_CURRENCY } from '../../lib/format';
 
 type TransactionType = 'expense' | 'income';
 
 type TransactionRouteParams = Record<string, string | string[] | undefined>;
 
 export type ParsedTransactionRouteParams = {
-  legacyCategory: CategoryModel | null;
-  legacyTransaction: TransactionModel | null;
   transactionId: string | null;
   transactionType: TransactionType | undefined;
-};
-
-const parseSerializedParam = <T>(value: string | string[] | undefined) => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return null;
-  }
 };
 
 export const parseTransactionRouteParams = (
@@ -39,25 +23,13 @@ export const parseTransactionRouteParams = (
   return {
     transactionType,
     transactionId: typeof params.transactionId === 'string' ? params.transactionId : null,
-    legacyTransaction: parseSerializedParam<TransactionModel>(params.transaction),
-    legacyCategory: parseSerializedParam<CategoryModel>(params.category),
   };
 };
 
+/** New expenses start with a minus sign so the amount is entered as negative. */
 export const getInitialTransactionAmount = (
-  transactionType: TransactionType | undefined,
-  transaction: TransactionModel | null
-) => {
-  const prefix = transactionType ? (transactionType === 'expense' ? '-' : '') : '';
-  return `${prefix}${transaction?.amount ?? ''}`;
-};
-
-export const getDefaultSelectedCurrency = (
-  transaction: TransactionModel | null,
-  defaultCurrency?: string | null
-) => {
-  return transaction?.currencyCode ?? defaultCurrency ?? FALLBACK_CURRENCY;
-};
+  transactionType: TransactionType | undefined
+) => (transactionType === 'expense' ? '-' : '');
 
 export const getAmountValidationMessage = (
   amount: string,
@@ -75,26 +47,18 @@ export const getAmountValidationMessage = (
   return null;
 };
 
-export const shouldAutoPopulateActiveTrip = ({
-  transaction,
-  transactionId,
-  tripsEnabled,
-}: {
-  transaction: TransactionModel | null;
-  transactionId: string | null;
-  tripsEnabled: boolean;
-}) => {
-  return !transaction && !transactionId && tripsEnabled;
-};
-
+/**
+ * Only new transactions autofocus the amount (never on Android). Edits are
+ * detected from the route's id because the transaction loads after mount.
+ */
 export const shouldFocusTransactionAmountInput = ({
   platform,
-  transaction,
+  transactionId,
 }: {
   platform: PlatformOSType;
-  transaction: TransactionModel | null;
+  transactionId: string | null;
 }) => {
-  return platform !== 'android' && !transaction;
+  return platform !== 'android' && !transactionId;
 };
 
 export const buildTransactionPayload = ({

@@ -4,17 +4,12 @@ import type { Database } from '@nozbe/watermelondb';
 import { Q } from '@nozbe/watermelondb';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { withObservables } from '@nozbe/watermelondb/react';
-import { Pen, Plus, Trash2 } from '@tamagui/lucide-icons-2';
+import { Plus } from '@tamagui/lucide-icons-2';
 import dayjs from 'dayjs';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, {
-  type SharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Observable } from 'rxjs';
 import { ScrollView, Text, View } from 'tamagui';
@@ -30,6 +25,7 @@ import { formatCurrency } from '../../lib/format';
 import { formatCadence } from '../../lib/recurrence';
 import { Button } from '../button/Button';
 import { CustomBackdrop } from '../CustomBackdrop';
+import { SwipeActions } from '../SwipeActions';
 import { Switch } from '../Switch';
 import { backgroundStyle, handleIndicatorStyle, snapPoints } from './constants';
 import { RecurringTransactionFormSheet } from './RecurringTransactionFormSheet';
@@ -93,59 +89,17 @@ const RecurringItem = withObservables<
     }
   };
 
-  const RightActions = ({ drag }: { drag: SharedValue<number> }) => {
-    const styleAnimation = useAnimatedStyle(() => ({
-      transform: [{ translateX: drag.value + 100 }],
-      flexDirection: 'row',
-    }));
-
-    return (
-      <Animated.View style={styleAnimation}>
-        <View backgroundColor="gray" width={50}>
-          <Pressable
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-            onPress={() => {
-              onEdit(recurring);
-              drag.value = withTiming(0, { duration: 200 });
-            }}
-            accessibilityLabel="Edit recurring transaction"
-            accessibilityRole="button"
-          >
-            <Pen height={24} width={24} />
-          </Pressable>
-        </View>
-        <View backgroundColor="$stroberiLight" width={50}>
-          <Pressable
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-            onPress={() => {
-              onDelete();
-              drag.value = withTiming(0, { duration: 200 });
-            }}
-          >
-            <Trash2 height={8} width={8} />
-          </Pressable>
-        </View>
-      </Animated.View>
-    );
-  };
-
   const renderRightAction = (_prog: SharedValue<number>, drag: SharedValue<number>) => (
-    <RightActions drag={drag} />
+    <SwipeActions
+      drag={drag}
+      itemLabel="recurring transaction"
+      onEdit={() => onEdit(recurring)}
+      onDelete={onDelete}
+    />
   );
 
   return (
     <ReanimatedSwipeable
-      key={recurring.id}
       friction={2}
       enableTrackpadTwoFingerGesture
       rightThreshold={40}

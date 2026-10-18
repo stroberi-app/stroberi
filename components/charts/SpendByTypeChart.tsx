@@ -5,7 +5,7 @@ import { map, type Observable } from 'rxjs';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { sumMagnitudesBy } from '../../lib/ledger';
-import { SpendBarChart } from './SpendBarChart';
+import { SpendChart } from './SpendChart';
 
 type SpendByMonthProps = {
   chartData: SpendByMonthChartData;
@@ -73,7 +73,8 @@ export const SpendByType = withObservables<
   };
 
   return (
-    <SpendBarChart
+    <SpendChart
+      variant="bar"
       chartData={chartData}
       title={
         type === 'expense'
