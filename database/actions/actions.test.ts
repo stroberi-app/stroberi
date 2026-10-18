@@ -229,6 +229,7 @@ describe('categories', () => {
       categoryId: category.id,
     });
     await expect(deleteCategory(category.id)).rejects.toThrow('still being used');
+    expect(console.error).not.toHaveBeenCalled();
 
     await deleteTransaction(transaction.id);
     await deleteCategory(category.id);
@@ -317,6 +318,7 @@ describe('trips', () => {
     await createTransaction({ ...baseTransaction, tripId: trip.id });
 
     await expect(deleteTrip(trip.id)).rejects.toThrow('Archive it instead');
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
 

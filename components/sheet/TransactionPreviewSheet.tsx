@@ -98,25 +98,20 @@ export const TransactionPreviewSheet = forwardRef<
     }
   }, [dateRange, isOpening]);
 
-  const formatDate = (dateString: string) => {
-    return dayjs(dateString).format('MMM DD, YYYY');
-  };
+  const formatDate = (date: string | Date) => dayjs(date).format('MMM DD, YYYY');
 
   const handleExport = async () => {
     if (!dateRange) return;
 
+    // exportTransactions reports its own failures with a toast.
     setIsExporting(true);
-    try {
-      await exportTransactions({
-        dateRange,
-        columns: EXTENDED_EXPORT_COLUMNS,
-        destination: 'csv',
-        preloadedTransactions: isPartialPreview ? undefined : transactions,
-      });
-    } catch (_error) {
-    } finally {
-      setIsExporting(false);
-    }
+    await exportTransactions({
+      dateRange,
+      columns: EXTENDED_EXPORT_COLUMNS,
+      destination: 'csv',
+      preloadedTransactions: isPartialPreview ? undefined : transactions,
+    });
+    setIsExporting(false);
   };
 
   const renderItem = ({ item }: { item: TransactionExportData }) => {
@@ -208,8 +203,7 @@ export const TransactionPreviewSheet = forwardRef<
             </Text>
             {dateRange && (
               <Text fontSize="$3" color="$gray11">
-                {formatDate(dateRange.fromDate.toISOString())} -{' '}
-                {formatDate(dateRange.toDate.toISOString())}
+                {formatDate(dateRange.fromDate)} - {formatDate(dateRange.toDate)}
               </Text>
             )}
           </View>

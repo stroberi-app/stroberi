@@ -1,7 +1,6 @@
 /** Display currency until the user has picked a base currency. */
 export const FALLBACK_CURRENCY = 'USD';
 
-// A worklet so the UI-thread formatter below can call it too.
 const fallbackFormat = (value: number, currency: string) => {
   'worklet';
   const code =
@@ -10,7 +9,9 @@ const fallbackFormat = (value: number, currency: string) => {
   return `${code} ${amount}`;
 };
 
+/** A worklet, so it is safe to call from both the JS and the UI thread. */
 export const formatCurrency = (value: number, currency: string) => {
+  'worklet';
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -20,18 +21,6 @@ export const formatCurrency = (value: number, currency: string) => {
     // Intl.NumberFormat throws on unsupported/malformed currency codes.
     // Fall back to a plain representation so a single bad row can't
     // crash the screen — the user can still see and delete the entry.
-    return fallbackFormat(value, currency);
-  }
-};
-
-export const formatCurrencyWorklet = (value: number, currency: string) => {
-  'worklet';
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(value);
-  } catch {
     return fallbackFormat(value, currency);
   }
 };

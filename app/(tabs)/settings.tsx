@@ -35,7 +35,62 @@ import { useAdvancedAnalyticsEnabled } from '../../hooks/useAdvancedAnalyticsEna
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { useSavingsRateEnabled } from '../../hooks/useSavingsRateEnabled';
 import { useSavingsRateTarget } from '../../hooks/useSavingsRateTarget';
+import useToast from '../../hooks/useToast';
 import type { ExportDateRange } from '../../hooks/useTransactionExport';
+
+type FeatureToggleProps = {
+  IconComponent: React.ElementType;
+  title: string;
+  description: string;
+  checked: boolean;
+  onToggle: () => void;
+};
+
+const FeatureToggle = ({
+  IconComponent,
+  title,
+  description,
+  checked,
+  onToggle,
+}: FeatureToggleProps) => (
+  <YGroup.Item>
+    <View
+      flexDirection="row"
+      alignItems="center"
+      justifyContent="space-between"
+      padding="$3"
+      backgroundColor="$gray3"
+      borderRadius="$3"
+      borderWidth={1}
+      borderColor="$gray5"
+    >
+      <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
+        <View
+          backgroundColor="$stroberi"
+          borderRadius="$2"
+          padding="$2"
+          width={32}
+          height={32}
+          justifyContent="center"
+          alignItems="center"
+        >
+          <IconComponent size={18} color="white" />
+        </View>
+        <View flex={1}>
+          <Text fontSize="$4" fontWeight="500" color="white">
+            {title}
+          </Text>
+          <Text fontSize="$2" color="$gray9">
+            {description}
+          </Text>
+        </View>
+      </View>
+      <Switch checked={checked} onCheckedChange={onToggle}>
+        <Switch.Thumb />
+      </Switch>
+    </View>
+  </YGroup.Item>
+);
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
@@ -59,34 +114,36 @@ export default function SettingsScreen() {
   const [isTogglingFeature, setIsTogglingFeature] = useState(false);
 
   const router = useRouter();
+  const toast = useToast();
 
-  const handleBudgetingToggle = async () => {
+  const toggleFeature = async (
+    setEnabled: (enabled: boolean) => Promise<void>,
+    enabled: boolean
+  ) => {
     if (isTogglingFeature) return;
     setIsTogglingFeature(true);
     try {
-      await setBudgetingEnabled(!budgetingEnabled);
+      await setEnabled(!enabled);
     } finally {
       setIsTogglingFeature(false);
     }
   };
 
-  const handleTripsToggle = async () => {
-    if (isTogglingFeature) return;
-    setIsTogglingFeature(true);
-    try {
-      await setTripsEnabled(!tripsEnabled);
-    } finally {
-      setIsTogglingFeature(false);
+  const handleCurrencySelect = async (currencyCode: string) => {
+    if (isUpdatingCurrency) {
+      return;
     }
-  };
-
-  const handleAnalyticsToggle = async () => {
-    if (isTogglingFeature) return;
-    setIsTogglingFeature(true);
+    currencySheetRef.current?.close();
     try {
-      await setAdvancedAnalyticsEnabled(!advancedAnalyticsEnabled);
-    } finally {
-      setIsTogglingFeature(false);
+      await setDefaultCurrency(currencyCode);
+    } catch {
+      toast.show({
+        title: 'Currency update failed',
+        message:
+          "Your transactions couldn't be converted to the new currency. Please try again.",
+        preset: 'error',
+        haptic: 'error',
+      });
     }
   };
 
@@ -163,123 +220,29 @@ export default function SettingsScreen() {
             Features
           </Text>
           <YGroup>
-            <YGroup.Item>
-              <View
-                flexDirection="row"
-                alignItems="center"
-                justifyContent="space-between"
-                padding="$3"
-                backgroundColor="$gray3"
-                borderRadius="$3"
-                borderWidth={1}
-                borderColor="$gray5"
-              >
-                <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
-                  <View
-                    backgroundColor="$stroberi"
-                    borderRadius="$2"
-                    padding="$2"
-                    width={32}
-                    height={32}
-                    justifyContent="center"
-                    alignItems="center"
-                  >
-                    <Wallet size={18} color="white" />
-                  </View>
-                  <View flex={1}>
-                    <Text fontSize="$4" fontWeight="500" color="white">
-                      Enable Budgeting
-                    </Text>
-                    <Text fontSize="$2" color="$gray9">
-                      Show budgets tab and features
-                    </Text>
-                  </View>
-                </View>
-                <Switch
-                  checked={budgetingEnabled}
-                  onCheckedChange={handleBudgetingToggle}
-                >
-                  <Switch.Thumb />
-                </Switch>
-              </View>
-            </YGroup.Item>
-            <YGroup.Item>
-              <View
-                flexDirection="row"
-                alignItems="center"
-                justifyContent="space-between"
-                padding="$3"
-                backgroundColor="$gray3"
-                borderRadius="$3"
-                borderWidth={1}
-                borderColor="$gray5"
-              >
-                <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
-                  <View
-                    backgroundColor="$stroberi"
-                    borderRadius="$2"
-                    padding="$2"
-                    width={32}
-                    height={32}
-                    justifyContent="center"
-                    alignItems="center"
-                  >
-                    <Plane size={18} color="white" />
-                  </View>
-                  <View flex={1}>
-                    <Text fontSize="$4" fontWeight="500" color="white">
-                      Enable Trips
-                    </Text>
-                    <Text fontSize="$2" color="$gray9">
-                      Track spending by trip
-                    </Text>
-                  </View>
-                </View>
-                <Switch checked={tripsEnabled} onCheckedChange={handleTripsToggle}>
-                  <Switch.Thumb />
-                </Switch>
-              </View>
-            </YGroup.Item>
-            <YGroup.Item>
-              <View
-                flexDirection="row"
-                alignItems="center"
-                justifyContent="space-between"
-                padding="$3"
-                backgroundColor="$gray3"
-                borderRadius="$3"
-                borderWidth={1}
-                borderColor="$gray5"
-              >
-                <View flexDirection="row" alignItems="center" gap="$3" flex={1}>
-                  <View
-                    backgroundColor="$stroberi"
-                    borderRadius="$2"
-                    padding="$2"
-                    width={32}
-                    height={32}
-                    justifyContent="center"
-                    alignItems="center"
-                  >
-                    <TrendingUp size={18} color="white" />
-                  </View>
-                  <View flex={1}>
-                    <Text fontSize="$4" fontWeight="500" color="white">
-                      Advanced Analytics
-                    </Text>
-                    <Text fontSize="$2" color="$gray9">
-                      Deep financial insights & scores
-                    </Text>
-                  </View>
-                </View>
-                <Switch
-                  checked={advancedAnalyticsEnabled}
-                  onCheckedChange={handleAnalyticsToggle}
-                >
-                  <Switch.Thumb />
-                </Switch>
-              </View>
-            </YGroup.Item>
+            <FeatureToggle
+              IconComponent={Wallet}
+              title="Enable Budgeting"
+              description="Show budgets tab and features"
+              checked={budgetingEnabled}
+              onToggle={() => toggleFeature(setBudgetingEnabled, budgetingEnabled)}
+            />
+            <FeatureToggle
+              IconComponent={Plane}
+              title="Enable Trips"
+              description="Track spending by trip"
+              checked={tripsEnabled}
+              onToggle={() => toggleFeature(setTripsEnabled, tripsEnabled)}
+            />
+            <FeatureToggle
+              IconComponent={TrendingUp}
+              title="Advanced Analytics"
+              description="Deep financial insights & scores"
+              checked={advancedAnalyticsEnabled}
+              onToggle={() =>
+                toggleFeature(setAdvancedAnalyticsEnabled, advancedAnalyticsEnabled)
+              }
+            />
           </YGroup>
         </View>
 
@@ -353,13 +316,7 @@ export default function SettingsScreen() {
       <SavingsRateTargetSheet sheetRef={savingsRateTargetSheetRef} />
       <CurrencySelect
         sheetRef={currencySheetRef}
-        onSelect={(selected) => {
-          if (isUpdatingCurrency) {
-            return;
-          }
-          setDefaultCurrency(selected.code);
-          currencySheetRef.current?.close();
-        }}
+        onSelect={(selected) => handleCurrencySelect(selected.code)}
         selectedCurrency={currency}
       />
       <ExportDataSheet

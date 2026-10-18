@@ -19,13 +19,11 @@ import {
 } from '../database/actions/categories';
 import { spendingCategories } from '../data/emojis';
 import useToast from '../hooks/useToast';
+import { firstParam } from '../lib/routeParams';
 
 type EditCategoryParams = {
   categoryId?: string | string[];
 };
-
-const firstParam = (value: string | string[] | undefined) =>
-  Array.isArray(value) ? value[0] : value;
 
 const getRandomIcon = () =>
   spendingCategories[Math.floor(Math.random() * spendingCategories.length)] ?? '📦';

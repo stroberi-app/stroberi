@@ -13,6 +13,7 @@ import { backgroundStyle } from '../components/sheet/constants';
 import type { CategoryModel } from '../database/category-model';
 import { deleteCategory } from '../database/actions/categories';
 import { selectCategoryForHandler } from '../lib/categorySelectionBridge';
+import { firstParam } from '../lib/routeParams';
 import useToast from '../hooks/useToast';
 
 type CategoryRouteParams = {
@@ -21,9 +22,6 @@ type CategoryRouteParams = {
   selectedCategoryIds?: string | string[];
   mode?: string | string[];
 };
-
-const firstParam = (value: string | string[] | undefined) =>
-  Array.isArray(value) ? value[0] : value;
 
 export default function SelectCategoryScreen() {
   const database = useDatabase();

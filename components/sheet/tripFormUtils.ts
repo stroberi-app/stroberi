@@ -71,13 +71,16 @@ export const validateTripForm = ({
   hasEndDate: boolean;
   name: string;
   startDate: Date;
-}) => {
+}): { title: string; message: string } | null => {
   if (!name.trim()) {
-    return 'Please enter a trip name';
+    return { title: 'Missing Name', message: 'Please enter a trip name' };
   }
 
   if (hasEndDate && endDate && dayjs(endDate).isBefore(dayjs(startDate), 'day')) {
-    return 'End date must be on or after the start date';
+    return {
+      title: 'Invalid Date Range',
+      message: 'End date must be on or after the start date',
+    };
   }
 
   return null;

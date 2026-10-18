@@ -105,7 +105,7 @@ export const deleteCategory = (categoryId: string): Promise<CategoryModel> =>
     ]);
 
     if (linkCounts.some((count) => count > 0)) {
-      throw new Error(
+      throw new ActionRejectedError(
         'This category is still being used. Reassign or remove its linked transactions, budgets, and recurring items before deleting it.'
       );
     }

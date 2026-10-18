@@ -1,5 +1,10 @@
 import type { CreateTransactionPayload } from '../../database/actions/transactions';
-import { normalizeCurrencyCode, validateCSVRow, type CSVRow } from './validation';
+import {
+  type CSVRow,
+  normalizeCurrencyCode,
+  parseImportDate,
+  validateCSVRow,
+} from './validation';
 
 export type PreparedImportTransaction = Omit<
   CreateTransactionPayload,
@@ -19,13 +24,11 @@ export const prepareImportRows = ({
   supportedCurrencyCodes,
   existingCategoryNames,
   baseCurrency,
-  startIndex = 0,
 }: {
   rows: CSVRow[];
   supportedCurrencyCodes: string[];
   existingCategoryNames: Set<string>;
   baseCurrency: string;
-  startIndex?: number;
 }): PreparedImportData => {
   const preparedTransactions: PreparedImportTransaction[] = [];
   const categoriesToCreate = new Map<string, { name: string; icon: string }>();
@@ -33,20 +36,24 @@ export const prepareImportRows = ({
 
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index];
-    const absoluteIndex = startIndex + index;
 
     if (!row || typeof row !== 'object') {
-      errors.push(`Row ${absoluteIndex + 1}: Invalid data format`);
+      errors.push(`Row ${index + 1}: Invalid data format`);
       continue;
     }
 
-    const validationErrors = validateCSVRow(row, absoluteIndex, supportedCurrencyCodes);
+    const validationErrors = validateCSVRow(row, index, supportedCurrencyCodes);
     if (validationErrors.length > 0) {
       errors.push(...validationErrors);
       continue;
     }
 
     const { merchant, amount, date, note, currencyCode, category, categoryIcon } = row;
+    const parsedDate = parseImportDate(date);
+    if (!parsedDate) {
+      continue;
+    }
+
     const normalizedMerchant = merchant?.trim() ?? '';
     const rawCategoryName = category?.trim() ?? '';
     const normalizedCategoryName = rawCategoryName.toLowerCase() || null;
@@ -66,12 +73,12 @@ export const prepareImportRows = ({
     preparedTransactions.push({
       merchant: normalizedMerchant,
       amount: Number(amount),
-      date: new Date(date),
+      date: parsedDate,
       note: note?.trim() || '',
       currencyCode: normalizeCurrencyCode(currencyCode),
       categoryName: normalizedCategoryName,
       baseCurrency,
-      sourceRowNumber: absoluteIndex + 1,
+      sourceRowNumber: index + 1,
     });
   }
 

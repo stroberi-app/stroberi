@@ -1,9 +1,4 @@
-import type { TransactionModel } from '../../database/transaction-model';
 import { shouldFocusTransactionAmountInput } from './form';
-
-const existingTransaction = {
-  id: 'existing-transaction',
-} as unknown as TransactionModel;
 
 describe('transaction form helpers', () => {
   describe('shouldFocusTransactionAmountInput', () => {
@@ -11,7 +6,7 @@ describe('transaction form helpers', () => {
       expect(
         shouldFocusTransactionAmountInput({
           platform: 'android',
-          transaction: null,
+          transactionId: null,
         })
       ).toBe(false);
     });
@@ -20,7 +15,7 @@ describe('transaction form helpers', () => {
       expect(
         shouldFocusTransactionAmountInput({
           platform: 'ios',
-          transaction: null,
+          transactionId: null,
         })
       ).toBe(true);
     });
@@ -29,7 +24,7 @@ describe('transaction form helpers', () => {
       expect(
         shouldFocusTransactionAmountInput({
           platform: 'ios',
-          transaction: existingTransaction,
+          transactionId: 'existing-transaction',
         })
       ).toBe(false);
     });

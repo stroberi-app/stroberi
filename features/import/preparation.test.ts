@@ -25,12 +25,11 @@ describe('import preparation', () => {
       supportedCurrencyCodes,
       existingCategoryNames: new Set<string>(),
       baseCurrency: 'USD',
-      startIndex: 100,
     });
 
     expect(result.preparedTransactions.length).toBe(1);
-    expect(result.preparedTransactions[0]?.sourceRowNumber).toBe(101);
-    expect(result.errors).toContain('Row 102: Missing required fields: amount');
+    expect(result.preparedTransactions[0]?.sourceRowNumber).toBe(1);
+    expect(result.errors).toContain('Row 2: Missing required fields: amount');
   });
 
   it('collects new categories from valid rows and maps ids when building payloads', () => {

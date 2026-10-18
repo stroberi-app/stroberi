@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 export interface CSVRow {
   merchant?: string;
   amount: string;
@@ -10,6 +12,15 @@ export interface CSVRow {
 
 export const normalizeCurrencyCode = (currencyCode: string) =>
   currencyCode.trim().toUpperCase();
+
+/**
+ * Parses an import date in local time. `new Date('2024-01-15')` would read a
+ * date-only value as UTC midnight, shifting it to the previous day west of UTC.
+ */
+export const parseImportDate = (value: string): Date | null => {
+  const parsed = dayjs(value.trim());
+  return parsed.isValid() ? parsed.toDate() : null;
+};
 
 export const validateCSVRow = (
   row: CSVRow,
@@ -42,11 +53,8 @@ export const validateCSVRow = (
     errors.push(`Row ${index + 1}: Amount must be a valid number`);
   }
 
-  if (date) {
-    const parsedDate = new Date(date);
-    if (Number.isNaN(parsedDate.getTime())) {
-      errors.push(`Row ${index + 1}: Date format is invalid (use YYYY-MM-DD)`);
-    }
+  if (date && !parseImportDate(date)) {
+    errors.push(`Row ${index + 1}: Date format is invalid (use YYYY-MM-DD)`);
   }
 
   if (currencyCode && !supportedCurrencyCodes.includes(currencyCode)) {

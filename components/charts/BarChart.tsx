@@ -20,13 +20,6 @@ type CartesianChartProps<
   data: RawData[];
   xKey: XK;
   yKeys: YK[];
-  domainPadding?: {
-    left?: number;
-    right?: number;
-    top?: number;
-    bottom?: number;
-  };
-  barWidth?: number;
   state?: VictoryCompatPressState | VictoryCompatPressState[];
   isActive?: boolean;
   tooltip?: {
@@ -34,7 +27,6 @@ type CartesianChartProps<
     ttY: SharedValue<number>;
     ttLabel: SharedValue<string>;
   };
-  barCount?: number;
   formatXLabel?: (value: InputFields<RawData>[XK]) => string;
 };
 
@@ -46,29 +38,22 @@ export const BarChart = <
   data,
   yKeys,
   xKey,
-  domainPadding,
-  barWidth,
   state,
   isActive,
   tooltip,
-  barCount,
   formatXLabel,
 }: CartesianChartProps<RawData, XK, YK>) => {
   const font = useFont(inter, 11);
 
   const dataLength = data.length;
   const calculatedBarWidth = React.useMemo(() => {
-    if (barWidth) return barWidth;
-
     if (dataLength <= 3) return 60;
     if (dataLength <= 5) return 45;
     if (dataLength <= 7) return 35;
     return 28;
-  }, [barWidth, dataLength]);
+  }, [dataLength]);
 
   const calculatedDomainPadding = React.useMemo(() => {
-    if (domainPadding) return domainPadding;
-
     const horizontalPadding = Math.max(25, calculatedBarWidth * 0.8);
     return {
       left: horizontalPadding,
@@ -76,7 +61,7 @@ export const BarChart = <
       top: 30,
       bottom: 0,
     };
-  }, [domainPadding, calculatedBarWidth]);
+  }, [calculatedBarWidth]);
 
   const { yDomain, yTickValues } = React.useMemo(() => {
     return calculateChartDomain(data, yKeys as string[]);
@@ -123,7 +108,6 @@ export const BarChart = <
             chartBounds={chartBounds}
             points={points[yKeys[0]]}
             barWidth={calculatedBarWidth}
-            barCount={barCount}
             roundedCorners={{
               topLeft: 6,
               topRight: 6,

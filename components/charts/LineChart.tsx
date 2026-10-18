@@ -20,12 +20,6 @@ type CartesianChartProps<
   data: RawData[];
   xKey: XK;
   yKeys: YK[];
-  domainPadding?: {
-    left?: number;
-    right?: number;
-    top?: number;
-    bottom?: number;
-  };
   state?: VictoryCompatPressState | VictoryCompatPressState[];
   isActive?: boolean;
   tooltip?: {
@@ -38,6 +32,8 @@ type CartesianChartProps<
   curveType?: 'linear' | 'natural';
 };
 
+const DOMAIN_PADDING = { left: 25, right: 25, top: 30, bottom: 10 };
+
 export const LineChart = <
   RawData extends Record<string, unknown>,
   XK extends keyof InputFields<RawData>,
@@ -46,7 +42,6 @@ export const LineChart = <
   data,
   yKeys,
   xKey,
-  domainPadding,
   state,
   isActive,
   tooltip,
@@ -55,17 +50,6 @@ export const LineChart = <
   curveType = 'natural',
 }: CartesianChartProps<RawData, XK, YK>) => {
   const font = useFont(inter, 11);
-
-  const calculatedDomainPadding = React.useMemo(() => {
-    if (domainPadding) return domainPadding;
-
-    return {
-      left: 25,
-      right: 25,
-      top: 30,
-      bottom: 10,
-    };
-  }, [domainPadding]);
 
   const { yDomain, yTickValues } = React.useMemo(() => {
     return calculateChartDomain(data, yKeys as string[]);
@@ -83,7 +67,7 @@ export const LineChart = <
       data={data}
       xKey={xKey}
       yKeys={yKeys}
-      domainPadding={calculatedDomainPadding}
+      domainPadding={DOMAIN_PADDING}
       domain={{ y: yDomain }}
       chartPressState={state}
       padding={{

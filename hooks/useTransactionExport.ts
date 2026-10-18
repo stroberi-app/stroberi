@@ -126,9 +126,9 @@ const useTransactionExport = () => {
               transactions.categoryId,
               categories.name as category,
               categories.icon as categoryIcon,
-              strftime('%Y-%m-%d %H:%M:%S', transactions.date / 1000, 'unixepoch') as date,
-              strftime('%Y-%m-%d %H:%M:%S', transactions.created_at / 1000, 'unixepoch') as createdAt,
-              strftime('%Y-%m-%d %H:%M:%S', transactions.updated_at / 1000, 'unixepoch') as updatedAt
+              strftime('%Y-%m-%d %H:%M:%S', transactions.date / 1000, 'unixepoch', 'localtime') as date,
+              strftime('%Y-%m-%d %H:%M:%S', transactions.created_at / 1000, 'unixepoch', 'localtime') as createdAt,
+              strftime('%Y-%m-%d %H:%M:%S', transactions.updated_at / 1000, 'unixepoch', 'localtime') as updatedAt
             FROM transactions
             LEFT JOIN categories ON transactions.categoryId = categories.id
             WHERE transactions.date >= ? AND transactions.date <= ? AND 
@@ -302,8 +302,6 @@ const useTransactionExport = () => {
     fetchTransactionsForExport,
     fetchTransactionsSample,
     isLoading,
-    saveExportData,
-    validateExportOptions,
   };
 };
 

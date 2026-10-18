@@ -11,15 +11,16 @@ import { useChartPressState } from 'victory-native';
 import type { InputFields, NumericalFields } from '../../lib/chartTypes';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { sanitizeChartPressNumber } from '../../lib/chartPressState';
-import { formatCurrencyWorklet } from '../../lib/format';
+import { formatCurrency } from '../../lib/format';
 import { CarouselItemChart } from '../carousel/CarouselItemChart';
 import { CarouselItemText } from '../carousel/CarouselItemText';
 import { CarouselItemWrapper } from '../carousel/CarouselItemWrapper';
 import { BarChart } from './BarChart';
+import { LineChart } from './LineChart';
 
 const animConfig = { duration: 300 };
 
-type SpendBarChartProps<
+type SpendChartProps<
   RawData extends Record<string, unknown>,
   XK extends keyof InputFields<RawData>,
   YK extends keyof NumericalFields<RawData>,
@@ -29,27 +30,22 @@ type SpendBarChartProps<
   xKey: XK;
   yKeys: YK[];
   isEmpty: boolean;
-  barCount?: number;
-  barWidth?: number;
   footer?: React.ReactNode;
   formatXLabel?: (value: InputFields<RawData>[XK]) => string;
-};
+} & (
+  | { variant: 'bar' }
+  | { variant: 'line'; strokeWidth?: number; curveType?: 'linear' | 'natural' }
+);
 
-export const SpendBarChart = <
+/** A carousel card plotting spend over time, with a press-to-inspect tooltip. */
+export const SpendChart = <
   RawData extends Record<string, unknown>,
   XK extends keyof InputFields<RawData>,
   YK extends keyof NumericalFields<RawData>,
->({
-  chartData,
-  title,
-  xKey,
-  yKeys,
-  isEmpty,
-  barCount,
-  barWidth,
-  footer,
-  formatXLabel,
-}: SpendBarChartProps<RawData, XK, YK>) => {
+>(
+  props: SpendChartProps<RawData, XK, YK>
+) => {
+  const { chartData, title, xKey, yKeys, isEmpty, footer, formatXLabel } = props;
   const { currency } = useDefaultCurrency();
 
   const { state, isActive } = useChartPressState({
@@ -59,7 +55,7 @@ export const SpendBarChart = <
   const amount = useDerivedValue(() => {
     const rawValue = state?.y.total.value.value;
     const safeValue = sanitizeChartPressNumber(rawValue, 0);
-    const formattedCurrency = formatCurrencyWorklet(safeValue, currency);
+    const formattedCurrency = formatCurrency(safeValue, currency);
     const xValue = state?.x.value.value;
     const xLabel = xValue === undefined || xValue === null ? '' : String(xValue);
     return `${xLabel}: ${formattedCurrency}`;
@@ -80,6 +76,16 @@ export const SpendBarChart = <
       ttY.value = withTiming(sanitizeChartPressNumber(val, ttY.value), animConfig);
     }
   );
+
+  const chartProps = {
+    xKey,
+    yKeys,
+    data: chartData,
+    state,
+    isActive,
+    tooltip: { ttX, ttY, ttLabel: amount },
+    formatXLabel,
+  };
 
   return (
     <CarouselItemWrapper>
@@ -111,21 +117,15 @@ export const SpendBarChart = <
           </View>
         ) : (
           <>
-            <BarChart
-              xKey={xKey}
-              yKeys={yKeys}
-              data={chartData}
-              state={state}
-              isActive={isActive}
-              tooltip={{
-                ttX,
-                ttY,
-                ttLabel: amount,
-              }}
-              barCount={barCount}
-              barWidth={barWidth}
-              formatXLabel={formatXLabel}
-            />
+            {props.variant === 'bar' ? (
+              <BarChart {...chartProps} />
+            ) : (
+              <LineChart
+                {...chartProps}
+                strokeWidth={props.strokeWidth}
+                curveType={props.curveType}
+              />
+            )}
             {footer}
           </>
         )}

@@ -7,7 +7,7 @@ import { Button, styled, Text, View } from 'tamagui';
 import type { TransactionModel } from '../../database/transaction-model';
 import { useDefaultCurrency } from '../../hooks/useDefaultCurrency';
 import { sumMagnitudesBy } from '../../lib/ledger';
-import { SpendLineChart } from './SpendLineChart';
+import { SpendChart } from './SpendChart';
 
 type SpendingTrendsProps = {
   chartData: SpendingTrendsChartData;
@@ -147,7 +147,8 @@ const SpendingTrends = withObservables<
   }, [trendType, defaultCurrency]);
 
   return (
-    <SpendLineChart
+    <SpendChart
+      variant="line"
       key={`spending-trends-${trendType}`}
       chartData={chartData}
       title={chartTitle}

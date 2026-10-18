@@ -39,13 +39,12 @@ import type { TripModel } from '../database/trip-model';
 import {
   buildTransactionPayload,
   getAmountValidationMessage,
-  getDefaultSelectedCurrency,
   getInitialTransactionAmount,
   parseTransactionRouteParams,
-  shouldAutoPopulateActiveTrip,
   shouldFocusTransactionAmountInput,
 } from '../features/transactions/form';
 import { MissingCurrencyRateError } from '../lib/currencyConversion';
+import { FALLBACK_CURRENCY } from '../lib/format';
 import { useDefaultCurrency } from '../hooks/useDefaultCurrency';
 import { useTripsEnabled } from '../hooks/useTripsEnabled';
 import useToast from '../hooks/useToast';
@@ -107,30 +106,25 @@ function CreateTransaction() {
   );
   const toast = useToast();
   const { showActionSheetWithOptions } = useActionSheet();
-  const { legacyCategory, legacyTransaction, transactionId, transactionType } =
-    parseTransactionRouteParams(params);
+  const { transactionId, transactionType } = parseTransactionRouteParams(params);
+  const focusAmountOnOpen = shouldFocusTransactionAmountInput({
+    platform: Platform.OS,
+    transactionId,
+  });
 
   const { defaultCurrency, isDefaultCurrencyLoaded } = useDefaultCurrency();
   const { tripsEnabled } = useTripsEnabled();
 
-  const [transaction, setTransaction] = useState<TransactionModel | null>(
-    legacyTransaction ?? null
-  );
-  const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(
-    legacyCategory ?? null
-  );
+  const [transaction, setTransaction] = useState<TransactionModel | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<TripModel | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState(
-    getDefaultSelectedCurrency(legacyTransaction)
+  const [selectedCurrency, setSelectedCurrency] = useState(FALLBACK_CURRENCY);
+  const [amount, setAmount] = useState(() =>
+    getInitialTransactionAmount(transactionType)
   );
-  const [amount, setAmount] = useState(
-    getInitialTransactionAmount(transactionType, legacyTransaction)
-  );
-  const [note, setNote] = useState(transaction?.note ?? '');
-  const [merchantName, setMerchantName] = useState(transaction?.merchant ?? '');
-  const [date, setDate] = useState(
-    legacyTransaction?.date ? new Date(legacyTransaction.date) : new Date()
-  );
+  const [note, setNote] = useState('');
+  const [merchantName, setMerchantName] = useState('');
+  const [date, setDate] = useState(() => new Date());
   const [isSaving, setIsSaving] = useState(false);
   const [amountValidationError, setAmountValidationError] = useState<string | null>(null);
 
@@ -168,7 +162,7 @@ function CreateTransaction() {
         setMerchantName(loaded.transaction.merchant ?? '');
         setDate(new Date(loaded.transaction.date));
       } catch {
-        // Logged by the action; the form stays usable with route params.
+        // Logged by the action; the form stays usable as a new transaction.
       }
     };
 
@@ -291,13 +285,7 @@ function CreateTransaction() {
   // Auto-populate with active trip when creating a new transaction
   useEffect(() => {
     const loadActiveTrip = async () => {
-      if (
-        !shouldAutoPopulateActiveTrip({
-          transaction,
-          transactionId,
-          tripsEnabled,
-        })
-      ) {
+      if (transactionId || !tripsEnabled) {
         return;
       }
 
@@ -312,10 +300,12 @@ function CreateTransaction() {
     };
 
     loadActiveTrip();
-  }, [handleTripSelect, transaction, transactionId, tripsEnabled]);
+  }, [handleTripSelect, transactionId, tripsEnabled]);
 
   useEffect(() => {
-    !transaction?.currencyCode && defaultCurrency && setSelectedCurrency(defaultCurrency);
+    if (!transaction?.currencyCode && defaultCurrency) {
+      setSelectedCurrency(defaultCurrency);
+    }
   }, [defaultCurrency, transaction?.currencyCode]);
 
   useEffect(() => {
@@ -328,7 +318,7 @@ function CreateTransaction() {
   // `autoFocus` alone is unreliable on modally-presented native-stack screens,
   // so we focus on `transitionEnd` (the open transition) instead.
   useEffect(() => {
-    if (!shouldFocusTransactionAmountInput({ platform: Platform.OS, transaction })) {
+    if (!focusAmountOnOpen) {
       return;
     }
 
@@ -340,7 +330,7 @@ function CreateTransaction() {
     });
 
     return unsubscribe;
-  }, [navigation, transaction]);
+  }, [focusAmountOnOpen, navigation]);
 
   return (
     <>
@@ -390,10 +380,7 @@ function CreateTransaction() {
             selectedCurrency={selectedCurrency}
             value={amount}
             onChangeText={handleAmountChange}
-            focusOnMount={shouldFocusTransactionAmountInput({
-              platform: Platform.OS,
-              transaction,
-            })}
+            focusOnMount={focusAmountOnOpen}
             onValidationError={setAmountValidationError}
           />
         </View>
